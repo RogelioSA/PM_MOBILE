@@ -1,0 +1,42 @@
+/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+@import "tailwindcss";
+@import "primeicons/primeicons.css";
+
+/* Configuración de tema con Tailwind 4 */
+@theme {
+  --font-sans: "Roboto", sans-serif;
+
+  --color-background-dark: #181818; /* gris oscuro */
+  --color-foreground-dark: #f9fafb; /* texto claro */
+
+  /* Colores modo claro */
+  --color-primary: #031b2e;
+  --color-secondary: #6b7280;
+  --color-accent: #9b59b6;
+  --color-success: #22c55e;
+  --color-info: #3b82f6;
+  --color-warn: #f59e0b;
+  --color-help: #6366f1;
+  --color-danger: #ef4444;
+
+  /* variantes hover/active opcionales */
+  --color-primary-hover: #4a7cd1;
+  --color-primary-active: #3664b8;
+  --color-success-hover: #1aa34d;
+  --color-success-active: #14823d;
+  --color-danger-hover: #dc2626;
+  --color-danger-active: #b91c1c;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Definición de esquemas de color */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+  background-color: var(--color-background-dark);
+  color: var(--color-foreground-dark);
+}

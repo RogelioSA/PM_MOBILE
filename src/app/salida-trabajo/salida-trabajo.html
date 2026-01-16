@@ -1,0 +1,181 @@
+<app-menu></app-menu>
+
+<div class="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-6 pt-20 sm:pt-24">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white mb-4 sm:mb-6">
+      Salida por Orden de Trabajo
+    </h1>
+
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
+      <form [formGroup]="form" class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Sucursal <span class="text-red-500">*</span>
+          </label>
+          <p-select formControlName="sucursal" [options]="sucursales" optionLabel="label" optionValue="value"
+            placeholder="Seleccione una sucursal" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
+            [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Almacén <span class="text-red-500">*</span>
+          </label>
+          <p-select formControlName="almacen" [options]="almacenes" optionLabel="label" optionValue="value"
+            placeholder="Seleccione un almacén" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
+            [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Orden de Trabajo <span class="text-red-500">*</span>
+          </label>
+          <p-select formControlName="ordenTrabajo" [options]="ordenesTrabajo" optionLabel="label" optionValue="value"
+            placeholder="Seleccione una orden de trabajo" styleClass="w-full" [filter]="true"
+            filterPlaceholder="Buscar orden de trabajo..." />
+        </div>
+
+        <button pButton type="button" label="Scanner" icon="pi pi-qrcode" (click)="onScanner()" class="w-full h-11 mt-4"
+          severity="primary"></button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Scanner con ZXing -->
+<p-dialog [(visible)]="modalVisible" [modal]="true" [style]="{ width: '95vw', height: '95vh' }"
+  [breakpoints]="{ '960px': '90vw', '640px': '95vw' }" [draggable]="false" [resizable]="false" [closable]="true"
+  (onShow)="onModalShow()" (onHide)="cerrarModal()" styleClass="scanner-modal"
+  [contentStyle]="{ padding: '0', overflow: 'hidden' }">
+  <ng-template pTemplate="header">
+    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
+      Scanner de Vehículos
+    </h2>
+  </ng-template>
+
+  <div class="h-full overflow-y-auto px-3 sm:px-6 pb-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+
+        <!-- COLUMNA IZQUIERDA: Cámara -->
+        <div class="flex flex-col gap-4">
+          <!-- ZXing Scanner -->
+          <div class="relative w-full bg-black rounded-lg overflow-hidden" style="aspect-ratio: 4/3;">
+            <zxing-scanner *ngIf="modalVisible && scannerActivo" [formats]="formatsEnabled" [device]="currentDevice"
+              (camerasFound)="onCamerasFound($event)" (scanSuccess)="onCodeResult($event)"
+              (permissionResponse)="onHasPermission($event)" (scanError)="onScanError($event)" [tryHarder]="true"
+              [timeBetweenScans]="300" [delayBetweenScanSuccess]="300" class="w-full h-full"></zxing-scanner>
+
+            <div
+              class="absolute top-2 left-2 sm:top-4 sm:left-4 bg-black/70 text-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm z-10">
+              <i class="pi pi-qrcode mr-1 sm:mr-2"></i>
+              <span>Escaneando códigos QR</span>
+            </div>
+
+            <div *ngIf="!hasPermission && modalVisible"
+              class="absolute inset-0 flex items-center justify-center bg-black/70 z-10">
+              <div class="text-center text-white p-4">
+                <i class="pi pi-exclamation-triangle text-4xl mb-3"></i>
+                <p class="text-sm mb-3">Se requiere permiso de cámara</p>
+                <button pButton type="button" label="Solicitar permiso" icon="pi pi-camera"
+                  (click)="solicitarPermisoCamara()" class="mt-2" severity="warn"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Formulario -->
+        <div class="flex flex-col gap-4">
+          <!-- VIN y Cantidad -->
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <div class="flex-1 min-w-0">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+                VIN <span class="text-red-500">*</span>
+              </label>
+              <input #vinInputElement pInputText type="text" [(ngModel)]="vinInput" placeholder="VIN..."
+                class="w-full h-11 text-sm" (keyup.enter)="agregarVehiculo()" />
+            </div>
+            <div class="w-full sm:w-36 flex-shrink-0">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+                Cantidad
+              </label>
+              <p-inputnumber [(ngModel)]="cantidad" [showButtons]="true" buttonLayout="horizontal" [step]="1" [min]="1"
+                [max]="999" styleClass="w-full cantidad-input" inputStyleClass="h-11 text-sm text-center">
+                <ng-template #incrementbuttonicon>
+                  <span class="pi pi-plus text-xs"></span>
+                </ng-template>
+                <ng-template #decrementbuttonicon>
+                  <span class="pi pi-minus text-xs"></span>
+                </ng-template>
+              </p-inputnumber>
+            </div>
+          </div>
+
+          <!-- Botón Agregar -->
+          <button pButton type="button" label="Agregar Vehículo" icon="pi pi-plus" (click)="agregarVehiculo()"
+            class="w-full h-11" severity="success"></button>
+
+          <!-- Fecha -->
+          <div>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+              Fecha
+            </label>
+            <div class="w-full">
+              <p-datepicker [(ngModel)]="fechaSeleccionada" dateFormat="dd/mm/yy" [showIcon]="true"
+                [iconDisplay]="'input'" inputStyleClass="w-full h-11 pr-10" styleClass="w-full"
+                [style]="{ width: '100%' }" />
+            </div>
+          </div>
+          <!-- Documento Generado -->
+          <div>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+              Documento Generado
+            </label>
+            <input type="text" [value]="documentoGenerado" readonly
+              class="w-full h-11 px-3 text-sm border rounded-lg bg-gray-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+              placeholder="Se generará al guardar" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de vehículos -->
+      <div *ngIf="vehiculos.length > 0"
+        class="mt-4 lg:mt-6 border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
+        <div class="overflow-x-auto" style="max-height: 280px; overflow-y: auto;">
+          <table class="w-full text-xs sm:text-sm">
+            <thead class="bg-gray-100 dark:bg-slate-700 sticky top-0">
+              <tr>
+                <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">VIN</th>
+                <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">STOCK</th>
+                <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">MODELO</th>
+                <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">COLOR</th>
+                <th class="px-2 sm:px-3 py-2 text-center text-gray-700 dark:text-gray-300 font-semibold">CANT.</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
+              <tr *ngFor="let vehiculo of vehiculos" class="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                <td class="px-2 sm:px-3 py-2 text-gray-800 dark:text-gray-200">{{vehiculo.vin}}</td>
+                <td class="px-2 sm:px-3 py-2 text-gray-800 dark:text-gray-200">{{vehiculo.stock}}</td>
+                <td class="px-2 sm:px-3 py-2 text-gray-800 dark:text-gray-200">{{vehiculo.modelo}}</td>
+                <td class="px-2 sm:px-3 py-2 text-gray-800 dark:text-gray-200">{{vehiculo.color}}</td>
+                <td class="px-2 sm:px-3 py-2 text-center text-gray-800 dark:text-gray-200 font-semibold">
+                  {{vehiculo.cantidad}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Botones finales -->
+      <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 lg:mt-6 pb-2">
+  <button pButton type="button" label="Nuevo Scaneo" icon="pi pi-qrcode" (click)="nuevoScaneo()" 
+    class="h-11 sm:w-auto" severity="help"></button>
+  <div class="sm:flex-1"></div>
+  <button pButton type="button" label="Guardar" icon="pi pi-save" (click)="guardar()" 
+    class="h-11 sm:w-auto sm:min-w-[200px]" severity="primary"></button>
+</div>
+    </div>
+  </div>
+</p-dialog>
+
+<p-toast position="top-right"></p-toast>

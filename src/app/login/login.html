@@ -1,0 +1,65 @@
+<div
+  class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-[var(--color-background-dark)] px-4"
+>
+  <div
+    class="w-full max-w-sm bg-white dark:bg-surface-900 rounded-xl shadow-lg p-6"
+  >
+    <!-- Logo -->
+    <div class="flex justify-center mb-4">
+      <img
+        src="assets/logo.png"
+        alt="PeruMoor"
+        class="h-12 object-contain"
+      />
+    </div>
+
+    <!-- Título -->
+    <h2
+      class="text-center text-xl font-semibold text-gray-800 dark:text-white"
+    >
+      Bienvenido de vuelta
+    </h2>
+    <p
+      class="text-center text-sm text-gray-500 dark:text-gray-400 mt-1 mb-6"
+    >
+      Ingresa tus credenciales para acceder al sistema
+    </p>
+
+    <!-- Form -->
+<form
+  [formGroup]="form"
+  (ngSubmit)="iniciarSesion()"
+  class="flex flex-col gap-4"
+>
+  <!-- Usuario -->
+  <input
+    pInputText
+    type="text"
+    placeholder="Usuario"
+    formControlName="usuario"
+    class="w-full h-11"
+  />
+
+  <!-- Contraseña -->
+<p-password
+  formControlName="password"
+  placeholder="Contraseña"
+  [feedback]="false"
+  [toggleMask]="true"
+  [style]="{'width': '100%'}"
+  inputStyleClass="w-full h-11"
+></p-password>
+
+  <!-- Botón -->
+  <button
+    pButton
+    type="submit"
+    label="Iniciar sesión"
+    class="w-full h-11 mt-2"
+    severity="primary"
+    [disabled]="form.invalid"
+  ></button>
+</form>
+
+  </div>
+</div>

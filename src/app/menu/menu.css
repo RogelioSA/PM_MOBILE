@@ -1,0 +1,13 @@
+/* menu.css - Opcional para ajustes finos */
+:host ::ng-deep {
+  .p-menubar {
+    border-radius: 0;
+  }
+
+  /* Responsive: menú hamburguesa en móvil */
+  @media (max-width: 960px) {
+    .p-menubar-button {
+      display: flex !important;
+    }
+  }
+}
