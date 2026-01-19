@@ -10,6 +10,11 @@ export interface RegistroSalidaOTDetalle {
   cantidad: number;
 }
 
+export interface RegistroTransferenciaDetalle {
+  idproducto: string;
+  cantidad: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -90,6 +95,35 @@ export class Api {
 
     return this.https.post(
       `${this.baseUrl}/Car/registroSalidaOT`,
+      detalle,
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  registroTransferenciaAlmacenes(
+    idsucursal: string,
+    idalmacen: string,
+    idsucursaldestino: string,
+    idalmacendestino: string,
+    fecha: string,
+    detalle: RegistroTransferenciaDetalle[]
+  ): Observable<any> {
+
+    const params = new HttpParams()
+      .set('idsucursal', idsucursal)
+      .set('idalmacen', idalmacen)
+      .set('idsucursaldestino', idsucursaldestino)
+      .set('idalmacendestino', idalmacendestino)
+      .set('fecha', fecha);
+
+    return this.https.post(
+      `${this.baseUrl}/Car/registroTransferenciaAlmacenes`,
       detalle,
       {
         headers: this.authService.getHeaders(),

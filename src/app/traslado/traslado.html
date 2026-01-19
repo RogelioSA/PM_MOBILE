@@ -19,7 +19,7 @@
 
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Almacén <span class="text-red-500">*</span>
+            Almacén Origen <span class="text-red-500">*</span>
           </label>
           <p-select formControlName="almacen" [options]="almacenes" optionLabel="label" optionValue="value"
             placeholder="Seleccione un almacén" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
@@ -28,22 +28,21 @@
 
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Orden de Trabajo <span class="text-red-500">*</span>
+            Sucursal Destino <span class="text-red-500">*</span>
           </label>
-          <p-select formControlName="ordenTrabajo" [options]="ordenesTrabajo" optionLabel="label" optionValue="value"
-            placeholder="Seleccione una orden de trabajo" styleClass="w-full" [filter]="true"
-            filterPlaceholder="Buscar orden de trabajo..." />
+          <p-select formControlName="sucursalDestino" [options]="sucursales" optionLabel="label" optionValue="value"
+            placeholder="Seleccione sucursal destino" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
+            [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
         </div>
 
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Sucursal Destino<span class="text-red-500">*</span>
+            Almacén Destino <span class="text-red-500">*</span>
           </label>
-          <p-select formControlName="sucursal" [options]="sucursales" optionLabel="label" optionValue="value"
-            placeholder="Seleccione una sucursal" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
+          <p-select formControlName="almacenDestino" [options]="almacenesDestino" optionLabel="label" optionValue="value"
+            placeholder="Seleccione almacén destino" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
             [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
         </div>
-
         <button pButton type="button" label="Scanner" icon="pi pi-qrcode" (click)="onScanner()" class="w-full h-11 mt-4"
           severity="primary"></button>
       </form>

@@ -88,6 +88,8 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy{
     private ultimoCodigoEscaneado = '';
     private ultimoTiempoEscaneo = 0;
   
+    almacenesDestino: Opcion[] = [];
+
     constructor(
       private fb: FormBuilder,
       private messageService: MessageService,
@@ -102,7 +104,8 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy{
       this.form = this.fb.group({
         sucursal: [null, Validators.required],
         almacen: [null, Validators.required],
-        ordenTrabajo: [null, Validators.required]
+        sucursalDestino: [null, Validators.required],
+        almacenDestino: [null, Validators.required]
       });
   
       console.log('📋 Formatos QR habilitados:', this.formatsEnabled);
@@ -118,7 +121,14 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy{
         }
       });
   
-      this.cargarOrdenesTrabajo();
+      this.form.get('sucursalDestino')?.valueChanges.subscribe(idSucursal => {
+      if (idSucursal) {
+        this.cargarAlmacenesDestinoPorSucursal(idSucursal);
+      } else {
+        this.almacenesDestino = [];
+        this.form.get('almacenDestino')?.reset();
+      }
+    });
   
       // Solicitar permisos al iniciar
       console.log('🎥 Solicitando permisos de cámara al inicio...');
@@ -133,6 +143,30 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy{
       }
     }
   
+    cargarAlmacenesDestinoPorSucursal(idSucursal: string) {
+    this.almacenesDestino = [];
+    this.form.get('almacenDestino')?.reset();
+
+    this.auth.getAlmacenesPorSucursal(idSucursal).subscribe({
+      next: (response) => {
+        if (Array.isArray(response)) {
+          this.almacenesDestino = response.map((item: any) => ({
+            label: item.nombre,
+            value: item.id
+          }));
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar almacenes destino', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los almacenes destino',
+          life: 3000
+        });
+      }
+    });
+  }
     async solicitarPermisoCamara() {
       console.log('📸 [PERMISO] Iniciando solicitud de permiso de cámara...');
   
@@ -634,75 +668,84 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy{
     }
   
     guardar() {
-      console.log('💾 [GUARDAR] Iniciando guardado');
-  
-      if (this.vehiculos.length === 0) {
-        console.warn('⚠️ [GUARDAR] No hay vehículos para guardar');
+    console.log('💾 [GUARDAR] Iniciando guardado');
+
+    if (this.vehiculos.length === 0) {
+      console.warn('⚠️ [GUARDAR] No hay vehículos para guardar');
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sin vehículos',
+        detail: 'Debe agregar al menos un vehículo',
+        life: 3000
+      });
+      return;
+    }
+
+    const idsucursal = this.form.get('sucursal')?.value;
+    const idalmacen = this.form.get('almacen')?.value;
+    const idsucursaldestino = this.form.get('sucursalDestino')?.value;
+    const idalmacendestino = this.form.get('almacenDestino')?.value;
+
+    console.log('📋 [GUARDAR] Datos del formulario:', {
+      sucursalOrigen: idsucursal,
+      almacenOrigen: idalmacen,
+      sucursalDestino: idsucursaldestino,
+      almacenDestino: idalmacendestino,
+      cantidadVehiculos: this.vehiculos.length
+    });
+
+    if (!idsucursal || !idalmacen || !idsucursaldestino || !idalmacendestino) {
+      console.error('❌ [GUARDAR] Datos incompletos');
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Debe completar todos los campos requeridos',
+        life: 3000
+      });
+      return;
+    }
+
+    const fecha = this.fechaSeleccionada.toISOString().split('T')[0];
+
+    const detalle = this.vehiculos.map(v => ({
+      idproducto: v.vin,
+      cantidad: v.cantidad
+    }));
+
+    console.log('📦 [GUARDAR] Detalle a enviar:', detalle);
+
+    this.auth.registroTransferenciaAlmacenes(
+      idsucursal,
+      idalmacen,
+      idsucursaldestino,
+      idalmacendestino,
+      fecha,
+      detalle
+    ).subscribe({
+      next: (response) => {
+        console.log('✅ [GUARDAR] Respuesta exitosa:', response);
+        this.documentoGenerado = response?.documento || 'DOC-' + Date.now();
+
         this.messageService.add({
-          severity: 'warn',
-          summary: 'Sin vehículos',
-          detail: 'Debe agregar al menos un vehículo',
+          severity: 'success',
+          summary: 'Transferencia exitosa',
+          detail: `Documento ${this.documentoGenerado} generado`,
           life: 3000
         });
-        return;
-      }
-  
-      const idsucursal = this.form.get('sucursal')?.value;
-      const idalmacen = this.form.get('almacen')?.value;
-      const idordentrabajo = this.form.get('ordenTrabajo')?.value;
-  
-      console.log('📋 [GUARDAR] Datos del formulario:', {
-        sucursal: idsucursal,
-        almacen: idalmacen,
-        ordenTrabajo: idordentrabajo,
-        cantidadVehiculos: this.vehiculos.length
-      });
-  
-      if (!idsucursal || !idalmacen || !idordentrabajo) {
-        console.error('❌ [GUARDAR] Datos incompletos');
+
+        this.cerrarModal();
+      },
+      error: (error) => {
+        console.error('❌ [GUARDAR] Error:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Datos incompletos del formulario',
-          life: 3000
+          summary: 'Error al guardar',
+          detail: error?.error?.message || 'No se pudo registrar la transferencia',
+          life: 4000
         });
-        return;
       }
-  
-      const fecha = this.fechaSeleccionada.toISOString().split('T')[0];
-  
-      const detalle = this.vehiculos.map(v => ({
-        idproducto: v.vin,
-        cantidad: v.cantidad
-      }));
-  
-      console.log('📦 [GUARDAR] Detalle a enviar:', detalle);
-  
-      this.auth.registroSalidaOT(idsucursal, idalmacen, idordentrabajo, fecha, detalle).subscribe({
-        next: (response) => {
-          console.log('✅ [GUARDAR] Respuesta exitosa:', response);
-          this.documentoGenerado = response?.documento || 'DOC-' + Date.now();
-  
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Guardado exitoso',
-            detail: `Documento ${this.documentoGenerado} generado`,
-            life: 3000
-          });
-  
-          this.cerrarModal();
-        },
-        error: (error) => {
-          console.error('❌ [GUARDAR] Error:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error al guardar',
-            detail: error?.error?.message || 'No se pudo registrar la salida',
-            life: 4000
-          });
-        }
-      });
-    }
+    });
+  }
   
     ngOnDestroy() {
       console.log('🧹 [DESTROY] Limpiando componente');
