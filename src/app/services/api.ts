@@ -10,9 +10,30 @@ export interface RegistroSalidaOTDetalle {
   cantidad: number;
 }
 
-export interface RegistroTransferenciaDetalle {
-  idproducto: string;
-  cantidad: number;
+export interface ChecklistEquipamiento {
+  código: string;
+  descripcion: string;
+  valor: string | null;
+}
+
+export interface ChecklistPDI {
+  Sucursal: string;
+  Almacen: string;
+  Marca: string;
+  Modelo: string;
+  Color: string | null;
+  Kilometraje: string;
+  Nuevo: boolean;
+  Activo: boolean;
+  NroChasis: string;
+  NroStock: string;
+  Equipamiento: ChecklistEquipamiento[];
+  Transportista: string;
+  Conductor: string;
+  FechaLlegada: Date | null;
+  Observaciones: string;
+  NombreTecnico: string;
+  FechaRecepcion: Date | null;
 }
 
 @Injectable({
@@ -25,59 +46,6 @@ export class Api {
     private https: HttpClient,
     private authService: Auth
   ) {}
-
-  // Sucursales
-  getSucursales(): Observable<any> {
-    return this.https.get(
-      `${this.baseUrl}/ResumeBySeller/GetSucursal`,
-      {
-        headers: this.authService.getHeaders()
-      }
-    ).pipe(
-      map((response: any) => response),
-      catchError(error => throwError(() => error))
-    );
-  }
-
-  // Almacenes por sucursal
-  getAlmacenesPorSucursal(idsucursal: string): Observable<any> {
-    return this.https.get(
-      `${this.baseUrl}/Almacen/${idsucursal}`,
-      {
-        headers: this.authService.getHeaders()
-      }
-    ).pipe(
-      map((response: any) => response),
-      catchError(error => throwError(() => error))
-    );
-  }
-
-  // Órdenes de producción
-  getOrdenesProduccionPorSucursal(idTaller: string): Observable<any> {
-    return this.https.get(
-      `${this.baseUrl}/Workshop/ListarOrdenesProduccion`,
-      {
-        headers: this.authService.getHeaders(),
-        params: new HttpParams().set('idTaller', idTaller)
-      }
-    ).pipe(
-      map((response: any) => response),
-      catchError(error => throwError(() => error))
-    );
-  }
-
-  // Obtener vehículo por VIN
-  getCarPorVin(vin: string): Observable<any> {
-    return this.https.get(
-      `${this.baseUrl}/Car/${vin}`,
-      {
-        headers: this.authService.getHeaders()
-      }
-    ).pipe(
-      map((response: any) => response),
-      catchError(error => throwError(() => error))
-    );
-  }
 
   // Registro de salida OT
   registroSalidaOT(
@@ -106,25 +74,96 @@ export class Api {
     );
   }
 
-  registroTransferenciaAlmacenes(
-    idsucursal: string,
-    idalmacen: string,
-    idsucursaldestino: string,
-    idalmacendestino: string,
-    fecha: string,
-    detalle: RegistroTransferenciaDetalle[]
-  ): Observable<any> {
+  guardarChecklistPDI(checklist: ChecklistPDI): Observable<any> {
+  // Parámetros en query string
+  let params = new HttpParams()
+    .set('sucursal', checklist.Sucursal)
+    .set('almacen', checklist.Almacen)
+    .set('marca', checklist.Marca)
+    .set('modelo', checklist.Modelo)
+    .set('kilometraje', checklist.Kilometraje)
+    .set('nuevo', checklist.Nuevo.toString())
+    .set('activo', checklist.Activo.toString())
+    .set('nroChasis', checklist.NroChasis)
+    .set('nroStock', checklist.NroStock)
+    .set('transportista', checklist.Transportista)
+    .set('conductor', checklist.Conductor)
+    .set('observaciones', checklist.Observaciones)
+    .set('nombreTecnico', checklist.NombreTecnico);
 
+  // Agregar parámetros opcionales
+  if (checklist.Color) {
+    params = params.set('color', checklist.Color);
+  }
+  
+  if (checklist.FechaLlegada) {
+    params = params.set('fechaLlegada', new Date(checklist.FechaLlegada).toISOString());
+  }
+  
+  if (checklist.FechaRecepcion) {
+    params = params.set('fechaRecepcion', new Date(checklist.FechaRecepcion).toISOString());
+  }
+
+  // Solo el equipamiento va en el body
+  const body = checklist.Equipamiento;
+
+  return this.https.post(
+    `${this.baseUrl}/Car/registroChecklistPDI`,
+    body,
+    { 
+      headers: this.authService.getHeaders(),
+      params 
+    }
+  ).pipe(
+    map((response: any) => response),
+    catchError(error => throwError(() => error))
+  );
+}
+
+  subirArchivoChecklist(
+  stock: string,
+  archivo: File,
+  tipoArchivo: string
+): Observable<any> {
+  const carpeta = `Chk_${stock}`;
+  
+  // Determinar el tipo MIME correcto
+  let mimeType = 'application/octet-stream'; // Default
+  
+  if (tipoArchivo === 'imagen') {
+    // Usar el tipo MIME real del archivo
+    mimeType = archivo.type || 'image/jpeg';
+  } else if (tipoArchivo === 'pdf') {
+    mimeType = 'application/pdf';
+  }
+  
+  const params = new HttpParams()
+    .set('carpeta', carpeta)
+    .set('archivo', archivo.name)
+    .set('tipoArchivo', mimeType);
+
+  return this.https.get(
+    `${this.baseUrl}/Car/subirArchivoChecklist`,
+    {
+      headers: this.authService.getHeaders(),
+      params
+    }
+  ).pipe(
+    map((response: any) => response),
+    catchError(error => throwError(() => error))
+  );
+}
+
+  // Listar archivos de checklist
+  listarArchivosChecklist(stock: string): Observable<any> {
+    // Construir ruta con formato Chk_P25-XXX
+    const ruta = `Chk_${stock}`;
+    
     const params = new HttpParams()
-      .set('idsucursal', idsucursal)
-      .set('idalmacen', idalmacen)
-      .set('idsucursaldestino', idsucursaldestino)
-      .set('idalmacendestino', idalmacendestino)
-      .set('fecha', fecha);
+      .set('ruta', ruta);
 
-    return this.https.post(
-      `${this.baseUrl}/Car/registroTransferenciaAlmacenes`,
-      detalle,
+    return this.https.get(
+      `${this.baseUrl}/Car/listarArchivosChecklist`,
       {
         headers: this.authService.getHeaders(),
         params
@@ -134,4 +173,5 @@ export class Api {
       catchError(error => throwError(() => error))
     );
   }
+
 }

@@ -12,10 +12,10 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { TableModule } from 'primeng/table';
 import { DatePickerModule } from 'primeng/datepicker';
 import { CheckboxModule } from 'primeng/checkbox';
-import { Auth } from '../services/auth';
 import { ZXingScannerModule } from '@zxing/ngx-scanner';
 import { BarcodeFormat } from '@zxing/library';
 import { Api } from '../services/api';
+import { Master } from '../services/master'; // Importar Master
 
 interface Opcion {
   label: string;
@@ -92,7 +92,8 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private messageService: MessageService,
-    private auth: Api
+    private api: Api,
+    private master: Master // Inyectar Master
   ) {
     console.log('🏗️ Constructor: Componente inicializado');
   }
@@ -138,7 +139,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     console.log('📸 [PERMISO] Iniciando solicitud de permiso de cámara...');
 
     try {
-      // Verificar si getUserMedia está disponible
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.error('❌ [PERMISO] getUserMedia no disponible en este navegador');
         this.messageService.add({
@@ -152,7 +152,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
 
       console.log('🔍 [PERMISO] Enumerando dispositivos disponibles...');
 
-      // Primero enumerar dispositivos
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
@@ -172,7 +171,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      // Solicitar acceso con constraints más flexibles
       console.log('🎬 [PERMISO] Solicitando acceso a la cámara...');
       const constraints = {
         video: {
@@ -200,7 +198,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
         });
       });
 
-      // Detener el stream
       stream.getTracks().forEach(track => {
         console.log(`🛑 [PERMISO] Deteniendo track: ${track.label}`);
         track.stop();
@@ -255,7 +252,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     this.scannerActivo = true;
     console.log('✅ [MODAL] Scanner activado');
 
-    // Solicitar permiso nuevamente al abrir modal si no lo tiene
     if (!this.hasPermission) {
       console.log('⚠️ [MODAL] No hay permiso, solicitando...');
       this.solicitarPermisoCamara();
@@ -287,7 +283,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       });
     });
 
-    // Seleccionar cámara trasera por defecto
     const rearCamera = devices.find(d =>
       /back|rear|environment|trasera/gi.test(d.label)
     );
@@ -324,7 +319,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     console.log('🔤 [DETECCIÓN] Tipo:', typeof resultString);
     console.log('⏱️ [DETECCIÓN] Timestamp:', new Date().toISOString());
 
-    // Prevenir duplicados rápidos (mismo código en menos de 1 segundo)
     if (this.ultimoCodigoEscaneado === resultString &&
       (ahora - this.ultimoTiempoEscaneo) < 1000) {
       console.log('⏭️ [DETECCIÓN] Código duplicado ignorado (escaneado hace',
@@ -332,7 +326,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    // Validación básica
     if (!resultString) {
       console.warn('⚠️ [DETECCIÓN] Código vacío o null, ignorando');
       return;
@@ -393,7 +386,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onScanError(error: any) {
-    // Filtrar errores comunes que no son problemáticos
     const erroresIgnorados = [
       'No MultiFormat Readers',
       'NotFoundException',
@@ -405,7 +397,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     );
 
     if (esErrorIgnorado) {
-      // No logear estos errores comunes
       return;
     }
 
@@ -416,8 +407,9 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  // Llamadas a Master Service
   cargarSucursales() {
-    this.auth.getSucursales().subscribe({
+    this.master.getSucursales().subscribe({
       next: (response) => {
         if (response?.success && Array.isArray(response.data)) {
           this.sucursales = response.data.map((item: any) => ({
@@ -442,7 +434,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     this.almacenes = [];
     this.form.get('almacen')?.reset();
 
-    this.auth.getAlmacenesPorSucursal(idSucursal).subscribe({
+    this.master.getAlmacenesPorSucursal(idSucursal).subscribe({
       next: (response) => {
         if (Array.isArray(response)) {
           this.almacenes = response.map((item: any) => ({
@@ -468,7 +460,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     this.ordenesTrabajo = [];
     this.form.get('ordenTrabajo')?.reset();
 
-    this.auth.getOrdenesProduccionPorSucursal(idTaller).subscribe({
+    this.master.getOrdenesProduccionPorSucursal(idTaller).subscribe({
       next: (response) => {
         if (response?.success && Array.isArray(response.data)) {
           this.ordenesTrabajo = response.data.map((item: any) => ({
@@ -545,7 +537,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
 
     console.log('🔍 [AGREGAR] Consultando información del vehículo...');
 
-    this.auth.getCarPorVin(vin).subscribe({
+    this.master.getCarPorVin(vin).subscribe({
       next: (data) => {
         console.log('📦 [AGREGAR] Respuesta del servidor:', data);
 
@@ -634,6 +626,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     }, 100);
   }
 
+  // Llamada a Api Service
   guardar() {
     console.log('💾 [GUARDAR] Iniciando guardado');
 
@@ -679,7 +672,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
 
     console.log('📦 [GUARDAR] Detalle a enviar:', detalle);
 
-    this.auth.registroSalidaOT(idsucursal, idalmacen, idordentrabajo, fecha, detalle).subscribe({
+    this.api.registroSalidaOT(idsucursal, idalmacen, idordentrabajo, fecha, detalle).subscribe({
       next: (response) => {
         console.log('✅ [GUARDAR] Respuesta exitosa:', response);
         this.documentoGenerado = response?.documento || 'DOC-' + Date.now();

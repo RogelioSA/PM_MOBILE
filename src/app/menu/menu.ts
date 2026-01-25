@@ -33,6 +33,10 @@ export class Menu implements OnInit {
       {
         label: 'Salida por Orden de Trabajo',
         command: () => this.navigateTo('salida-trabajo')
+      },
+      {
+        label: 'Checklist PDI',
+        command: () => this.navigateTo('checklist')
       }
     ];
 
