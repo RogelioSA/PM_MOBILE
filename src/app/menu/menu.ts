@@ -37,6 +37,10 @@ export class Menu implements OnInit {
       {
         label: 'Checklist PDI',
         command: () => this.navigateTo('checklist')
+      },
+            {
+        label: 'Listar Checklist',
+        command: () => this.navigateTo('listarchecklist')
       }
     ];
 

@@ -99,7 +99,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    console.log('🚀 ngOnInit: Iniciando componente');
 
     this.form = this.fb.group({
       sucursal: [null, Validators.required],
@@ -107,7 +106,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
       ordenTrabajo: [null, Validators.required]
     });
 
-    console.log('📋 Formatos QR habilitados:', this.formatsEnabled);
 
     this.cargarSucursales();
 

@@ -11,7 +11,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TextareaModule } from 'primeng/textarea';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { Api,ChecklistPDI  } from '../services/api';
+import { Api, ChecklistPDI } from '../services/api';
 import { Master } from '../services/master';
 
 interface Opcion {
@@ -20,6 +20,7 @@ interface Opcion {
 }
 
 interface EquipamientoItem {
+  codigo: string;
   descripcion: string;
   valor: string | null;
 }
@@ -69,52 +70,52 @@ export class Checklist implements OnInit {
   nroChasis: string = '';
   nroStock: string = '';
 
-  // Equipamiento (columna izquierda)
+  // Equipamiento (columna izquierda) - AHORA CON CÓDIGO
   equipamientoCol1: EquipamientoItem[] = [
-    { descripcion: 'TAPA DE PIN', valor: null },
-    { descripcion: 'ANTENA', valor: null },
-    { descripcion: 'LLAVES DE CONTACTO/SIMPLES', valor: null },
-    { descripcion: 'LLAVES DE COMANDO', valor: null },
-    { descripcion: 'RADIO FABRICA', valor: null },
-    { descripcion: 'CHIP GPS', valor: null },
-    { descripcion: 'MANUAL DE USO', valor: null },
-    { descripcion: 'CENISERO', valor: null },
-    { descripcion: 'ENCENDEDOR', valor: null },
-    { descripcion: 'TAPA DE FUSIBLES', valor: null },
-    { descripcion: 'TARJETA CODE', valor: null },
-    { descripcion: 'CABLE AUXILIAR', valor: null },
-    { descripcion: 'COBERTOR', valor: null },
-    { descripcion: 'LLANTA DE REPUESTO', valor: null },
-    { descripcion: 'LLAVE DE BOCA', valor: null },
-    { descripcion: 'LLAVE DE RUEDA', valor: null },
-    { descripcion: 'TRIANGULO DE SEGURIDAD', valor: null },
-    { descripcion: 'PIN DE REMOLQUE', valor: null },
-    { descripcion: 'DESARMADOR', valor: null },
-    { descripcion: 'ACOPLE', valor: null }
+    { codigo: 'EQ001', descripcion: 'TAPA DE PIN', valor: null },
+    { codigo: 'EQ002', descripcion: 'ANTENA', valor: null },
+    { codigo: 'EQ003', descripcion: 'LLAVES DE CONTACTO/SIMPLES', valor: null },
+    { codigo: 'EQ004', descripcion: 'LLAVES DE COMANDO', valor: null },
+    { codigo: 'EQ005', descripcion: 'RADIO FABRICA', valor: null },
+    { codigo: 'EQ006', descripcion: 'CHIP GPS', valor: null },
+    { codigo: 'EQ007', descripcion: 'MANUAL DE USO', valor: null },
+    { codigo: 'EQ008', descripcion: 'CENISERO', valor: null },
+    { codigo: 'EQ009', descripcion: 'ENCENDEDOR', valor: null },
+    { codigo: 'EQ010', descripcion: 'TAPA DE FUSIBLES', valor: null },
+    { codigo: 'EQ011', descripcion: 'TARJETA CODE', valor: null },
+    { codigo: 'EQ012', descripcion: 'CABLE AUXILIAR', valor: null },
+    { codigo: 'EQ013', descripcion: 'COBERTOR', valor: null },
+    { codigo: 'EQ014', descripcion: 'LLANTA DE REPUESTO', valor: null },
+    { codigo: 'EQ015', descripcion: 'LLAVE DE BOCA', valor: null },
+    { codigo: 'EQ016', descripcion: 'LLAVE DE RUEDA', valor: null },
+    { codigo: 'EQ017', descripcion: 'TRIANGULO DE SEGURIDAD', valor: null },
+    { codigo: 'EQ018', descripcion: 'PIN DE REMOLQUE', valor: null },
+    { codigo: 'EQ019', descripcion: 'DESARMADOR', valor: null },
+    { codigo: 'EQ020', descripcion: 'ACOPLE', valor: null }
   ];
 
-  // Equipamiento (columna derecha)
+  // Equipamiento (columna derecha) - AHORA CON CÓDIGO
   equipamientoCol2: EquipamientoItem[] = [
-    { descripcion: 'LLAVE ALLEN', valor: null },
-    { descripcion: 'LLAVE TUBULAR', valor: null },
-    { descripcion: 'EXTINTOR', valor: null },
-    { descripcion: 'MARTILLO', valor: null },
-    { descripcion: 'LLAVE FRANCESA', valor: null },
-    { descripcion: 'LLAVE CORONA', valor: null },
-    { descripcion: 'ALICATE', valor: null },
-    { descripcion: 'MANIVELA', valor: null },
-    { descripcion: 'COPAS DE AROS', valor: null },
-    { descripcion: 'TACOS METALICOS', valor: null },
-    { descripcion: 'VASOS DE AROS', valor: null },
-    { descripcion: 'LLAVEROS', valor: null },
-    { descripcion: 'MANUAL DE GARANTIA', valor: null },
-    { descripcion: 'PISOS', valor: null },
-    { descripcion: 'PORTADOCUMENTO', valor: null },
-    { descripcion: 'EMBLEMA', valor: null },
-    { descripcion: 'BOLSA DE SEGUROS', valor: null },
-    { descripcion: 'VALVULA DE GAS', valor: null },
-    { descripcion: 'GATA/PALANCA', valor: null },
-    { descripcion: 'PORTA PLACAS', valor: null }
+    { codigo: 'EQ021', descripcion: 'LLAVE ALLEN', valor: null },
+    { codigo: 'EQ022', descripcion: 'LLAVE TUBULAR', valor: null },
+    { codigo: 'EQ023', descripcion: 'EXTINTOR', valor: null },
+    { codigo: 'EQ024', descripcion: 'MARTILLO', valor: null },
+    { codigo: 'EQ025', descripcion: 'LLAVE FRANCESA', valor: null },
+    { codigo: 'EQ026', descripcion: 'LLAVE CORONA', valor: null },
+    { codigo: 'EQ027', descripcion: 'ALICATE', valor: null },
+    { codigo: 'EQ028', descripcion: 'MANIVELA', valor: null },
+    { codigo: 'EQ029', descripcion: 'COPAS DE AROS', valor: null },
+    { codigo: 'EQ030', descripcion: 'TACOS METALICOS', valor: null },
+    { codigo: 'EQ031', descripcion: 'VASOS DE AROS', valor: null },
+    { codigo: 'EQ032', descripcion: 'LLAVEROS', valor: null },
+    { codigo: 'EQ033', descripcion: 'MANUAL DE GARANTIA', valor: null },
+    { codigo: 'EQ034', descripcion: 'PISOS', valor: null },
+    { codigo: 'EQ035', descripcion: 'PORTADOCUMENTO', valor: null },
+    { codigo: 'EQ036', descripcion: 'EMBLEMA', valor: null },
+    { codigo: 'EQ037', descripcion: 'BOLSA DE SEGUROS', valor: null },
+    { codigo: 'EQ038', descripcion: 'VALVULA DE GAS', valor: null },
+    { codigo: 'EQ039', descripcion: 'GATA/PALANCA', valor: null },
+    { codigo: 'EQ040', descripcion: 'PORTA PLACAS', valor: null }
   ];
 
   // Datos de transporte
@@ -124,7 +125,7 @@ export class Checklist implements OnInit {
   observaciones: string = '';
 
   // Datos del técnico
-  nombreTecnicoPDI: string = '';
+  nombreTecnico: string = '';
   fechaRecepcion: Date | null = null;
 
   // Fotos
@@ -148,10 +149,12 @@ export class Checklist implements OnInit {
       color: [null]
     });
 
+    // Cargar catálogos iniciales
     this.cargarSucursales();
     this.cargarMarcas();
     this.cargarColores();
 
+    // Reaccionar a cambios para cargar dependencias
     this.form.get('sucursal')?.valueChanges.subscribe(idSucursal => {
       if (idSucursal) {
         this.cargarAlmacenesPorSucursal(idSucursal);
@@ -171,7 +174,8 @@ export class Checklist implements OnInit {
     });
   }
 
-  // Llamadas a Master Service
+  // ==================== CARGA DE CATÁLOGOS ====================
+
   cargarSucursales() {
     this.master.getSucursales().subscribe({
       next: (response) => {
@@ -288,12 +292,11 @@ export class Checklist implements OnInit {
     });
   }
 
+  // ==================== MANEJO DE FOTOS ====================
+
   onFileSelect(event: any) {
-    console.log('📸 onFileSelect disparado');
     const files = event.files || event.target.files;
-    
-    console.log('📦 Files recibidos:', files);
-    
+        
     if (!files || files.length === 0) {
       console.warn('⚠️ No se recibieron archivos');
       return;
@@ -309,9 +312,7 @@ export class Checklist implements OnInit {
       return;
     }
 
-    for (let file of files) {
-      console.log('🔍 Procesando archivo:', file.name, file.type, file.size);
-      
+    for (let file of files) {      
       if (this.fotos.length >= this.maxFotos) break;
 
       if (!file.type.startsWith('image/')) {
@@ -337,9 +338,7 @@ export class Checklist implements OnInit {
       }
 
       const reader = new FileReader();
-      reader.onload = (e: any) => {
-        console.log('✅ Imagen cargada correctamente:', file.name);
-        
+      reader.onload = (e: any) => {        
         const dataUrl = e.target.result;
         const nuevaFoto: FotoChecklist = {
           id: Date.now().toString() + Math.random(),
@@ -349,10 +348,7 @@ export class Checklist implements OnInit {
           preview: dataUrl
         };
 
-        this.fotos.push(nuevaFoto);
-        console.log('📊 Total fotos:', this.fotos.length);
-        console.log('🖼️ Foto agregada:', nuevaFoto);
-        
+        this.fotos.push(nuevaFoto);        
         this.messageService.add({
           severity: 'success',
           summary: 'Foto agregada',
@@ -376,14 +372,12 @@ export class Checklist implements OnInit {
   }
 
   abrirCamara() {
-    console.log('📷 Abriendo cámara...');
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
     input.capture = 'environment';
     
     input.onchange = (event: any) => {
-      console.log('📸 Foto capturada desde cámara');
       this.onFileSelect(event);
     };
 
@@ -391,10 +385,7 @@ export class Checklist implements OnInit {
   }
 
   eliminarFoto(fotoId: string) {
-    console.log('🗑️ Eliminando foto:', fotoId);
-    this.fotos = this.fotos.filter(f => f.id !== fotoId);
-    console.log('📊 Fotos restantes:', this.fotos.length);
-    
+    this.fotos = this.fotos.filter(f => f.id !== fotoId);    
     this.messageService.add({
       severity: 'info',
       summary: 'Foto eliminada',
@@ -403,297 +394,174 @@ export class Checklist implements OnInit {
     });
   }
 
-  // Subir fotos al servidor
-  subirFotos(stock: string): void {
-    if (this.fotos.length === 0) {
-      console.log('📸 No hay fotos para subir');
+  // ==================== GUARDAR CHECKLIST ====================
+
+  guardarChecklist(): void {
+    // Validar campos obligatorios del formulario
+    if (this.form.invalid) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Campos incompletos',
+        detail: 'Complete los campos obligatorios (Sucursal, Almacén, Marca, Modelo)',
+        life: 3000
+      });
       return;
     }
 
-    console.log(`📤 Subiendo ${this.fotos.length} fotos para stock: ${stock}`);
+    // Validar campos obligatorios adicionales
+    if (!this.nroChasis) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Campo requerido',
+        detail: 'El número de chasis es obligatorio',
+        life: 3000
+      });
+      return;
+    }
+
+    if (!this.nroStock) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Campo requerido',
+        detail: 'El número de stock es obligatorio',
+        life: 3000
+      });
+      return;
+    }
+
+    // Mapear equipamiento al formato de la API (SOLO codigo y valor)
+    const equipamientoCompleto = [...this.equipamientoCol1, ...this.equipamientoCol2].map(item => ({
+      codigo: item.codigo,
+      valor: item.valor || 'NC' // Valor por defecto si no se seleccionó
+    }));
+
+    // Crear objeto según la interface ChecklistPDI de la API
+    const checklist: ChecklistPDI = {
+      Sucursal: this.form.get('sucursal')?.value,
+      Almacen: this.form.get('almacen')?.value,
+      Marca: this.form.get('marca')?.value,
+      Modelo: this.form.get('modelo')?.value,
+      Color: this.form.get('color')?.value || null,
+      Kilometraje: this.kilometraje || '0',
+      Nuevo: this.condicionNuevo,
+      Activo: this.condicionActivo,
+      NroChasis: this.nroChasis,
+      NroStock: this.nroStock,
+      Equipamiento: equipamientoCompleto,
+      Transportista: this.transportista || '',
+      Conductor: this.conductor || '',
+      FechaLlegada: this.fechaLlegada,
+      Observaciones: this.observaciones || '',
+      NombreTecnico: this.nombreTecnico || '',
+      FechaRecepcion: this.fechaRecepcion
+    };
+
+
+    // PASO 1: Guardar el checklist
+    this.api.guardarChecklistPDI(checklist).subscribe({
+      next: (response) => {
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Checklist guardado',
+          detail: response?.message || 'El checklist se guardó correctamente',
+          life: 3000
+        });
+
+        // PASO 2: Subir fotos si existen
+        if (this.fotos.length > 0) {
+          this.subirFotosSecuencial(this.nroStock);
+        } else {
+          this.limpiarFormulario();
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al guardar checklist:', error);
+        
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al guardar',
+          detail: error?.error?.message || 'No se pudo guardar el checklist',
+          life: 4000
+        });
+      }
+    });
+  }
+
+  // Método para subir fotos de forma secuencial
+  subirFotosSecuencial(stock: string): void {
     let fotosSubidas = 0;
     let erroresSubida = 0;
+    const totalFotos = this.fotos.length;
 
     this.fotos.forEach((foto, index) => {
       if (!foto.file) {
         console.warn(`⚠️ Foto ${index + 1} no tiene archivo adjunto`);
+        erroresSubida++;
+        
+        // Verificar si terminamos de procesar todas
+        if (fotosSubidas + erroresSubida === totalFotos) {
+          this.finalizarSubidaFotos(stock, fotosSubidas, erroresSubida);
+        }
         return;
       }
 
-      // Determinar tipo de archivo
       const tipoArchivo = foto.file.type.includes('pdf') ? 'pdf' : 'imagen';
-
-      console.log(`📤 Subiendo foto ${index + 1}/${this.fotos.length}:`, foto.nombre);
 
       this.api.subirArchivoChecklist(stock, foto.file, tipoArchivo).subscribe({
         next: (response) => {
           fotosSubidas++;
-          console.log(`✅ Foto ${index + 1} subida exitosamente:`, response);
-
-          // Mostrar mensaje solo cuando se suban todas
-          if (fotosSubidas + erroresSubida === this.fotos.length) {
-            if (erroresSubida === 0) {
-              this.messageService.add({
-                severity: 'success',
-                summary: 'Fotos subidas',
-                detail: `${fotosSubidas} foto(s) subida(s) correctamente`,
-                life: 3000
-              });
-            } else {
-              this.messageService.add({
-                severity: 'warn',
-                summary: 'Subida parcial',
-                detail: `${fotosSubidas} subidas, ${erroresSubida} con error`,
-                life: 4000
-              });
-            }
+          // Verificar si terminamos de subir todas
+          if (fotosSubidas + erroresSubida === totalFotos) {
+            this.finalizarSubidaFotos(stock, fotosSubidas, erroresSubida);
           }
         },
         error: (error) => {
           erroresSubida++;
           console.error(`❌ Error al subir foto ${index + 1}:`, error);
 
-          // Mostrar mensaje solo cuando se procesen todas
-          if (fotosSubidas + erroresSubida === this.fotos.length) {
-            if (fotosSubidas === 0) {
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Error al subir fotos',
-                detail: 'No se pudieron subir las fotos',
-                life: 4000
-              });
-            } else {
-              this.messageService.add({
-                severity: 'warn',
-                summary: 'Subida parcial',
-                detail: `${fotosSubidas} subidas, ${erroresSubida} con error`,
-                life: 4000
-              });
-            }
+          // Verificar si terminamos de procesar todas
+          if (fotosSubidas + erroresSubida === totalFotos) {
+            this.finalizarSubidaFotos(stock, fotosSubidas, erroresSubida);
           }
         }
       });
     });
   }
 
-  // Cargar fotos existentes de un checklist
-  cargarFotosChecklist(stock: string): void {
-    console.log(`📷 Cargando fotos del checklist para stock: ${stock}`);
+  // Método para finalizar la subida de fotos
+  finalizarSubidaFotos(stock: string, fotosSubidas: number, erroresSubida: number): void {
 
-    this.api.listarArchivosChecklist(stock).subscribe({
-      next: (response) => {
-        console.log('📦 Respuesta archivos checklist:', response);
-        
-        if (response?.success && Array.isArray(response.data)) {
-          this.fotos = response.data.map((archivo: any) => ({
-            id: archivo.id || Date.now().toString() + Math.random(),
-            url: archivo.url || archivo.ruta,
-            nombre: archivo.nombre || archivo.archivo,
-            preview: archivo.url || archivo.ruta
-          }));
-
-          console.log(`✅ Cargadas ${this.fotos.length} fotos`);
-
-          if (this.fotos.length > 0) {
-            this.messageService.add({
-              severity: 'info',
-              summary: 'Fotos cargadas',
-              detail: `Se cargaron ${this.fotos.length} foto(s) del checklist`,
-              life: 2000
-            });
-          }
-        } else {
-          console.log('ℹ️ No se encontraron fotos para este checklist');
-        }
-      },
-      error: (error) => {
-        console.error('❌ Error al cargar archivos del checklist:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No se pudieron cargar las fotos del checklist',
-          life: 3000
-        });
-      }
-    });
-  }
-
-guardarChecklist(): void {
-  if (this.form.invalid) {
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Campos incompletos',
-      detail: 'Complete los campos obligatorios (Sucursal, Almacén, Marca, Modelo)',
-      life: 3000
-    });
-    return;
-  }
-
-  if (!this.nroChasis) {
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Campo requerido',
-      detail: 'El número de chasis es obligatorio',
-      life: 3000
-    });
-    return;
-  }
-
-  if (!this.nroStock) {
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Campo requerido',
-      detail: 'El número de stock es obligatorio',
-      life: 3000
-    });
-    return;
-  }
-
-  // Mapear equipamiento al formato de la API
-  const equipamientoCompleto = [...this.equipamientoCol1, ...this.equipamientoCol2].map((item, index) => ({
-    código: `EQ${(index + 1).toString().padStart(3, '0')}`,
-    descripcion: item.descripcion,
-    valor: item.valor
-  }));
-
-  // Crear objeto según la interface ChecklistPDI de la API
-  const checklist: ChecklistPDI = {
-    Sucursal: this.form.get('sucursal')?.value,
-    Almacen: this.form.get('almacen')?.value,
-    Marca: this.form.get('marca')?.value,
-    Modelo: this.form.get('modelo')?.value,
-    Color: this.form.get('color')?.value,
-    Kilometraje: this.kilometraje,
-    Nuevo: this.condicionNuevo,
-    Activo: this.condicionActivo,
-    NroChasis: this.nroChasis,
-    NroStock: this.nroStock,
-    Equipamiento: equipamientoCompleto,
-    Transportista: this.transportista,
-    Conductor: this.conductor,
-    FechaLlegada: this.fechaLlegada,
-    Observaciones: this.observaciones,
-    NombreTecnico: this.nombreTecnicoPDI,
-    FechaRecepcion: this.fechaRecepcion
-  };
-
-  console.log('💾 Checklist a guardar:', checklist);
-
-  // PASO 1: Guardar el checklist
-  this.api.guardarChecklistPDI(checklist).subscribe({
-    next: (response) => {
-      console.log('✅ Checklist guardado exitosamente:', response);
-      
+    // Mostrar mensaje de resultado
+    if (erroresSubida === 0) {
       this.messageService.add({
         severity: 'success',
-        summary: 'Checklist guardado',
-        detail: response?.message || 'El checklist se guardó correctamente',
+        summary: 'Fotos subidas',
+        detail: `${fotosSubidas} foto(s) subida(s) correctamente`,
         life: 3000
       });
-
-      // PASO 2: Subir fotos si existen
-      if (this.fotos.length > 0) {
-        console.log(`📤 Iniciando subida de ${this.fotos.length} fotos...`);
-        this.subirFotosSecuencial(this.nroStock);
-      } else {
-        console.log('ℹ️ No hay fotos para subir');
-        this.limpiarFormulario();
-      }
-    },
-    error: (error) => {
-      console.error('❌ Error al guardar checklist:', error);
-      
+    } else if (fotosSubidas === 0) {
       this.messageService.add({
         severity: 'error',
-        summary: 'Error al guardar',
-        detail: error?.error?.message || 'No se pudo guardar el checklist',
+        summary: 'Error al subir fotos',
+        detail: 'No se pudieron subir las fotos',
+        life: 4000
+      });
+    } else {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Subida parcial',
+        detail: `${fotosSubidas} subidas, ${erroresSubida} con error`,
         life: 4000
       });
     }
-  });
-}
 
-// Método para subir fotos de forma secuencial
-subirFotosSecuencial(stock: string): void {
-  let fotosSubidas = 0;
-  let erroresSubida = 0;
-  const totalFotos = this.fotos.length;
-
-  this.fotos.forEach((foto, index) => {
-    if (!foto.file) {
-      console.warn(`⚠️ Foto ${index + 1} no tiene archivo adjunto`);
-      erroresSubida++;
-      
-      // Verificar si terminamos de procesar todas
-      if (fotosSubidas + erroresSubida === totalFotos) {
-        this.finalizarSubidaFotos(stock, fotosSubidas, erroresSubida);
-      }
-      return;
-    }
-
-    const tipoArchivo = foto.file.type.includes('pdf') ? 'pdf' : 'imagen';
-    console.log(`📤 Subiendo foto ${index + 1}/${totalFotos}:`, foto.nombre);
-
-    this.api.subirArchivoChecklist(stock, foto.file, tipoArchivo).subscribe({
-      next: (response) => {
-        fotosSubidas++;
-        console.log(`✅ Foto ${index + 1} subida exitosamente:`, response);
-
-        // Verificar si terminamos de subir todas
-        if (fotosSubidas + erroresSubida === totalFotos) {
-          this.finalizarSubidaFotos(stock, fotosSubidas, erroresSubida);
-        }
-      },
-      error: (error) => {
-        erroresSubida++;
-        console.error(`❌ Error al subir foto ${index + 1}:`, error);
-
-        // Verificar si terminamos de procesar todas
-        if (fotosSubidas + erroresSubida === totalFotos) {
-          this.finalizarSubidaFotos(stock, fotosSubidas, erroresSubida);
-        }
-      }
-    });
-  });
-}
-
-// Método para finalizar la subida de fotos
-finalizarSubidaFotos(stock: string, fotosSubidas: number, erroresSubida: number): void {
-  console.log(`📊 Subida completada: ${fotosSubidas} exitosas, ${erroresSubida} con error`);
-
-  // Mostrar mensaje de resultado
-  if (erroresSubida === 0) {
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Fotos subidas',
-      detail: `${fotosSubidas} foto(s) subida(s) correctamente`,
-      life: 3000
-    });
-  } else if (fotosSubidas === 0) {
-    this.messageService.add({
-      severity: 'error',
-      summary: 'Error al subir fotos',
-      detail: 'No se pudieron subir las fotos',
-      life: 4000
-    });
-  } else {
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Subida parcial',
-      detail: `${fotosSubidas} subidas, ${erroresSubida} con error`,
-      life: 4000
-    });
+    // Limpiar formulario
+    setTimeout(() => {
+      this.limpiarFormulario();
+    }, 2000);
   }
 
-  // PASO 3: Listar las fotos subidas
-  console.log('📷 Cargando fotos subidas del servidor...');
-  this.cargarFotosChecklist(stock);
-
-  // Limpiar formulario después de cargar las fotos
-  setTimeout(() => {
-    this.limpiarFormulario();
-  }, 2000);
-}
   limpiarFormulario(): void {
     this.form.reset();
     this.kilometraje = '';
@@ -707,7 +575,7 @@ finalizarSubidaFotos(stock: string, fotosSubidas: number, erroresSubida: number)
     this.conductor = '';
     this.fechaLlegada = null;
     this.observaciones = '';
-    this.nombreTecnicoPDI = '';
+    this.nombreTecnico = '';
     this.fechaRecepcion = null;
     this.fotos = [];
 

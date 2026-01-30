@@ -1,0 +1,274 @@
+<app-menu></app-menu>
+
+<div class="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-6 pt-20 sm:pt-24">
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Loading State -->
+    <div *ngIf="cargando" class="text-center py-12">
+      <i class="pi pi-spin pi-spinner text-4xl text-blue-500 mb-4 block"></i>
+      <p class="text-gray-600 dark:text-gray-400">Cargando detalle del checklist...</p>
+    </div>
+
+    <!-- Content -->
+    <div *ngIf="!cargando && checklist">
+
+      <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white mb-6">
+        Detalle Checklist PDI - {{ checklist.nroStock }}
+      </h1>
+
+      <!-- DATOS DEL VEHÍCULO -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+        <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+          DATOS DEL VEHÍCULO
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Sucursal</label>
+            <input pInputText class="w-full h-11" [value]="checklist.sucursalNombre" disabled />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Almacén</label>
+            <input pInputText class="w-full h-11" [value]="checklist.almacenNombre" disabled />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Marca</label>
+            <input pInputText class="w-full h-11" [value]="checklist.marcaNombre" disabled />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Modelo</label>
+            <input pInputText class="w-full h-11" [value]="checklist.modeloNombre" disabled />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+            <input pInputText class="w-full h-11" [value]="checklist.colorNombre" disabled />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Kilometraje</label>
+            <input pInputText class="w-full h-11" [value]="checklist.kilometraje" disabled />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Condición</label>
+            <div class="flex items-center gap-4 h-11">
+              <label class="flex items-center gap-2">
+                <input type="checkbox" [checked]="checklist.nuevo" disabled class="w-4 h-4" />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Nuevo</span>
+              </label>
+
+              <label class="flex items-center gap-2">
+                <input type="checkbox" [checked]="checklist.activo" disabled class="w-4 h-4" />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Activo</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">N° Chasis</label>
+            <input pInputText class="w-full h-11" [value]="checklist.nroChasis" disabled />
+          </div>
+
+          <div class="flex flex-col gap-2 sm:col-span-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">N° Stock</label>
+            <input pInputText class="w-full h-11" [value]="checklist.nroStock" disabled />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- EQUIPAMIENTO -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+        <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+          EQUIPAMIENTO DE LA UNIDAD
+        </h2>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          <!-- Columna Izquierda -->
+          <div class="space-y-3">
+            <div *ngFor="let item of equipamientoCol1"
+              class="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-slate-700">
+              <span class="text-sm text-gray-700 dark:text-gray-300">
+                {{ item.descripcion }}
+              </span>
+              <div class="flex gap-3">
+                <div class="flex items-center gap-1">
+                  <input type="radio" [checked]="item.valor === 'NO'" disabled class="w-4 h-4" />
+                  <label class="text-xs text-gray-600 dark:text-gray-400">NO</label>
+                </div>
+                <div class="flex items-center gap-1">
+                  <input type="radio" [checked]="item.valor === 'SI'" disabled class="w-4 h-4" />
+                  <label class="text-xs text-gray-600 dark:text-gray-400">SÍ</label>
+                </div>
+                <div class="flex items-center gap-1">
+                  <input type="radio" [checked]="item.valor === 'NC'" disabled class="w-4 h-4" />
+                  <label class="text-xs text-gray-600 dark:text-gray-400">NC</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna Derecha -->
+          <div class="space-y-3">
+            <div *ngFor="let item of equipamientoCol2"
+              class="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-slate-700">
+              <span class="text-sm text-gray-700 dark:text-gray-300">
+                {{ item.descripcion }}
+              </span>
+              <div class="flex gap-3">
+                <div class="flex items-center gap-1">
+                  <input type="radio" [checked]="item.valor === 'NO'" disabled class="w-4 h-4" />
+                  <label class="text-xs text-gray-600 dark:text-gray-400">NO</label>
+                </div>
+                <div class="flex items-center gap-1">
+                  <input type="radio" [checked]="item.valor === 'SI'" disabled class="w-4 h-4" />
+                  <label class="text-xs text-gray-600 dark:text-gray-400">SÍ</label>
+                </div>
+                <div class="flex items-center gap-1">
+                  <input type="radio" [checked]="item.valor === 'NC'" disabled class="w-4 h-4" />
+                  <label class="text-xs text-gray-600 dark:text-gray-400">NC</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Mensaje cuando no hay equipamiento -->
+        <div *ngIf="equipamientoCol1.length === 0 && equipamientoCol2.length === 0"
+          class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <i class="pi pi-info-circle text-3xl mb-3 block opacity-50"></i>
+          <p class="text-sm">No se registró equipamiento para este vehículo</p>
+        </div>
+      </div>
+
+      <!-- DATOS DE TRANSPORTE -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+        <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+          DATOS DE TRANSPORTE
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Transportista</label>
+            <input pInputText class="w-full h-11" [value]="checklist.transportista" disabled />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Conductor</label>
+            <input pInputText class="w-full h-11" [value]="checklist.conductor" disabled />
+          </div>
+
+          <div class="flex flex-col gap-2 sm:col-span-2 lg:col-span-1">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Llegada</label>
+            <input pInputText class="w-full h-11" [value]="checklist.fechaLlegada | date:'dd/MM/yyyy HH:mm'" disabled />
+          </div>
+
+          <div class="flex flex-col gap-2 sm:col-span-2 lg:col-span-3">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Observaciones</label>
+            <textarea pTextarea rows="4" class="w-full" [value]="checklist.observaciones" disabled>
+            </textarea>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- DATOS DEL TÉCNICO PDI -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+        <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+          DATOS DEL TÉCNICO PDI
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nombre Técnico PDI</label>
+            <input pInputText class="w-full h-11" [value]="checklist.nombreTecnico" disabled />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Recepción</label>
+            <input pInputText class="w-full h-11" [value]="checklist.fechaRecepcion | date:'dd/MM/yyyy HH:mm'"
+              disabled />
+          </div>
+
+        </div>
+      </div>
+      <!-- FOTOS DEL VEHÍCULO -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+        <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+          FOTOS DEL VEHÍCULO
+          <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+            ({{ fotos.length }})
+          </span>
+        </h2>
+
+        <!-- Loading fotos -->
+        <div *ngIf="cargandoFotos" class="text-center py-8">
+          <i class="pi pi-spin pi-spinner text-3xl text-blue-500 mb-3 block"></i>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Cargando fotos...</p>
+        </div>
+
+        <!-- Grid de fotos con preview -->
+        <div *ngIf="!cargandoFotos && fotos.length > 0"
+          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div *ngFor="let foto of fotos"
+            class="relative group rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all bg-gray-100 dark:bg-slate-700 cursor-pointer"
+            (click)="verImagen(foto)">
+
+            <!-- Imagen preview desde S3 -->
+            <div class="w-full h-32 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-slate-700">
+              <img [src]="foto.url" [alt]="foto.nombre" class="max-w-full max-h-full object-contain" loading="lazy"
+                (error)="$event.target.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext fill=%22%23999%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3EError%3C/text%3E%3C/svg%3E'" />
+            </div>
+
+            <!-- Overlay con ícono de ver -->
+            <div
+              class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
+              <i class="pi pi-eye text-white text-2xl opacity-0 group-hover:opacity-100 transition-opacity"></i>
+            </div>
+
+            <!-- Nombre del archivo -->
+            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-xs p-1.5 truncate">
+              {{ foto.nombre }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje cuando no hay fotos -->
+        <div *ngIf="!cargandoFotos && fotos.length === 0"
+          class="text-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
+          <i class="pi pi-images text-4xl mb-3 block opacity-50"></i>
+          <p class="text-sm font-medium">No se encontraron fotos</p>
+          <p class="text-xs mt-1">Este checklist no tiene fotos adjuntas</p>
+        </div>
+      </div>
+
+      <!-- BOTÓN VOLVER -->
+      <div class="flex justify-end gap-3">
+        <button pButton label="Volver" icon="pi pi-arrow-left" routerLink="/listarchecklist" severity="secondary"
+          class="h-11">
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="!cargando && !checklist" class="text-center py-12">
+      <i class="pi pi-exclamation-triangle text-4xl text-red-500 mb-4 block"></i>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">No se pudo cargar el detalle del checklist</p>
+      <button pButton label="Volver" icon="pi pi-arrow-left" routerLink="/listarchecklist" severity="secondary">
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<p-toast position="top-right"></p-toast>

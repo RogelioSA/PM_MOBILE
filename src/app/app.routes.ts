@@ -4,6 +4,8 @@ import { SalidaTrabajo } from './salida-trabajo/salida-trabajo';
 import { authGuard } from './services/auth.guard';
 import { Traslado } from './traslado/traslado';
 import { Checklist } from './checklist/checklist';
+import { Listarchecklist } from './listarchecklist/listarchecklist';
+import { Detallechecklist } from './detallechecklist/detallechecklist';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -31,6 +33,16 @@ export const routes: Routes = [
     canActivate: [authGuard]  // 🔒 Protección
   },
 
+  {
+    path: 'listarchecklist',
+    component: Listarchecklist,
+    canActivate: [authGuard]  // 🔒 Protección
+  },
+  {
+    path: 'detallechecklist/:id',
+    component: Detallechecklist,
+    canActivate: [authGuard]
+  },
   // Cualquier ruta no válida vuelve al login
   {
     path: '**',

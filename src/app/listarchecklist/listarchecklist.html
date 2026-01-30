@@ -1,0 +1,462 @@
+<app-menu></app-menu>
+
+<div class="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-6 pt-20 sm:pt-24">
+    <div class="max-w-[1600px] mx-auto">
+
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
+                Checklists PDI - Recepción de Unidades
+            </h1>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                Filtros de Búsqueda
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                <!-- Sucursal -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Sucursal
+                    </label>
+                    <p-select [(ngModel)]="sucursalSeleccionada" [options]="sucursales" optionLabel="label"
+                        optionValue="value" placeholder="Todas las sucursales" styleClass="w-full"
+                        (onChange)="onSucursalChange()" />
+                </div>
+
+                <!-- Almacén -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Almacén
+                    </label>
+                    <p-select [(ngModel)]="almacenSeleccionado" [options]="almacenes" optionLabel="label"
+                        optionValue="value" placeholder="Todos los almacenes" styleClass="w-full"
+                        (onChange)="cargarChecklists()" />
+                </div>
+
+                <!-- Fecha Inicio -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Fecha Inicio <span class="text-red-500">*</span>
+                    </label>
+                    <p-datepicker [(ngModel)]="fechaInicio" dateFormat="dd/mm/yy" [showIcon]="true"
+                        inputStyleClass="w-full h-11" styleClass="w-full" (onSelect)="cargarChecklists()" />
+                </div>
+
+                <!-- Fecha Fin -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Fecha Fin <span class="text-red-500">*</span>
+                    </label>
+                    <p-datepicker [(ngModel)]="fechaFin" dateFormat="dd/mm/yy" [showIcon]="true"
+                        inputStyleClass="w-full h-11" styleClass="w-full" (onSelect)="cargarChecklists()" />
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="flex flex-col gap-2 sm:col-span-2 lg:col-span-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300 opacity-0">
+                        Acciones
+                    </label>
+                    <div class="flex gap-3">
+                        <button pButton type="button" label="Buscar" icon="pi pi-search" (click)="cargarChecklists()"
+                            class="h-11 flex-1" [disabled]="!fechaInicio || !fechaFin">
+                        </button>
+                        <button pButton type="button" label="Limpiar" icon="pi pi-filter-slash"
+                            (click)="limpiarFiltros()" class="h-11 flex-1" severity="secondary">
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de resultados -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
+
+            <!-- Vista Desktop/Tablet (tabla) -->
+            <div class="hidden md:block overflow-x-auto">
+                <p-table [value]="checklistsFiltrados" [loading]="cargando" styleClass="p-datatable-sm"
+                    responsiveLayout="scroll" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
+
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                N° Stock
+                            </th>
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Marca/Modelo
+                            </th>
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                N° Chasis
+                            </th>
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Sucursal
+                            </th>
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Almacén
+                            </th>
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Fecha Recepción
+                            </th>
+                            <th
+                                class="text-center p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Acciones
+                            </th>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="body" let-item>
+                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                            <td class="p-3 text-sm text-gray-800 dark:text-gray-200 font-medium">
+                                {{ item.nroStock }}
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+                                {{ item.marcaNombre }} {{ item.modeloNombre }}
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+                                {{ item.nroChasis }}
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+                                {{ item.sucursalNombre }}
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+                                {{ item.almacenNombre }}
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+                                {{ item.fechaRecepcion | date:'dd/MM/yyyy HH:mm' }}
+                            </td>
+                            <td class="p-3 text-center">
+                                <button pButton type="button" icon="pi pi-eye" (click)="verDetalle(item)"
+                                    class="p-button-sm p-button-text" pTooltip="Ver detalle" tooltipPosition="left">
+                                </button>
+                            </td>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="7" class="text-center py-8">
+                                <div class="text-gray-500 dark:text-gray-400">
+                                    <i class="pi pi-inbox text-4xl mb-3 block opacity-50"></i>
+                                    <p class="text-sm font-medium">No se encontraron checklists</p>
+                                    <p class="text-xs mt-1">Intenta ajustar los filtros de búsqueda</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+
+            <!-- Vista Mobile (cards) -->
+            <div class="md:hidden p-4 space-y-4">
+                <div *ngIf="cargando" class="text-center py-8">
+                    <i class="pi pi-spin pi-spinner text-3xl text-blue-500"></i>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Cargando...</p>
+                </div>
+
+                <div *ngIf="!cargando && checklistsFiltrados.length === 0" class="text-center py-8">
+                    <div class="text-gray-500 dark:text-gray-400">
+                        <i class="pi pi-inbox text-4xl mb-3 block opacity-50"></i>
+                        <p class="text-sm font-medium">No se encontraron checklists</p>
+                        <p class="text-xs mt-1">Intenta ajustar los filtros de búsqueda</p>
+                    </div>
+                </div>
+
+                <div *ngFor="let item of checklistsFiltrados"
+                    class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <p class="text-sm font-bold text-gray-800 dark:text-white">
+                                {{ item.nroStock }}
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ item.marcaNombre }} {{ item.modeloNombre }}
+                            </p>
+                        </div>
+                        <button pButton type="button" icon="pi pi-eye" (click)="verDetalle(item)"
+                            class="p-button-sm p-button-rounded" severity="secondary">
+                        </button>
+                    </div>
+
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Chasis:</span>
+                            <span class="text-gray-800 dark:text-white font-medium">{{ item.nroChasis }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Sucursal:</span>
+                            <span class="text-gray-800 dark:text-white">{{ item.sucursalNombre }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Almacén:</span>
+                            <span class="text-gray-800 dark:text-white">{{ item.almacenNombre }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Fecha:</span>
+                            <span class="text-gray-800 dark:text-white">
+                                {{ item.fechaRecepcion | date:'dd/MM/yyyy HH:mm' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- MODAL DE DETALLE -->
+<p-dialog [(visible)]="mostrarDetalle" [modal]="true" [closable]="true" [closeOnEscape]="true" [dismissableMask]="true"
+    [style]="{width: '95vw', maxWidth: '1400px'}"
+    [contentStyle]="{padding: '0', 'max-height': '85vh', 'overflow-y': 'auto'}"
+    [header]="'Detalle Checklist PDI - ' + (checklistSeleccionado?.nroStock || '')">
+
+    <!-- Loading State -->
+    <div *ngIf="cargandoDetalle" class="text-center py-12">
+        <i class="pi pi-spin pi-spinner text-4xl text-blue-500 mb-4 block"></i>
+        <p class="text-gray-600 dark:text-gray-400">Cargando detalle del checklist...</p>
+    </div>
+
+    <!-- Content -->
+    <div *ngIf="!cargandoDetalle && checklistSeleccionado" class="p-4 sm:p-6">
+
+        <!-- DATOS DEL VEHÍCULO -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+            <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+                DATOS DEL VEHÍCULO
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Sucursal</label>
+                    <input pInputText class="w-full h-11" [value]="checklistSeleccionado.sucursalNombre" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Almacén</label>
+                    <input pInputText class="w-full h-11" [value]="checklistSeleccionado.almacenNombre" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Marca</label>
+                    <input pInputText class="w-full h-11" [value]="checklistSeleccionado.marcaNombre" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Modelo</label>
+                    <input pInputText class="w-full h-11" [value]="checklistSeleccionado.modeloNombre" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+                    <input pInputText class="w-full h-11" [value]="checklistSeleccionado.colorNombre" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Kilometraje</label>
+                    <input pInputText class="w-full h-11" [value]="checklistSeleccionado.kilometraje" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Condición</label>
+                    <div class="flex items-center gap-4 h-11">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" [checked]="checklistSeleccionado.nuevo" disabled class="w-4 h-4" />
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Nuevo</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" [checked]="checklistSeleccionado.activo" disabled class="w-4 h-4" />
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Activo</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">N° Chasis</label>
+                    <input pInputText class="w-full h-11" [value]="checklistSeleccionado.nroChasis" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2 sm:col-span-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">N° Stock</label>
+                    <input pInputText class="w-full h-11" [value]="checklistSeleccionado.nroStock" disabled />
+                </div>
+            </div>
+        </div>
+
+        <!-- EQUIPAMIENTO -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+            <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+                EQUIPAMIENTO DE LA UNIDAD
+            </h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <!-- Columna Izquierda -->
+                <div class="space-y-3">
+                    <div *ngFor="let item of equipamientoCol1"
+                        class="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-slate-700">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ item.descripcion }}</span>
+                        <div class="flex gap-3">
+                            <div class="flex items-center gap-1">
+                                <input type="radio" [checked]="item.valor === 'NO'" disabled class="w-4 h-4" />
+                                <label class="text-xs text-gray-600 dark:text-gray-400">NO</label>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <input type="radio" [checked]="item.valor === 'SI'" disabled class="w-4 h-4" />
+                                <label class="text-xs text-gray-600 dark:text-gray-400">SÍ</label>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <input type="radio" [checked]="item.valor === 'NC'" disabled class="w-4 h-4" />
+                                <label class="text-xs text-gray-600 dark:text-gray-400">NC</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha -->
+                <div class="space-y-3">
+                    <div *ngFor="let item of equipamientoCol2"
+                        class="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-slate-700">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ item.descripcion }}</span>
+                        <div class="flex gap-3">
+                            <div class="flex items-center gap-1">
+                                <input type="radio" [checked]="item.valor === 'NO'" disabled class="w-4 h-4" />
+                                <label class="text-xs text-gray-600 dark:text-gray-400">NO</label>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <input type="radio" [checked]="item.valor === 'SI'" disabled class="w-4 h-4" />
+                                <label class="text-xs text-gray-600 dark:text-gray-400">SÍ</label>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <input type="radio" [checked]="item.valor === 'NC'" disabled class="w-4 h-4" />
+                                <label class="text-xs text-gray-600 dark:text-gray-400">NC</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="equipamientoCol1.length === 0 && equipamientoCol2.length === 0"
+                class="text-center py-8 text-gray-500 dark:text-gray-400">
+                <i class="pi pi-info-circle text-3xl mb-3 block opacity-50"></i>
+                <p class="text-sm">No se registró equipamiento para este vehículo</p>
+            </div>
+        </div>
+
+        <!-- DATOS DE TRANSPORTE -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+            <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+                DATOS DE TRANSPORTE
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Transportista</label>
+                    <input pInputText class="w-full h-11" [value]="checklistSeleccionado.transportista" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Conductor</label>
+                    <input pInputText class="w-full h-11" [value]="checklistSeleccionado.conductor" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2 sm:col-span-2 lg:col-span-1">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Llegada</label>
+                    <input pInputText class="w-full h-11"
+                        [value]="checklistSeleccionado.fechaLlegada | date:'dd/MM/yyyy HH:mm'" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2 sm:col-span-2 lg:col-span-3">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Observaciones</label>
+                    <textarea pTextarea rows="4" class="w-full" [value]="checklistSeleccionado.observaciones" disabled>
+          </textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- DATOS DEL TÉCNICO PDI -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+            <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+                DATOS DEL TÉCNICO PDI
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nombre Técnico PDI</label>
+                    <input pInputText class="w-full h-11" [value]="checklistSeleccionado.nombreTecnico" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Recepción</label>
+                    <input pInputText class="w-full h-11"
+                        [value]="checklistSeleccionado.fechaRecepcion | date:'dd/MM/yyyy HH:mm'" disabled />
+                </div>
+            </div>
+        </div>
+        <!-- FOTOS DEL VEHÍCULO -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
+            <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+                FOTOS DEL VEHÍCULO
+                <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+                    ({{ fotos.length }})
+                </span>
+            </h2>
+
+            <div *ngIf="cargandoFotos" class="text-center py-8">
+                <i class="pi pi-spin pi-spinner text-3xl text-blue-500 mb-3 block"></i>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Cargando fotos...</p>
+            </div>
+
+            <!-- Lista de fotos -->
+            <div *ngIf="!cargandoFotos && fotos.length > 0" class="space-y-2">
+                <div *ngFor="let foto of fotos; let i = index"
+                    class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+
+                    <!-- Información de la foto -->
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <div
+                            class="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                            <i class="pi pi-image text-blue-600 dark:text-blue-400 text-lg"></i>
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
+                                {{ foto.nombre }}
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Foto #{{ i + 1 }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Botón ver -->
+                    <button pButton type="button" icon="pi pi-eye" (click)="verImagen(foto)"
+                        class="p-button-sm p-button-rounded p-button-text" pTooltip="Ver imagen" tooltipPosition="left"
+                        severity="secondary">
+                    </button>
+                </div>
+            </div>
+
+            <div *ngIf="!cargandoFotos && fotos.length === 0"
+                class="text-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                <i class="pi pi-images text-4xl mb-3 block opacity-50"></i>
+                <p class="text-sm font-medium">No se encontraron fotos</p>
+                <p class="text-xs mt-1">Este checklist no tiene fotos adjuntas</p>
+            </div>
+        </div>
+
+    </div>
+
+</p-dialog>
+
+<p-toast position="top-right"></p-toast>

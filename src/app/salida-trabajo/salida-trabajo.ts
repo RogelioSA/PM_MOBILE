@@ -95,19 +95,14 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     private api: Api,
     private master: Master // Inyectar Master
   ) {
-    console.log('🏗️ Constructor: Componente inicializado');
   }
 
   ngOnInit() {
-    console.log('🚀 ngOnInit: Iniciando componente');
-
     this.form = this.fb.group({
       sucursal: [null, Validators.required],
       almacen: [null, Validators.required],
       ordenTrabajo: [null, Validators.required]
     });
-
-    console.log('📋 Formatos QR habilitados:', this.formatsEnabled);
 
     this.cargarSucursales();
 
@@ -122,8 +117,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
 
     this.cargarOrdenesTrabajo();
 
-    // Solicitar permisos al iniciar
-    console.log('🎥 Solicitando permisos de cámara al inicio...');
     this.solicitarPermisoCamara();
   }
 
@@ -136,7 +129,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async solicitarPermisoCamara() {
-    console.log('📸 [PERMISO] Iniciando solicitud de permiso de cámara...');
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -150,12 +142,9 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      console.log('🔍 [PERMISO] Enumerando dispositivos disponibles...');
-
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-      console.log('📹 [PERMISO] Dispositivos de video encontrados:', videoDevices.length);
       videoDevices.forEach((device, index) => {
         console.log(`  ${index + 1}. ${device.label || 'Cámara sin nombre'} (${device.deviceId})`);
       });
@@ -170,8 +159,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
         });
         return;
       }
-
-      console.log('🎬 [PERMISO] Solicitando acceso a la cámara...');
       const constraints = {
         video: {
           facingMode: { ideal: 'environment' },
@@ -181,12 +168,8 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
         audio: false
       };
 
-      console.log('⚙️ [PERMISO] Constraints:', JSON.stringify(constraints, null, 2));
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-      console.log('✅ [PERMISO] Stream obtenido:', stream);
-      console.log('🎥 [PERMISO] Tracks activos:', stream.getTracks().length);
 
       stream.getTracks().forEach((track, index) => {
         console.log(`  Track ${index + 1}:`, {
@@ -199,12 +182,10 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       });
 
       stream.getTracks().forEach(track => {
-        console.log(`🛑 [PERMISO] Deteniendo track: ${track.label}`);
         track.stop();
       });
 
       this.hasPermission = true;
-      console.log('✅ [PERMISO] Permiso de cámara otorgado exitosamente');
 
       this.messageService.add({
         severity: 'success',
@@ -246,14 +227,9 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onModalShow() {
-    console.log('🎭 [MODAL] Modal abierto');
-    console.log('🔓 [MODAL] Estado permiso:', this.hasPermission);
-
     this.scannerActivo = true;
-    console.log('✅ [MODAL] Scanner activado');
 
     if (!this.hasPermission) {
-      console.log('⚠️ [MODAL] No hay permiso, solicitando...');
       this.solicitarPermisoCamara();
     } else {
       console.log('✅ [MODAL] Permiso ya otorgado, listo para escanear');
@@ -262,14 +238,11 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       if (this.vinInputElement) {
         this.vinInputElement.nativeElement.focus();
-        console.log('⌨️ [MODAL] Focus en input VIN');
       }
     }, 200);
   }
 
   onCamerasFound(devices: MediaDeviceInfo[]): void {
-    console.log('📷 [SCANNER] ========== CÁMARAS ENCONTRADAS ==========');
-    console.log('🔢 [SCANNER] Total de cámaras:', devices.length);
 
     this.availableDevices = devices;
     this.hasDevices = Boolean(devices && devices.length);
@@ -313,12 +286,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   onCodeResult(resultString: string) {
     const ahora = Date.now();
 
-    console.log('🎯 [DETECCIÓN] ========== CÓDIGO DETECTADO ==========');
-    console.log('📝 [DETECCIÓN] Código (raw):', resultString);
-    console.log('📏 [DETECCIÓN] Longitud:', resultString?.length);
-    console.log('🔤 [DETECCIÓN] Tipo:', typeof resultString);
-    console.log('⏱️ [DETECCIÓN] Timestamp:', new Date().toISOString());
-
     if (this.ultimoCodigoEscaneado === resultString &&
       (ahora - this.ultimoTiempoEscaneo) < 1000) {
       console.log('⏭️ [DETECCIÓN] Código duplicado ignorado (escaneado hace',
@@ -339,10 +306,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       console.warn('📊 [DETECCIÓN] Longitud:', codigoLimpio.length);
       return;
     }
-
-    console.log('✅ [DETECCIÓN] ¡CÓDIGO QR VÁLIDO ACEPTADO!');
-    console.log('💾 [DETECCIÓN] Guardando en input VIN...');
-
     this.vinInput = codigoLimpio;
     this.ultimoCodigoEscaneado = codigoLimpio;
     this.ultimoTiempoEscaneo = ahora;
@@ -482,8 +445,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onScanner() {
-    console.log('📱 [ACCIÓN] Botón Scanner presionado');
-    console.log('📋 [ACCIÓN] Formatos habilitados:', this.formatsEnabled.map(f => BarcodeFormat[f]));
 
     if (this.form.invalid) {
       console.warn('⚠️ [ACCIÓN] Formulario inválido');
@@ -496,22 +457,16 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    console.log('✅ [ACCIÓN] Formulario válido, abriendo modal...');
     this.modalVisible = true;
   }
 
   cerrarModal() {
-    console.log('🔒 [MODAL] Cerrando modal');
     this.modalVisible = false;
     this.scannerActivo = false;
-    console.log('🛑 [MODAL] Scanner desactivado');
   }
 
   agregarVehiculo() {
     const vin = this.vinInput.trim();
-
-    console.log('➕ [AGREGAR] Intentando agregar vehículo');
-    console.log('🔑 [AGREGAR] VIN:', vin);
 
     if (!vin) {
       console.warn('⚠️ [AGREGAR] VIN vacío');
@@ -535,11 +490,8 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    console.log('🔍 [AGREGAR] Consultando información del vehículo...');
-
     this.master.getCarPorVin(vin).subscribe({
       next: (data) => {
-        console.log('📦 [AGREGAR] Respuesta del servidor:', data);
 
         if (!data || !data.vin) {
           console.warn('⚠️ [AGREGAR] No se encontró información del vehículo');
@@ -560,15 +512,11 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
           cantidad: this.cantidad
         };
 
-        console.log('✅ [AGREGAR] Vehículo creado:', nuevoVehiculo);
 
         this.vehiculos.push(nuevoVehiculo);
-        console.log('📊 [AGREGAR] Total vehículos:', this.vehiculos.length);
 
         this.vinInput = '';
         this.cantidad = 1;
-
-        console.log('🧹 [AGREGAR] Formulario limpiado');
 
         this.messageService.add({
           severity: 'success',
@@ -594,13 +542,11 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   }
 
   reiniciar() {
-    console.log('🔄 [RESET] Reiniciando formulario');
     this.vehiculos = [];
     this.vinInput = '';
     this.cantidad = 1;
     this.fechaSeleccionada = new Date();
     this.documentoGenerado = '';
-    console.log('✅ [RESET] Formulario reiniciado');
 
     setTimeout(() => {
       if (this.vinInputElement) {
@@ -610,13 +556,11 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   }
 
   nuevoScaneo() {
-    console.log('🔄 [NUEVO] Iniciando nuevo escaneo');
     this.scannerActivo = false;
 
     setTimeout(() => {
       this.modalVisible = true;
       this.scannerActivo = true;
-      console.log('✅ [NUEVO] Scanner reiniciado');
 
       setTimeout(() => {
         if (this.vinInputElement) {
@@ -628,7 +572,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
 
   // Llamada a Api Service
   guardar() {
-    console.log('💾 [GUARDAR] Iniciando guardado');
 
     if (this.vehiculos.length === 0) {
       console.warn('⚠️ [GUARDAR] No hay vehículos para guardar');
@@ -670,11 +613,9 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       cantidad: v.cantidad
     }));
 
-    console.log('📦 [GUARDAR] Detalle a enviar:', detalle);
 
     this.api.registroSalidaOT(idsucursal, idalmacen, idordentrabajo, fecha, detalle).subscribe({
       next: (response) => {
-        console.log('✅ [GUARDAR] Respuesta exitosa:', response);
         this.documentoGenerado = response?.documento || 'DOC-' + Date.now();
 
         this.messageService.add({

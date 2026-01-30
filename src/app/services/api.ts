@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError,switchMap  } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Auth } from './auth';
 
@@ -11,10 +11,10 @@ export interface RegistroSalidaOTDetalle {
 }
 
 export interface ChecklistEquipamiento {
-  código: string;
-  descripcion: string;
+  codigo: string;
   valor: string | null;
 }
+
 
 export interface ChecklistPDI {
   Sucursal: string;
@@ -121,38 +121,46 @@ export class Api {
 }
 
   subirArchivoChecklist(
-  stock: string,
-  archivo: File,
-  tipoArchivo: string
-): Observable<any> {
-  const carpeta = `Chk_${stock}`;
-  
-  // Determinar el tipo MIME correcto
-  let mimeType = 'application/octet-stream'; // Default
-  
-  if (tipoArchivo === 'imagen') {
-    // Usar el tipo MIME real del archivo
-    mimeType = archivo.type || 'image/jpeg';
-  } else if (tipoArchivo === 'pdf') {
-    mimeType = 'application/pdf';
-  }
-  
-  const params = new HttpParams()
-    .set('carpeta', carpeta)
-    .set('archivo', archivo.name)
-    .set('tipoArchivo', mimeType);
-
-  return this.https.get(
-    `${this.baseUrl}/Car/subirArchivoChecklist`,
-    {
-      headers: this.authService.getHeaders(),
-      params
+    stock: string,
+    archivo: File,
+    tipoArchivo: string
+  ): Observable<any> {
+    const carpeta = `Chk_${stock}`;
+    
+    // Determinar el tipo MIME correcto
+    let mimeType = 'application/octet-stream';
+    
+    if (tipoArchivo === 'imagen') {
+      mimeType = archivo.type || 'image/jpeg';
+    } else if (tipoArchivo === 'pdf') {
+      mimeType = 'application/pdf';
     }
-  ).pipe(
-    map((response: any) => response),
-    catchError(error => throwError(() => error))
-  );
-}
+    
+    const params = new HttpParams()
+      .set('carpeta', carpeta)
+      .set('archivo', archivo.name)
+      .set('tipoArchivo', mimeType);
+
+    // 1. Obtener URL pre-firmada
+    return this.https.get<{ url: string }>(
+      `${this.baseUrl}/Car/subirArchivoChecklist`,
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      // 2. Subir el archivo a la URL pre-firmada
+      switchMap(response => {
+        return this.https.put(response.url, archivo, {
+          headers: { 'Content-Type': mimeType }
+        });
+      }),
+      catchError(error => {
+        console.error('Error al subir el archivo:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 
   // Listar archivos de checklist
   listarArchivosChecklist(stock: string): Observable<any> {
@@ -164,6 +172,48 @@ export class Api {
 
     return this.https.get(
       `${this.baseUrl}/Car/listarArchivosChecklist`,
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  listarChecklistsPDI(
+    fechaInicio: string,
+    fechaFin: string,
+    sucursal: string,
+    almacen: string
+  ): Observable<any> {
+
+    const params = new HttpParams()
+      .set('fechaInicio', fechaInicio)
+      .set('fechaFin', fechaFin)
+      .set('sucursal', sucursal)
+      .set('almacen', almacen);
+
+    return this.https.get(
+      `${this.baseUrl}/Car/listarChecklistPDI`,
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  obtenerChecklistPDI(idRecepcionVehiculo: number): Observable<ChecklistPDI> {
+
+    const params = new HttpParams()
+      .set('idRecepcionVehiculo', idRecepcionVehiculo.toString());
+
+    return this.https.get(
+      `${this.baseUrl}/Car/obtenerChecklistPDI`,
       {
         headers: this.authService.getHeaders(),
         params

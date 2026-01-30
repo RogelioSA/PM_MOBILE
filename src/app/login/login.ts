@@ -37,7 +37,6 @@ export class Login implements OnInit {
     // Si ya tiene token, redirigir directamente
     const token = this.getCookie('token');
     if (token) {
-      console.log('✅ Ya tiene sesión activa');
       this.router.navigate(['/salidaTrabajo']);
     }
   }
@@ -69,7 +68,6 @@ export class Login implements OnInit {
           document.cookie = `token=${response.data.token}; path=/; max-age=${60 * 60 * 24}`;
           document.cookie = `usuario=${response.data.usuario}; path=/; max-age=${60 * 60 * 24}`;
 
-          console.log('✅ Login exitoso');
           this.router.navigate(['/salidaTrabajo']);
 
         } else {
