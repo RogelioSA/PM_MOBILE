@@ -427,7 +427,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       next: (response) => {
         if (response?.success && Array.isArray(response.data)) {
           this.ordenesTrabajo = response.data.map((item: any) => ({
-            label: item.idOrdenPro,
+            label: `${item.serie} - ${item.numero}`,
             value: item.idOrdenPro
           }));
         }
