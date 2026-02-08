@@ -54,12 +54,28 @@
     min-width: 0 !important;
   }
 
-  /* Datepicker - icono arreglado */
+  /* Datepicker - FORZAR POSICIÓN SUPERIOR */
+  .p-datepicker {
+    z-index: 10001 !important;
+  }
+
+  /* Transición suave para el calendario */
+  .p-datepicker {
+    transition: none !important;
+  }
+
+  /* Fecha input wrapper */
+  .fecha-input {
+    position: relative;
+  }
+
   .fecha-input .p-datepicker-input-icon-container {
     position: absolute;
     top: 50%;
     right: 0.75rem;
     transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 1;
   }
 
   .fecha-input .p-datepicker-input-icon-container .p-icon {
@@ -67,11 +83,8 @@
     height: 1rem;
   }
 
-  .fecha-input .p-datepicker {
-    width: 100%;
-  }
-
-  .fecha-input input {
+  .fecha-input .p-inputtext {
+    width: 100% !important;
     padding-right: 2.5rem !important;
   }
 
@@ -119,6 +132,19 @@
     .cantidad-input .p-inputnumber-button {
       width: 2rem !important;
       min-width: 2rem !important;
+    }
+
+    /* Calendario móvil */
+    .p-datepicker {
+      font-size: 0.875rem;
+      max-width: calc(100vw - 2rem) !important;
+      left: 1rem !important;
+      right: 1rem !important;
+      width: auto !important;
+    }
+    
+    .p-datepicker table td {
+      padding: 0.25rem !important;
     }
   }
 

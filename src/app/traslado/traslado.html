@@ -3,46 +3,61 @@
 <div class="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-6 pt-20 sm:pt-24">
   <div class="max-w-4xl mx-auto">
     <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white mb-4 sm:mb-6">
-      Traslado entre establecimientos
+      Traslado entre Establecimientos
     </h1>
 
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
       <form [formGroup]="form" class="flex flex-col gap-4">
-        <div class="flex flex-col gap-2">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Sucursal Origen<span class="text-red-500">*</span>
-          </label>
-          <p-select formControlName="sucursal" [options]="sucursales" optionLabel="label" optionValue="value"
-            placeholder="Seleccione una sucursal" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
-            [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
+        <!-- ORIGEN -->
+        <div class="border-b border-gray-200 dark:border-slate-700 pb-4">
+          <h2 class="text-md font-semibold text-gray-700 dark:text-gray-300 mb-3">Origen</h2>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Sucursal Origen <span class="text-red-500">*</span>
+              </label>
+              <p-select formControlName="sucursalOrigen" [options]="sucursales" optionLabel="label" optionValue="value"
+                placeholder="Seleccione sucursal origen" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
+                [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Almacén Origen <span class="text-red-500">*</span>
+              </label>
+              <p-select formControlName="almacenOrigen" [options]="almacenesOrigen" optionLabel="label" optionValue="value"
+                placeholder="Seleccione almacén origen" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
+                [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
+            </div>
+          </div>
         </div>
 
-        <div class="flex flex-col gap-2">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Almacén Origen <span class="text-red-500">*</span>
-          </label>
-          <p-select formControlName="almacen" [options]="almacenes" optionLabel="label" optionValue="value"
-            placeholder="Seleccione un almacén" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
-            [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
+        <!-- DESTINO -->
+        <div class="border-b border-gray-200 dark:border-slate-700 pb-4">
+          <h2 class="text-md font-semibold text-gray-700 dark:text-gray-300 mb-3">Destino</h2>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Sucursal Destino <span class="text-red-500">*</span>
+              </label>
+              <p-select formControlName="sucursalDestino" [options]="sucursales" optionLabel="label" optionValue="value"
+                placeholder="Seleccione sucursal destino" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
+                [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Almacén Destino <span class="text-red-500">*</span>
+              </label>
+              <p-select formControlName="almacenDestino" [options]="almacenesDestino" optionLabel="label" optionValue="value"
+                placeholder="Seleccione almacén destino" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
+                [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
+            </div>
+          </div>
         </div>
 
-        <div class="flex flex-col gap-2">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Sucursal Destino<span class="text-red-500">*</span>
-          </label>
-          <p-select formControlName="sucursal" [options]="sucursales" optionLabel="label" optionValue="value"
-            placeholder="Seleccione una sucursal" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
-            [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Almacén Destino <span class="text-red-500">*</span>
-          </label>
-          <p-select formControlName="almacen" [options]="almacenes" optionLabel="label" optionValue="value"
-            placeholder="Seleccione un almacén" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
-            [panelStyle]="{ 'max-height': '300px' }" [virtualScroll]="true" [virtualScrollItemSize]="38" />
-        </div>
         <button pButton type="button" label="Scanner" icon="pi pi-qrcode" (click)="onScanner()" class="w-full h-11 mt-4"
           severity="primary"></button>
       </form>
@@ -57,7 +72,7 @@
   [contentStyle]="{ padding: '0', overflow: 'hidden' }">
   <ng-template pTemplate="header">
     <h2 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
-      Scanner de Vehículos
+      Scanner de Repuestos
     </h2>
   </ng-template>
 
@@ -94,14 +109,14 @@
 
         <!-- COLUMNA DERECHA: Formulario -->
         <div class="flex flex-col gap-4">
-          <!-- VIN y Cantidad -->
+          <!-- Id Producto y Cantidad -->
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <div class="flex-1 min-w-0">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
-                VIN <span class="text-red-500">*</span>
+                Id Producto <span class="text-red-500">*</span>
               </label>
-              <input #vinInputElement pInputText type="text" [(ngModel)]="vinInput" placeholder="VIN..."
-                class="w-full h-11 text-sm" (keyup.enter)="agregarVehiculo()" />
+              <input #idProductoInputElement pInputText type="text" [(ngModel)]="idProductoInput" 
+                placeholder="idProducto..." class="w-full h-11 text-sm" (keyup.enter)="agregarVehiculo()" />
             </div>
             <div class="w-full sm:w-36 flex-shrink-0">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
@@ -128,12 +143,21 @@
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
               Fecha
             </label>
-            <div class="w-full">
-              <p-datepicker [(ngModel)]="fechaSeleccionada" dateFormat="dd/mm/yy" [showIcon]="true"
-                [iconDisplay]="'input'" inputStyleClass="w-full h-11 pr-10" styleClass="w-full"
-                [style]="{ width: '100%' }" />
+            <div class="w-full fecha-input">
+              <p-datepicker 
+                #calendarioPicker
+                [(ngModel)]="fechaSeleccionada" 
+                dateFormat="dd/mm/yy" 
+                [showIcon]="true"
+                [iconDisplay]="'input'" 
+                inputStyleClass="w-full h-11" 
+                styleClass="w-full"
+                [style]="{ width: '100%' }"
+                appendTo="body" 
+                [baseZIndex]="10001" />
             </div>
           </div>
+
           <!-- Documento Generado -->
           <div>
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
@@ -153,7 +177,7 @@
           <table class="w-full text-xs sm:text-sm">
             <thead class="bg-gray-100 dark:bg-slate-700 sticky top-0">
               <tr>
-                <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">VIN</th>
+                <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">ID PRODUCTO</th>
                 <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">STOCK</th>
                 <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">MODELO</th>
                 <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">COLOR</th>
@@ -176,12 +200,12 @@
 
       <!-- Botones finales -->
       <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 lg:mt-6 pb-2">
-  <button pButton type="button" label="Nuevo Scaneo" icon="pi pi-qrcode" (click)="nuevoScaneo()" 
-    class="h-11 sm:w-auto" severity="help"></button>
-  <div class="sm:flex-1"></div>
-  <button pButton type="button" label="Guardar" icon="pi pi-save" (click)="guardar()" 
-    class="h-11 sm:w-auto sm:min-w-[200px]" severity="primary"></button>
-</div>
+        <button pButton type="button" label="Nuevo Scaneo" icon="pi pi-qrcode" (click)="nuevoScaneo()"
+          class="h-11 sm:w-auto" severity="help"></button>
+        <div class="sm:flex-1"></div>
+        <button pButton type="button" label="Guardar" icon="pi pi-save" (click)="guardar()"
+          class="h-11 sm:w-auto sm:min-w-[200px]" severity="primary"></button>
+      </div>
     </div>
   </div>
 </p-dialog>

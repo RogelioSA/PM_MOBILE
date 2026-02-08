@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Menu } from '../menu/menu';
@@ -11,11 +11,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TableModule } from 'primeng/table';
 import { DatePickerModule } from 'primeng/datepicker';
+import { DatePicker } from 'primeng/datepicker';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ZXingScannerModule } from '@zxing/ngx-scanner';
 import { BarcodeFormat } from '@zxing/library';
 import { Api } from '../services/api';
-import { Master } from '../services/master'; // Importar Master
+import { Master } from '../services/master';
 
 interface Opcion {
   label: string;
@@ -32,6 +33,7 @@ interface Vehiculo {
 
 @Component({
   selector: 'app-traslado',
+  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -53,17 +55,17 @@ interface Vehiculo {
   styleUrl: './traslado.css'
 })
 export class Traslado implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('idProductoInputElement') idProductoInputElement!: ElementRef<HTMLInputElement>;
+  @ViewChild('calendarioPicker') calendarioPicker!: DatePicker;
 
-  @ViewChild('vinInputElement') vinInputElement!: ElementRef<HTMLInputElement>;
-  
   form!: FormGroup;
   sucursales: Opcion[] = [];
-  almacenes: Opcion[] = [];
-  ordenesTrabajo: Opcion[] = [];
+  almacenesOrigen: Opcion[] = [];
+  almacenesDestino: Opcion[] = [];
 
   // Modal Scanner
   modalVisible = false;
-  vinInput = '';
+  idProductoInput = '';
   cantidad = 1;
   scannerActivo = false;
 
@@ -93,51 +95,109 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
     private fb: FormBuilder,
     private messageService: MessageService,
     private api: Api,
-    private master: Master // Inyectar Master
+    private master: Master,
+    private renderer: Renderer2
   ) {
-    console.log('🏗️ Constructor: Componente inicializado');
   }
 
   ngOnInit() {
-
     this.form = this.fb.group({
-      sucursal: [null, Validators.required],
-      almacen: [null, Validators.required],
-      ordenTrabajo: [null, Validators.required]
+      sucursalOrigen: [null, Validators.required],
+      almacenOrigen: [null, Validators.required],
+      sucursalDestino: [null, Validators.required],
+      almacenDestino: [null, Validators.required]
     });
-
 
     this.cargarSucursales();
 
-    this.form.get('sucursal')?.valueChanges.subscribe(idSucursal => {
+    // Listener para sucursal origen
+    this.form.get('sucursalOrigen')?.valueChanges.subscribe(idSucursal => {
       if (idSucursal) {
-        this.cargarAlmacenesPorSucursal(idSucursal);
+        this.cargarAlmacenesOrigen(idSucursal);
       } else {
-        this.almacenes = [];
-        this.form.get('almacen')?.reset();
+        this.almacenesOrigen = [];
+        this.form.get('almacenOrigen')?.reset();
       }
     });
 
-    this.cargarOrdenesTrabajo();
+    // Listener para sucursal destino
+    this.form.get('sucursalDestino')?.valueChanges.subscribe(idSucursal => {
+      if (idSucursal) {
+        this.cargarAlmacenesDestino(idSucursal);
+      } else {
+        this.almacenesDestino = [];
+        this.form.get('almacenDestino')?.reset();
+      }
+    });
 
-    // Solicitar permisos al iniciar
-    console.log('🎥 Solicitando permisos de cámara al inicio...');
     this.solicitarPermisoCamara();
   }
 
   ngAfterViewInit() {
-    if (this.modalVisible && this.vinInputElement) {
+    if (this.modalVisible && this.idProductoInputElement) {
       setTimeout(() => {
-        this.vinInputElement.nativeElement.focus();
+        this.idProductoInputElement.nativeElement.focus();
       }, 100);
     }
+
+    this.setupCalendarioListener();
+  }
+
+  setupCalendarioListener() {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof HTMLElement && node.classList.contains('p-datepicker')) {
+            this.ajustarPosicionCalendario(node);
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: false
+    });
+  }
+
+  ajustarPosicionCalendario(calendario: HTMLElement) {
+    console.log('📅 [CALENDARIO] Ajustando posición');
+
+    requestAnimationFrame(() => {
+      const inputElement = document.querySelector('.fecha-input input') as HTMLElement;
+      
+      if (!inputElement) {
+        console.warn('⚠️ [CALENDARIO] No se encontró el input');
+        return;
+      }
+
+      const inputRect = inputElement.getBoundingClientRect();
+      const calendarHeight = calendario.offsetHeight;
+      const espacioArriba = inputRect.top;
+
+      if (espacioArriba > calendarHeight + 10) {
+        const topPosition = inputRect.top - calendarHeight - 8;
+        
+        this.renderer.setStyle(calendario, 'position', 'fixed');
+        this.renderer.setStyle(calendario, 'top', `${topPosition}px`);
+        this.renderer.setStyle(calendario, 'left', `${inputRect.left}px`);
+        this.renderer.setStyle(calendario, 'bottom', 'auto');
+        this.renderer.setStyle(calendario, 'transform', 'none');
+        
+        console.log('✅ [CALENDARIO] Posicionado arriba en:', topPosition);
+      } else {
+        this.renderer.setStyle(calendario, 'position', 'fixed');
+        this.renderer.setStyle(calendario, 'top', '10px');
+        this.renderer.setStyle(calendario, 'left', `${inputRect.left}px`);
+        this.renderer.setStyle(calendario, 'bottom', 'auto');
+        
+        console.log('⚠️ [CALENDARIO] Poco espacio, posicionado en top: 10px');
+      }
+    });
   }
 
   async solicitarPermisoCamara() {
-    console.log('📸 [PERMISO] Iniciando solicitud de permiso de cámara...');
-
     try {
-      // Verificar si getUserMedia está disponible
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.error('❌ [PERMISO] getUserMedia no disponible en este navegador');
         this.messageService.add({
@@ -149,16 +209,8 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      console.log('🔍 [PERMISO] Enumerando dispositivos disponibles...');
-
-      // Primero enumerar dispositivos
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
-      console.log('📹 [PERMISO] Dispositivos de video encontrados:', videoDevices.length);
-      videoDevices.forEach((device, index) => {
-        console.log(`  ${index + 1}. ${device.label || 'Cámara sin nombre'} (${device.deviceId})`);
-      });
 
       if (videoDevices.length === 0) {
         console.error('❌ [PERMISO] No se encontraron cámaras');
@@ -171,8 +223,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      // Solicitar acceso con constraints más flexibles
-      console.log('🎬 [PERMISO] Solicitando acceso a la cámara...');
       const constraints = {
         video: {
           facingMode: { ideal: 'environment' },
@@ -182,31 +232,13 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
         audio: false
       };
 
-      console.log('⚙️ [PERMISO] Constraints:', JSON.stringify(constraints, null, 2));
-
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      console.log('✅ [PERMISO] Stream obtenido:', stream);
-      console.log('🎥 [PERMISO] Tracks activos:', stream.getTracks().length);
-
-      stream.getTracks().forEach((track, index) => {
-        console.log(`  Track ${index + 1}:`, {
-          kind: track.kind,
-          label: track.label,
-          enabled: track.enabled,
-          readyState: track.readyState,
-          settings: track.getSettings()
-        });
-      });
-
-      // Detener el stream
       stream.getTracks().forEach(track => {
-        console.log(`🛑 [PERMISO] Deteniendo track: ${track.label}`);
         track.stop();
       });
 
       this.hasPermission = true;
-      console.log('✅ [PERMISO] Permiso de cámara otorgado exitosamente');
 
       this.messageService.add({
         severity: 'success',
@@ -217,25 +249,18 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
 
     } catch (error: any) {
       console.error('❌ [PERMISO] Error al solicitar permiso:', error);
-      console.error('📋 [PERMISO] Tipo de error:', error.name);
-      console.error('💬 [PERMISO] Mensaje:', error.message);
-
       this.hasPermission = false;
 
       let detalleError = 'No se pudo acceder a la cámara';
 
       if (error.name === 'NotAllowedError') {
         detalleError = 'Permiso denegado por el usuario';
-        console.error('🚫 [PERMISO] Usuario denegó el acceso a la cámara');
       } else if (error.name === 'NotFoundError') {
         detalleError = 'No se encontró ninguna cámara';
-        console.error('🔍 [PERMISO] No hay cámaras disponibles');
       } else if (error.name === 'NotReadableError') {
         detalleError = 'Cámara en uso por otra aplicación';
-        console.error('🔒 [PERMISO] Cámara bloqueada o en uso');
       } else if (error.name === 'OverconstrainedError') {
         detalleError = 'Configuración de cámara no soportada';
-        console.error('⚠️ [PERMISO] Constraints no compatibles');
       }
 
       this.messageService.add({
@@ -248,112 +273,53 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onModalShow() {
-    console.log('🎭 [MODAL] Modal abierto');
-    console.log('🔓 [MODAL] Estado permiso:', this.hasPermission);
-
     this.scannerActivo = true;
-    console.log('✅ [MODAL] Scanner activado');
 
-    // Solicitar permiso nuevamente al abrir modal si no lo tiene
     if (!this.hasPermission) {
-      console.log('⚠️ [MODAL] No hay permiso, solicitando...');
       this.solicitarPermisoCamara();
-    } else {
-      console.log('✅ [MODAL] Permiso ya otorgado, listo para escanear');
     }
 
     setTimeout(() => {
-      if (this.vinInputElement) {
-        this.vinInputElement.nativeElement.focus();
-        console.log('⌨️ [MODAL] Focus en input VIN');
+      if (this.idProductoInputElement) {
+        this.idProductoInputElement.nativeElement.focus();
       }
     }, 200);
   }
 
   onCamerasFound(devices: MediaDeviceInfo[]): void {
-    console.log('📷 [SCANNER] ========== CÁMARAS ENCONTRADAS ==========');
-    console.log('🔢 [SCANNER] Total de cámaras:', devices.length);
-
     this.availableDevices = devices;
     this.hasDevices = Boolean(devices && devices.length);
 
-    devices.forEach((device, index) => {
-      console.log(`📹 [SCANNER] Cámara ${index + 1}:`, {
-        deviceId: device.deviceId,
-        label: device.label || 'Sin nombre',
-        kind: device.kind,
-        groupId: device.groupId
-      });
-    });
-
-    // Seleccionar cámara trasera por defecto
     const rearCamera = devices.find(d =>
       /back|rear|environment|trasera/gi.test(d.label)
     );
 
     this.currentDevice = rearCamera || devices[0];
-
-    if (rearCamera) {
-      console.log('✅ [SCANNER] Cámara trasera detectada y seleccionada:', rearCamera.label);
-    } else {
-      console.log('⚠️ [SCANNER] No se encontró cámara trasera, usando primera disponible:', devices[0]?.label);
-    }
-
-    console.log('🎯 [SCANNER] Cámara activa:', {
-      deviceId: this.currentDevice?.deviceId,
-      label: this.currentDevice?.label || 'Sin nombre'
-    });
-
-    console.log('📋 [SCANNER] Formatos habilitados:', this.formatsEnabled.map(f => BarcodeFormat[f]));
-    console.log('⚙️ [SCANNER] Configuración scanner:', {
-      tryHarder: true,
-      timeBetweenScans: 500,
-      delayBetweenScanSuccess: 500
-    });
-
-    console.log('🟢 [SCANNER] Scanner listo para detectar códigos QR');
   }
 
   onCodeResult(resultString: string) {
     const ahora = Date.now();
 
-    console.log('🎯 [DETECCIÓN] ========== CÓDIGO DETECTADO ==========');
-    console.log('📝 [DETECCIÓN] Código (raw):', resultString);
-    console.log('📏 [DETECCIÓN] Longitud:', resultString?.length);
-    console.log('🔤 [DETECCIÓN] Tipo:', typeof resultString);
-    console.log('⏱️ [DETECCIÓN] Timestamp:', new Date().toISOString());
-
-    // Prevenir duplicados rápidos (mismo código en menos de 1 segundo)
     if (this.ultimoCodigoEscaneado === resultString &&
       (ahora - this.ultimoTiempoEscaneo) < 1000) {
-      console.log('⏭️ [DETECCIÓN] Código duplicado ignorado (escaneado hace',
-        (ahora - this.ultimoTiempoEscaneo), 'ms)');
       return;
     }
 
-    // Validación básica
     if (!resultString) {
-      console.warn('⚠️ [DETECCIÓN] Código vacío o null, ignorando');
       return;
     }
 
     const codigoLimpio = resultString.trim();
-    console.log('🧹 [DETECCIÓN] Código limpio:', codigoLimpio);
 
     if (codigoLimpio.length < 5) {
-      console.warn('⚠️ [DETECCIÓN] Código muy corto (<5 caracteres), ignorando:', codigoLimpio);
-      console.warn('📊 [DETECCIÓN] Longitud:', codigoLimpio.length);
       return;
     }
 
-    console.log('✅ [DETECCIÓN] ¡CÓDIGO QR VÁLIDO ACEPTADO!');
-    console.log('💾 [DETECCIÓN] Guardando en input VIN...');
-
-    this.vinInput = codigoLimpio;
+    this.idProductoInput = codigoLimpio;
     this.ultimoCodigoEscaneado = codigoLimpio;
     this.ultimoTiempoEscaneo = ahora;
 
-    console.log('🎉 [DETECCIÓN] vinInput actualizado:', this.vinInput);
+    console.log('🎉 [DETECCIÓN] idProductoInput actualizado:', this.idProductoInput);
 
     this.messageService.add({
       severity: 'success',
@@ -362,26 +328,17 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
       life: 2000
     });
 
-    console.log('🔔 [DETECCIÓN] Notificación mostrada al usuario');
-
     setTimeout(() => {
-      if (this.vinInputElement) {
-        this.vinInputElement.nativeElement.focus();
-        console.log('⌨️ [DETECCIÓN] Focus restaurado en input');
+      if (this.idProductoInputElement) {
+        this.idProductoInputElement.nativeElement.focus();
       }
     }, 100);
-
-    console.log('✅ [DETECCIÓN] Proceso completado exitosamente');
   }
 
   onHasPermission(has: boolean) {
-    console.log('🔐 [PERMISO] Callback onHasPermission:', has);
     this.hasPermission = has;
 
-    if (has) {
-      console.log('✅ [PERMISO] Permiso confirmado por ZXing scanner');
-    } else {
-      console.error('❌ [PERMISO] Permiso denegado o no disponible');
+    if (!has) {
       this.messageService.add({
         severity: 'error',
         summary: 'Permiso denegado',
@@ -392,7 +349,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onScanError(error: any) {
-    // Filtrar errores comunes que no son problemáticos
     const erroresIgnorados = [
       'No MultiFormat Readers',
       'NotFoundException',
@@ -404,18 +360,12 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
     );
 
     if (esErrorIgnorado) {
-      // No logear estos errores comunes
       return;
     }
 
-    console.warn('⚠️ [ERROR] Error durante escaneo:', {
-      name: error?.name,
-      message: error?.message,
-      stack: error?.stack
-    });
+    console.warn('⚠️ [ERROR] Error durante escaneo:', error);
   }
 
-  // Llamadas a Master Service
   cargarSucursales() {
     this.master.getSucursales().subscribe({
       next: (response) => {
@@ -438,51 +388,50 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  cargarAlmacenesPorSucursal(idSucursal: string) {
-    this.almacenes = [];
-    this.form.get('almacen')?.reset();
+  cargarAlmacenesOrigen(idSucursal: string) {
+    this.almacenesOrigen = [];
+    this.form.get('almacenOrigen')?.reset();
 
     this.master.getAlmacenesPorSucursal(idSucursal).subscribe({
       next: (response) => {
         if (Array.isArray(response)) {
-          this.almacenes = response.map((item: any) => ({
+          this.almacenesOrigen = response.map((item: any) => ({
             label: item.nombre,
             value: item.id
           }));
         }
       },
       error: (error) => {
-        console.error('Error al cargar almacenes', error);
+        console.error('Error al cargar almacenes origen', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'No se pudieron cargar los almacenes',
+          detail: 'No se pudieron cargar los almacenes de origen',
           life: 3000
         });
       }
     });
   }
 
-  cargarOrdenesTrabajo() {
-    const idTaller = '001';
-    this.ordenesTrabajo = [];
-    this.form.get('ordenTrabajo')?.reset();
+  cargarAlmacenesDestino(idSucursal: string) {
+    this.almacenesDestino = [];
+    this.form.get('almacenDestino')?.reset();
 
-    this.master.getOrdenesProduccionPorSucursal(idTaller).subscribe({
+    this.master.getAlmacenesPorSucursal(idSucursal).subscribe({
       next: (response) => {
-        if (response?.success && Array.isArray(response.data)) {
-          this.ordenesTrabajo = response.data.map((item: any) => ({
-            label: item.idOrdenPro,
-            value: item.idOrdenPro
+        if (Array.isArray(response)) {
+          this.almacenesDestino = response.map((item: any) => ({
+            label: item.nombre,
+            value: item.id
           }));
         }
       },
       error: (error) => {
-        console.error('Error al cargar órdenes de trabajo', error);
+        console.error('Error al cargar almacenes destino', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'No se pudieron cargar las órdenes de trabajo',
+          detail: 'No se pudieron cargar los almacenes de destino',
           life: 3000
         });
       }
@@ -490,65 +439,52 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onScanner() {
-    console.log('📱 [ACCIÓN] Botón Scanner presionado');
-    console.log('📋 [ACCIÓN] Formatos habilitados:', this.formatsEnabled.map(f => BarcodeFormat[f]));
-
     if (this.form.invalid) {
       console.warn('⚠️ [ACCIÓN] Formulario inválido');
       this.messageService.add({
         severity: 'warn',
         summary: 'Campos incompletos',
-        detail: 'Debe seleccionar Sucursal, Almacén y Orden de Trabajo',
+        detail: 'Debe seleccionar Sucursal y Almacén de Origen y Destino',
         life: 3000
       });
       return;
     }
 
-    console.log('✅ [ACCIÓN] Formulario válido, abriendo modal...');
     this.modalVisible = true;
   }
 
   cerrarModal() {
-    console.log('🔒 [MODAL] Cerrando modal');
     this.modalVisible = false;
     this.scannerActivo = false;
-    console.log('🛑 [MODAL] Scanner desactivado');
   }
 
   agregarVehiculo() {
-    const vin = this.vinInput.trim();
+    const idProducto = this.idProductoInput.trim();
 
-    console.log('➕ [AGREGAR] Intentando agregar vehículo');
-    console.log('🔑 [AGREGAR] VIN:', vin);
-
-    if (!vin) {
-      console.warn('⚠️ [AGREGAR] VIN vacío');
+    if (!idProducto) {
+      console.warn('⚠️ [AGREGAR] idProducto vacío');
       this.messageService.add({
         severity: 'warn',
         summary: 'Campo vacío',
-        detail: 'Debe ingresar un VIN',
+        detail: 'Debe ingresar un idProducto',
         life: 2000
       });
       return;
     }
 
-    if (this.vehiculos.some(v => v.vin === vin)) {
-      console.warn('⚠️ [AGREGAR] VIN duplicado:', vin);
+    if (this.vehiculos.some(v => v.vin === idProducto)) {
+      console.warn('⚠️ [AGREGAR] idProducto duplicado:', idProducto);
       this.messageService.add({
         severity: 'warn',
         summary: 'Duplicado',
-        detail: 'Este VIN ya fue agregado',
+        detail: 'Este idProducto ya fue agregado',
         life: 2000
       });
       return;
     }
 
-    console.log('🔍 [AGREGAR] Consultando información del vehículo...');
-
-    this.master.getCarPorVin(vin).subscribe({
+    this.master.getCarPorVin(idProducto).subscribe({
       next: (data) => {
-        console.log('📦 [AGREGAR] Respuesta del servidor:', data);
-
         if (!data || !data.vin) {
           console.warn('⚠️ [AGREGAR] No se encontró información del vehículo');
           this.messageService.add({
@@ -568,25 +504,20 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
           cantidad: this.cantidad
         };
 
-        console.log('✅ [AGREGAR] Vehículo creado:', nuevoVehiculo);
-
         this.vehiculos.push(nuevoVehiculo);
-        console.log('📊 [AGREGAR] Total vehículos:', this.vehiculos.length);
 
-        this.vinInput = '';
+        this.idProductoInput = '';
         this.cantidad = 1;
-
-        console.log('🧹 [AGREGAR] Formulario limpiado');
 
         this.messageService.add({
           severity: 'success',
           summary: 'Vehículo agregado',
-          detail: `VIN ${data.vin} agregado correctamente`,
+          detail: `idProducto ${data.vin} agregado correctamente`,
           life: 2000
         });
 
         setTimeout(() => {
-          this.vinInputElement?.nativeElement.focus();
+          this.idProductoInputElement?.nativeElement.focus();
         }, 100);
       },
       error: (err) => {
@@ -602,44 +533,36 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
   }
 
   reiniciar() {
-    console.log('🔄 [RESET] Reiniciando formulario');
     this.vehiculos = [];
-    this.vinInput = '';
+    this.idProductoInput = '';
     this.cantidad = 1;
     this.fechaSeleccionada = new Date();
     this.documentoGenerado = '';
-    console.log('✅ [RESET] Formulario reiniciado');
 
     setTimeout(() => {
-      if (this.vinInputElement) {
-        this.vinInputElement.nativeElement.focus();
+      if (this.idProductoInputElement) {
+        this.idProductoInputElement.nativeElement.focus();
       }
     }, 100);
   }
 
   nuevoScaneo() {
-    console.log('🔄 [NUEVO] Iniciando nuevo escaneo');
     this.scannerActivo = false;
 
     setTimeout(() => {
       this.modalVisible = true;
       this.scannerActivo = true;
-      console.log('✅ [NUEVO] Scanner reiniciado');
 
       setTimeout(() => {
-        if (this.vinInputElement) {
-          this.vinInputElement.nativeElement.focus();
+        if (this.idProductoInputElement) {
+          this.idProductoInputElement.nativeElement.focus();
         }
       }, 200);
     }, 100);
   }
 
-  // Llamada a Api Service
   guardar() {
-    console.log('💾 [GUARDAR] Iniciando guardado');
-
     if (this.vehiculos.length === 0) {
-      console.warn('⚠️ [GUARDAR] No hay vehículos para guardar');
       this.messageService.add({
         severity: 'warn',
         summary: 'Sin vehículos',
@@ -649,19 +572,20 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const idsucursal = this.form.get('sucursal')?.value;
-    const idalmacen = this.form.get('almacen')?.value;
-    const idordentrabajo = this.form.get('ordenTrabajo')?.value;
+    const idsucursal = this.form.get('sucursalOrigen')?.value;
+    const idalmacen = this.form.get('almacenOrigen')?.value;
+    const idsucursaldestino = this.form.get('sucursalDestino')?.value;
+    const idalmacendestino = this.form.get('almacenDestino')?.value;
 
     console.log('📋 [GUARDAR] Datos del formulario:', {
-      sucursal: idsucursal,
-      almacen: idalmacen,
-      ordenTrabajo: idordentrabajo,
+      sucursalOrigen: idsucursal,
+      almacenOrigen: idalmacen,
+      sucursalDestino: idsucursaldestino,
+      almacenDestino: idalmacendestino,
       cantidadVehiculos: this.vehiculos.length
     });
 
-    if (!idsucursal || !idalmacen || !idordentrabajo) {
-      console.error('❌ [GUARDAR] Datos incompletos');
+    if (!idsucursal || !idalmacen || !idsucursaldestino || !idalmacendestino) {
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -678,11 +602,15 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
       cantidad: v.cantidad
     }));
 
-    console.log('📦 [GUARDAR] Detalle a enviar:', detalle);
-
-    this.api.registroSalidaOT(idsucursal, idalmacen, idordentrabajo, fecha, detalle).subscribe({
+    this.api.registroTransferenciaAlmacenes(
+      idsucursal,
+      idalmacen,
+      idsucursaldestino,
+      idalmacendestino,
+      fecha,
+      detalle
+    ).subscribe({
       next: (response) => {
-        console.log('✅ [GUARDAR] Respuesta exitosa:', response);
         this.documentoGenerado = response?.documento || 'DOC-' + Date.now();
 
         this.messageService.add({
@@ -699,7 +627,7 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
         this.messageService.add({
           severity: 'error',
           summary: 'Error al guardar',
-          detail: error?.error?.message || 'No se pudo registrar la salida',
+          detail: error?.error?.message || 'No se pudo registrar la transferencia',
           life: 4000
         });
       }
@@ -707,7 +635,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    console.log('🧹 [DESTROY] Limpiando componente');
     this.scannerActivo = false;
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Menu } from '../menu/menu';
@@ -11,11 +11,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TableModule } from 'primeng/table';
 import { DatePickerModule } from 'primeng/datepicker';
+import { DatePicker } from 'primeng/datepicker';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ZXingScannerModule } from '@zxing/ngx-scanner';
 import { BarcodeFormat } from '@zxing/library';
 import { Api } from '../services/api';
-import { Master } from '../services/master'; // Importar Master
+import { Master } from '../services/master';
 
 interface Opcion {
   label: string;
@@ -54,16 +55,20 @@ interface Vehiculo {
   styleUrl: './salida-trabajo.css'
 })
 export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('vinInputElement') vinInputElement!: ElementRef<HTMLInputElement>;
+  @ViewChild('idProductoInputElement') idProductoInputElement!: ElementRef<HTMLInputElement>;
+  @ViewChild('calendarioPicker') calendarioPicker!: DatePicker;
 
   form!: FormGroup;
   sucursales: Opcion[] = [];
   almacenes: Opcion[] = [];
   ordenesTrabajo: Opcion[] = [];
 
+  placaSeleccionada = '';
+  idProductoSeleccionado = '';
+
   // Modal Scanner
   modalVisible = false;
-  vinInput = '';
+  idProductoInput = '';
   cantidad = 1;
   scannerActivo = false;
 
@@ -93,7 +98,8 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     private fb: FormBuilder,
     private messageService: MessageService,
     private api: Api,
-    private master: Master // Inyectar Master
+    private master: Master,
+    private renderer: Renderer2
   ) {
   }
 
@@ -115,21 +121,98 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    this.cargarOrdenesTrabajo();
+    this.form.get('ordenTrabajo')?.valueChanges.subscribe(idOrdenTrabajo => {
+      if (idOrdenTrabajo) {
+        this.cargarDetalleOrdenTrabajo(idOrdenTrabajo);
+      } else {
+        this.placaSeleccionada = '';
+        this.idProductoSeleccionado = '';
+      }
+    });
 
+    this.cargarOrdenesTrabajo();
     this.solicitarPermisoCamara();
   }
 
   ngAfterViewInit() {
-    if (this.modalVisible && this.vinInputElement) {
+    if (this.modalVisible && this.idProductoInputElement) {
       setTimeout(() => {
-        this.vinInputElement.nativeElement.focus();
+        this.idProductoInputElement.nativeElement.focus();
       }, 100);
     }
+
+    // Configurar listener para el calendario
+    this.setupCalendarioListener();
+  }
+
+  setupCalendarioListener() {
+    // Escuchar cuando se abra cualquier datepicker
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof HTMLElement && node.classList.contains('p-datepicker')) {
+            this.ajustarPosicionCalendario(node);
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: false
+    });
+  }
+
+  ajustarPosicionCalendario(calendario: HTMLElement) {
+    console.log('📅 [CALENDARIO] Ajustando posición');
+
+    // Esperar un frame para que PrimeNG termine de posicionar
+    requestAnimationFrame(() => {
+      const inputElement = document.querySelector('.fecha-input input') as HTMLElement;
+      
+      if (!inputElement) {
+        console.warn('⚠️ [CALENDARIO] No se encontró el input');
+        return;
+      }
+
+      const inputRect = inputElement.getBoundingClientRect();
+      const calendarHeight = calendario.offsetHeight;
+      const viewportHeight = window.innerHeight;
+
+      // Calcular espacio disponible arriba y abajo
+      const espacioArriba = inputRect.top;
+      const espacioAbajo = viewportHeight - inputRect.bottom;
+
+      console.log('📐 [CALENDARIO] Espacios:', {
+        arriba: espacioArriba,
+        abajo: espacioAbajo,
+        alturaCalendario: calendarHeight
+      });
+
+      // Forzar posición arriba SIEMPRE que haya espacio
+      if (espacioArriba > calendarHeight + 10) {
+        const topPosition = inputRect.top - calendarHeight - 8;
+        
+        this.renderer.setStyle(calendario, 'position', 'fixed');
+        this.renderer.setStyle(calendario, 'top', `${topPosition}px`);
+        this.renderer.setStyle(calendario, 'left', `${inputRect.left}px`);
+        this.renderer.setStyle(calendario, 'bottom', 'auto');
+        this.renderer.setStyle(calendario, 'transform', 'none');
+        
+        console.log('✅ [CALENDARIO] Posicionado arriba en:', topPosition);
+      } else {
+        // Si no hay espacio arriba, posicionar arriba del viewport
+        this.renderer.setStyle(calendario, 'position', 'fixed');
+        this.renderer.setStyle(calendario, 'top', '10px');
+        this.renderer.setStyle(calendario, 'left', `${inputRect.left}px`);
+        this.renderer.setStyle(calendario, 'bottom', 'auto');
+        
+        console.log('⚠️ [CALENDARIO] Poco espacio, posicionado en top: 10px');
+      }
+    });
   }
 
   async solicitarPermisoCamara() {
-
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.error('❌ [PERMISO] getUserMedia no disponible en este navegador');
@@ -159,6 +242,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
         });
         return;
       }
+
       const constraints = {
         video: {
           facingMode: { ideal: 'environment' },
@@ -167,7 +251,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
         },
         audio: false
       };
-
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
@@ -236,14 +319,13 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     }
 
     setTimeout(() => {
-      if (this.vinInputElement) {
-        this.vinInputElement.nativeElement.focus();
+      if (this.idProductoInputElement) {
+        this.idProductoInputElement.nativeElement.focus();
       }
     }, 200);
   }
 
   onCamerasFound(devices: MediaDeviceInfo[]): void {
-
     this.availableDevices = devices;
     this.hasDevices = Boolean(devices && devices.length);
 
@@ -276,8 +358,8 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     console.log('📋 [SCANNER] Formatos habilitados:', this.formatsEnabled.map(f => BarcodeFormat[f]));
     console.log('⚙️ [SCANNER] Configuración scanner:', {
       tryHarder: true,
-      timeBetweenScans: 500,
-      delayBetweenScanSuccess: 500
+      timeBetweenScans: 300,
+      delayBetweenScanSuccess: 300
     });
 
     console.log('🟢 [SCANNER] Scanner listo para detectar códigos QR');
@@ -306,11 +388,12 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       console.warn('📊 [DETECCIÓN] Longitud:', codigoLimpio.length);
       return;
     }
-    this.vinInput = codigoLimpio;
+
+    this.idProductoInput = codigoLimpio;
     this.ultimoCodigoEscaneado = codigoLimpio;
     this.ultimoTiempoEscaneo = ahora;
 
-    console.log('🎉 [DETECCIÓN] vinInput actualizado:', this.vinInput);
+    console.log('🎉 [DETECCIÓN] idProductoInput actualizado:', this.idProductoInput);
 
     this.messageService.add({
       severity: 'success',
@@ -322,8 +405,8 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     console.log('🔔 [DETECCIÓN] Notificación mostrada al usuario');
 
     setTimeout(() => {
-      if (this.vinInputElement) {
-        this.vinInputElement.nativeElement.focus();
+      if (this.idProductoInputElement) {
+        this.idProductoInputElement.nativeElement.focus();
         console.log('⌨️ [DETECCIÓN] Focus restaurado en input');
       }
     }, 100);
@@ -370,7 +453,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // Llamadas a Master Service
   cargarSucursales() {
     this.master.getSucursales().subscribe({
       next: (response) => {
@@ -427,7 +509,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       next: (response) => {
         if (response?.success && Array.isArray(response.data)) {
           this.ordenesTrabajo = response.data.map((item: any) => ({
-            label: `${item.serie} - ${item.numero}`,
+            label: `OTR${item.serie} - ${item.numero}`,
             value: item.idOrdenPro
           }));
         }
@@ -444,8 +526,42 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  onScanner() {
+  cargarDetalleOrdenTrabajo(idOrdenTrabajo: string) {
+    console.log('📋 [DETALLE OT] Cargando detalle para:', idOrdenTrabajo);
+    
+    const idTaller = '001';
+    
+    this.master.getOrdenesProduccionPorSucursal(idTaller).subscribe({
+      next: (response) => {
+        if (response?.success && Array.isArray(response.data)) {
+          const ordenSeleccionada = response.data.find(
+            (item: any) => item.idOrdenPro === idOrdenTrabajo
+          );
 
+          if (ordenSeleccionada) {
+            this.placaSeleccionada = ordenSeleccionada.idOrdenProduc || '';
+            this.idProductoSeleccionado = ordenSeleccionada.idProducto || '';
+
+            console.log('✅ [DETALLE OT] Datos cargados:', {
+              placa: this.placaSeleccionada,
+              idProducto: this.idProductoSeleccionado
+            });
+          } else {
+            console.warn('⚠️ [DETALLE OT] No se encontró la orden seleccionada');
+            this.placaSeleccionada = '';
+            this.idProductoSeleccionado = '';
+          }
+        }
+      },
+      error: (error) => {
+        console.error('❌ [DETALLE OT] Error al cargar detalle:', error);
+        this.placaSeleccionada = '';
+        this.idProductoSeleccionado = '';
+      }
+    });
+  }
+  
+  onScanner() {
     if (this.form.invalid) {
       console.warn('⚠️ [ACCIÓN] Formulario inválido');
       this.messageService.add({
@@ -466,33 +582,32 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   }
 
   agregarVehiculo() {
-    const vin = this.vinInput.trim();
+    const idProducto = this.idProductoInput.trim();
 
-    if (!vin) {
-      console.warn('⚠️ [AGREGAR] VIN vacío');
+    if (!idProducto) {
+      console.warn('⚠️ [AGREGAR] idProducto vacío');
       this.messageService.add({
         severity: 'warn',
         summary: 'Campo vacío',
-        detail: 'Debe ingresar un VIN',
+        detail: 'Debe ingresar un idProducto',
         life: 2000
       });
       return;
     }
 
-    if (this.vehiculos.some(v => v.vin === vin)) {
-      console.warn('⚠️ [AGREGAR] VIN duplicado:', vin);
+    if (this.vehiculos.some(v => v.vin === idProducto)) {
+      console.warn('⚠️ [AGREGAR] idProducto duplicado:', idProducto);
       this.messageService.add({
         severity: 'warn',
         summary: 'Duplicado',
-        detail: 'Este VIN ya fue agregado',
+        detail: 'Este idProducto ya fue agregado',
         life: 2000
       });
       return;
     }
 
-    this.master.getCarPorVin(vin).subscribe({
+    this.master.getCarPorVin(idProducto).subscribe({
       next: (data) => {
-
         if (!data || !data.vin) {
           console.warn('⚠️ [AGREGAR] No se encontró información del vehículo');
           this.messageService.add({
@@ -512,21 +627,20 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
           cantidad: this.cantidad
         };
 
-
         this.vehiculos.push(nuevoVehiculo);
 
-        this.vinInput = '';
+        this.idProductoInput = '';
         this.cantidad = 1;
 
         this.messageService.add({
           severity: 'success',
           summary: 'Vehículo agregado',
-          detail: `VIN ${data.vin} agregado correctamente`,
+          detail: `idProducto ${data.vin} agregado correctamente`,
           life: 2000
         });
 
         setTimeout(() => {
-          this.vinInputElement?.nativeElement.focus();
+          this.idProductoInputElement?.nativeElement.focus();
         }, 100);
       },
       error: (err) => {
@@ -543,14 +657,14 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
 
   reiniciar() {
     this.vehiculos = [];
-    this.vinInput = '';
+    this.idProductoInput = '';
     this.cantidad = 1;
     this.fechaSeleccionada = new Date();
     this.documentoGenerado = '';
 
     setTimeout(() => {
-      if (this.vinInputElement) {
-        this.vinInputElement.nativeElement.focus();
+      if (this.idProductoInputElement) {
+        this.idProductoInputElement.nativeElement.focus();
       }
     }, 100);
   }
@@ -563,16 +677,14 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       this.scannerActivo = true;
 
       setTimeout(() => {
-        if (this.vinInputElement) {
-          this.vinInputElement.nativeElement.focus();
+        if (this.idProductoInputElement) {
+          this.idProductoInputElement.nativeElement.focus();
         }
       }, 200);
     }, 100);
   }
 
-  // Llamada a Api Service
   guardar() {
-
     if (this.vehiculos.length === 0) {
       console.warn('⚠️ [GUARDAR] No hay vehículos para guardar');
       this.messageService.add({
@@ -612,7 +724,6 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       idproducto: v.vin,
       cantidad: v.cantidad
     }));
-
 
     this.api.registroSalidaOT(idsucursal, idalmacen, idordentrabajo, fecha, detalle).subscribe({
       next: (response) => {
