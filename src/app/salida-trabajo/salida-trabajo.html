@@ -113,7 +113,7 @@
                 Id Producto <span class="text-red-500">*</span>
               </label>
               <input #idProductoInputElement pInputText type="text" [(ngModel)]="idProductoInput" 
-                placeholder="idProducto..." class="w-full h-11 text-sm" (keyup.enter)="agregarVehiculo()" />
+  placeholder="idProducto..." class="w-full h-11 text-sm" (keyup.enter)="agregarProducto()" />
             </div>
             <div class="w-full sm:w-36 flex-shrink-0">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
@@ -132,8 +132,8 @@
           </div>
 
           <!-- Botón Agregar -->
-          <button pButton type="button" label="Agregar Vehículo" icon="pi pi-plus" (click)="agregarVehiculo()"
-            class="w-full h-11" severity="success"></button>
+<button pButton type="button" label="Agregar Producto" icon="pi pi-plus" (click)="agregarProducto()"
+  class="w-full h-11" severity="success"></button>
 
           <!-- Fecha -->
           <div>
@@ -168,32 +168,37 @@
       </div>
 
       <!-- Tabla de vehículos -->
-      <div *ngIf="vehiculos.length > 0"
-        class="mt-4 lg:mt-6 border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
-        <div class="overflow-x-auto" style="max-height: 280px; overflow-y: auto;">
-          <table class="w-full text-xs sm:text-sm">
-            <thead class="bg-gray-100 dark:bg-slate-700 sticky top-0">
-              <tr>
-                <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">ID PRODUCTO</th>
-                <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">STOCK</th>
-                <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">MODELO</th>
-                <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">COLOR</th>
-                <th class="px-2 sm:px-3 py-2 text-center text-gray-700 dark:text-gray-300 font-semibold">CANT.</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-              <tr *ngFor="let vehiculo of vehiculos" class="hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                <td class="px-2 sm:px-3 py-2 text-gray-800 dark:text-gray-200">{{vehiculo.vin}}</td>
-                <td class="px-2 sm:px-3 py-2 text-gray-800 dark:text-gray-200">{{vehiculo.stock}}</td>
-                <td class="px-2 sm:px-3 py-2 text-gray-800 dark:text-gray-200">{{vehiculo.modelo}}</td>
-                <td class="px-2 sm:px-3 py-2 text-gray-800 dark:text-gray-200">{{vehiculo.color}}</td>
-                <td class="px-2 sm:px-3 py-2 text-center text-gray-800 dark:text-gray-200 font-semibold">
-                  {{vehiculo.cantidad}}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <div *ngIf="productos.length > 0"
+  class="mt-4 lg:mt-6 border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
+  <div class="overflow-x-auto" style="max-height: 280px; overflow-y: auto;">
+    <table class="w-full text-xs sm:text-sm">
+      <thead class="bg-gray-100 dark:bg-slate-700 sticky top-0">
+        <tr>
+          <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">#</th>
+          <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">ID PRODUCTO</th>
+          <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">NOMBRE</th>
+          <th class="px-2 sm:px-3 py-2 text-left text-gray-700 dark:text-gray-300 font-semibold">MEDIDA</th>
+          <th class="px-2 sm:px-3 py-2 text-center text-gray-700 dark:text-gray-300 font-semibold">CANT.</th>
+          <th class="px-2 sm:px-3 py-2 text-center text-gray-700 dark:text-gray-300 font-semibold">ACCIÓN</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
+        <tr *ngFor="let producto of productos; let i = index"
+          class="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+          <td class="px-2 sm:px-3 py-2 text-gray-500 dark:text-gray-400">{{i + 1}}</td>
+          <td class="px-2 sm:px-3 py-2 text-gray-800 dark:text-gray-200 font-mono">{{producto.idProducto}}</td>
+          <td class="px-2 sm:px-3 py-2 text-gray-800 dark:text-gray-200">{{producto.nombre}}</td>
+          <td class="px-2 sm:px-3 py-2 text-gray-800 dark:text-gray-200">{{producto.idMedida}}</td>
+          <td class="px-2 sm:px-3 py-2 text-center text-gray-800 dark:text-gray-200 font-semibold">{{producto.cantidad}}</td>
+          <td class="px-2 sm:px-3 py-2 text-center">
+            <button pButton type="button" icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true"
+              (click)="eliminarProducto(i)" class="h-8 w-8"></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
       <!-- Botones finales -->
       <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 lg:mt-6 pb-2">

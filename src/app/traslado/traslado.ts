@@ -24,10 +24,9 @@ interface Opcion {
 }
 
 interface Vehiculo {
-  vin: string;
-  stock: string;
-  modelo: string;
-  color: string;
+  idProducto: string;
+  nombre: string;
+  idMedida: string;
   cantidad: number;
 }
 
@@ -80,7 +79,7 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
     BarcodeFormat.QR_CODE
   ];
 
-  // Tabla de vehículos
+  // Tabla de productos
   vehiculos: Vehiculo[] = [];
 
   // Fecha y documento
@@ -97,8 +96,7 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
     private api: Api,
     private master: Master,
     private renderer: Renderer2
-  ) {
-  }
+  ) {}
 
   ngOnInit() {
     this.form = this.fb.group({
@@ -110,7 +108,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
 
     this.cargarSucursales();
 
-    // Listener para sucursal origen
     this.form.get('sucursalOrigen')?.valueChanges.subscribe(idSucursal => {
       if (idSucursal) {
         this.cargarAlmacenesOrigen(idSucursal);
@@ -120,7 +117,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    // Listener para sucursal destino
     this.form.get('sucursalDestino')?.valueChanges.subscribe(idSucursal => {
       if (idSucursal) {
         this.cargarAlmacenesDestino(idSucursal);
@@ -161,15 +157,10 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ajustarPosicionCalendario(calendario: HTMLElement) {
-    console.log('📅 [CALENDARIO] Ajustando posición');
-
     requestAnimationFrame(() => {
       const inputElement = document.querySelector('.fecha-input input') as HTMLElement;
-      
-      if (!inputElement) {
-        console.warn('⚠️ [CALENDARIO] No se encontró el input');
-        return;
-      }
+
+      if (!inputElement) return;
 
       const inputRect = inputElement.getBoundingClientRect();
       const calendarHeight = calendario.offsetHeight;
@@ -177,21 +168,16 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
 
       if (espacioArriba > calendarHeight + 10) {
         const topPosition = inputRect.top - calendarHeight - 8;
-        
         this.renderer.setStyle(calendario, 'position', 'fixed');
         this.renderer.setStyle(calendario, 'top', `${topPosition}px`);
         this.renderer.setStyle(calendario, 'left', `${inputRect.left}px`);
         this.renderer.setStyle(calendario, 'bottom', 'auto');
         this.renderer.setStyle(calendario, 'transform', 'none');
-        
-        console.log('✅ [CALENDARIO] Posicionado arriba en:', topPosition);
       } else {
         this.renderer.setStyle(calendario, 'position', 'fixed');
         this.renderer.setStyle(calendario, 'top', '10px');
         this.renderer.setStyle(calendario, 'left', `${inputRect.left}px`);
         this.renderer.setStyle(calendario, 'bottom', 'auto');
-        
-        console.log('⚠️ [CALENDARIO] Poco espacio, posicionado en top: 10px');
       }
     });
   }
@@ -199,7 +185,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
   async solicitarPermisoCamara() {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.error('❌ [PERMISO] getUserMedia no disponible en este navegador');
         this.messageService.add({
           severity: 'error',
           summary: 'Navegador no compatible',
@@ -213,7 +198,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
       if (videoDevices.length === 0) {
-        console.error('❌ [PERMISO] No se encontraron cámaras');
         this.messageService.add({
           severity: 'error',
           summary: 'Sin cámaras',
@@ -223,21 +207,16 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      const constraints = {
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: 'environment' },
           width: { ideal: 1280 },
           height: { ideal: 720 }
         },
         audio: false
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-      stream.getTracks().forEach(track => {
-        track.stop();
       });
 
+      stream.getTracks().forEach(track => track.stop());
       this.hasPermission = true;
 
       this.messageService.add({
@@ -248,20 +227,13 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
       });
 
     } catch (error: any) {
-      console.error('❌ [PERMISO] Error al solicitar permiso:', error);
       this.hasPermission = false;
 
       let detalleError = 'No se pudo acceder a la cámara';
-
-      if (error.name === 'NotAllowedError') {
-        detalleError = 'Permiso denegado por el usuario';
-      } else if (error.name === 'NotFoundError') {
-        detalleError = 'No se encontró ninguna cámara';
-      } else if (error.name === 'NotReadableError') {
-        detalleError = 'Cámara en uso por otra aplicación';
-      } else if (error.name === 'OverconstrainedError') {
-        detalleError = 'Configuración de cámara no soportada';
-      }
+      if (error.name === 'NotAllowedError') detalleError = 'Permiso denegado por el usuario';
+      else if (error.name === 'NotFoundError') detalleError = 'No se encontró ninguna cámara';
+      else if (error.name === 'NotReadableError') detalleError = 'Cámara en uso por otra aplicación';
+      else if (error.name === 'OverconstrainedError') detalleError = 'Configuración de cámara no soportada';
 
       this.messageService.add({
         severity: 'error',
@@ -300,26 +272,20 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
   onCodeResult(resultString: string) {
     const ahora = Date.now();
 
-    if (this.ultimoCodigoEscaneado === resultString &&
-      (ahora - this.ultimoTiempoEscaneo) < 1000) {
-      return;
-    }
+    if (
+      this.ultimoCodigoEscaneado === resultString &&
+      (ahora - this.ultimoTiempoEscaneo) < 1000
+    ) return;
 
-    if (!resultString) {
-      return;
-    }
+    if (!resultString) return;
 
     const codigoLimpio = resultString.trim();
 
-    if (codigoLimpio.length < 5) {
-      return;
-    }
+    if (codigoLimpio.length < 5) return;
 
     this.idProductoInput = codigoLimpio;
     this.ultimoCodigoEscaneado = codigoLimpio;
     this.ultimoTiempoEscaneo = ahora;
-
-    console.log('🎉 [DETECCIÓN] idProductoInput actualizado:', this.idProductoInput);
 
     this.messageService.add({
       severity: 'success',
@@ -349,20 +315,11 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onScanError(error: any) {
-    const erroresIgnorados = [
-      'No MultiFormat Readers',
-      'NotFoundException',
-      'No barcode found'
-    ];
-
+    const erroresIgnorados = ['No MultiFormat Readers', 'NotFoundException', 'No barcode found'];
     const esErrorIgnorado = erroresIgnorados.some(msg =>
       error?.message?.includes(msg) || error?.name?.includes(msg)
     );
-
-    if (esErrorIgnorado) {
-      return;
-    }
-
+    if (esErrorIgnorado) return;
     console.warn('⚠️ [ERROR] Error durante escaneo:', error);
   }
 
@@ -376,8 +333,7 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
           }));
         }
       },
-      error: (error) => {
-        console.error('Error al cargar sucursales', error);
+      error: () => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -401,8 +357,7 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
           }));
         }
       },
-      error: (error) => {
-        console.error('Error al cargar almacenes origen', error);
+      error: () => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -426,8 +381,7 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
           }));
         }
       },
-      error: (error) => {
-        console.error('Error al cargar almacenes destino', error);
+      error: () => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -440,7 +394,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
 
   onScanner() {
     if (this.form.invalid) {
-      console.warn('⚠️ [ACCIÓN] Formulario inválido');
       this.messageService.add({
         severity: 'warn',
         summary: 'Campos incompletos',
@@ -462,45 +415,41 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
     const idProducto = this.idProductoInput.trim();
 
     if (!idProducto) {
-      console.warn('⚠️ [AGREGAR] idProducto vacío');
       this.messageService.add({
         severity: 'warn',
         summary: 'Campo vacío',
-        detail: 'Debe ingresar un idProducto',
+        detail: 'Debe ingresar un ID de producto',
         life: 2000
       });
       return;
     }
 
-    if (this.vehiculos.some(v => v.vin === idProducto)) {
-      console.warn('⚠️ [AGREGAR] idProducto duplicado:', idProducto);
+    if (this.vehiculos.some(v => v.idProducto === idProducto)) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Duplicado',
-        detail: 'Este idProducto ya fue agregado',
+        detail: 'Este producto ya fue agregado',
         life: 2000
       });
       return;
     }
 
-    this.master.getCarPorVin(idProducto).subscribe({
+    this.master.getCarPorIdProducto(idProducto).subscribe({
       next: (data) => {
-        if (!data || !data.vin) {
-          console.warn('⚠️ [AGREGAR] No se encontró información del vehículo');
+        if (!data || !data.idProducto) {
           this.messageService.add({
             severity: 'warn',
             summary: 'No encontrado',
-            detail: 'No se encontró información del vehículo',
+            detail: 'No se encontró información del producto',
             life: 3000
           });
           return;
         }
 
         const nuevoVehiculo: Vehiculo = {
-          vin: data.vin,
-          stock: data.placa,
-          modelo: data.modelo,
-          color: data.color,
+          idProducto: data.idProducto?.trim(),
+          nombre: data.nombre?.trim(),
+          idMedida: data.idMedida?.trim(),
           cantidad: this.cantidad
         };
 
@@ -511,8 +460,8 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
 
         this.messageService.add({
           severity: 'success',
-          summary: 'Vehículo agregado',
-          detail: `idProducto ${data.vin} agregado correctamente`,
+          summary: 'Producto agregado',
+          detail: `${nuevoVehiculo.idProducto} - ${nuevoVehiculo.nombre}`,
           life: 2000
         });
 
@@ -520,16 +469,19 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
           this.idProductoInputElement?.nativeElement.focus();
         }, 100);
       },
-      error: (err) => {
-        console.error('❌ [AGREGAR] Error al consultar vehículo:', err);
+      error: () => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Error al consultar el vehículo',
+          detail: 'Error al consultar el producto',
           life: 3000
         });
       }
     });
+  }
+
+  eliminarVehiculo(index: number) {
+    this.vehiculos.splice(index, 1);
   }
 
   reiniciar() {
@@ -565,8 +517,8 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
     if (this.vehiculos.length === 0) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Sin vehículos',
-        detail: 'Debe agregar al menos un vehículo',
+        summary: 'Sin productos',
+        detail: 'Debe agregar al menos un producto',
         life: 3000
       });
       return;
@@ -576,14 +528,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
     const idalmacen = this.form.get('almacenOrigen')?.value;
     const idsucursaldestino = this.form.get('sucursalDestino')?.value;
     const idalmacendestino = this.form.get('almacenDestino')?.value;
-
-    console.log('📋 [GUARDAR] Datos del formulario:', {
-      sucursalOrigen: idsucursal,
-      almacenOrigen: idalmacen,
-      sucursalDestino: idsucursaldestino,
-      almacenDestino: idalmacendestino,
-      cantidadVehiculos: this.vehiculos.length
-    });
 
     if (!idsucursal || !idalmacen || !idsucursaldestino || !idalmacendestino) {
       this.messageService.add({
@@ -598,7 +542,7 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
     const fecha = this.fechaSeleccionada.toISOString().split('T')[0];
 
     const detalle = this.vehiculos.map(v => ({
-      idproducto: v.vin,
+      idproducto: v.idProducto,
       cantidad: v.cantidad
     }));
 
@@ -623,7 +567,6 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
         this.cerrarModal();
       },
       error: (error) => {
-        console.error('❌ [GUARDAR] Error:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error al guardar',

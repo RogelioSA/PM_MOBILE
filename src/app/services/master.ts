@@ -63,6 +63,20 @@ export class Master {
     );
   }
 
+  //vehiculo por idproducto
+  getCarPorIdProducto(idProduct: string): Observable<any> {
+    return this.https.get(
+      `${this.baseUrl}/Car/product`,
+      {
+        headers: this.authService.getHeaders(),
+        params: { idProduct }
+      }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
   // Marcas
   getMarcas(): Observable<any> {
     return this.https.get(
