@@ -107,15 +107,15 @@
         <!-- COLUMNA DERECHA: Formulario -->
         <div class="flex flex-col gap-4">
           <!-- Id Producto y Cantidad -->
-          <div class="flex flex-row gap-2 sm:gap-3 items-end">
-            <div class="flex-1 min-w-0">
+          <div class="producto-cantidad-row w-full">
+            <div class="producto-col min-w-0">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                 Id Producto <span class="text-red-500">*</span>
               </label>
-              <input #idProductoInputElement pInputText type="text" [(ngModel)]="idProductoInput" 
-  placeholder="idProducto..." class="w-full h-11 text-sm" (keyup.enter)="agregarProducto()" />
+              <input #idProductoInputElement pInputText type="text" [(ngModel)]="idProductoInput"
+                placeholder="idProducto..." class="w-full h-11 text-sm" (keyup.enter)="agregarProducto()" />
             </div>
-            <div class="w-24 sm:w-36 flex-shrink-0">
+            <div class="cantidad-col-mobile">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                 Cantidad
               </label>

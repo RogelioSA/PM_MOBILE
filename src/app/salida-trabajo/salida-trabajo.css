@@ -26,6 +26,25 @@
     border-bottom-color: #334155;
   }
 
+
+  /* Fila Id Producto + Cantidad */
+  .producto-cantidad-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 8.5rem;
+    gap: 0.75rem;
+    align-items: end;
+  }
+
+  .producto-col {
+    min-width: 0;
+  }
+
+  .cantidad-col-mobile {
+    width: 100%;
+    min-width: 0;
+  }
+
   /* InputNumber cantidad - ARREGLADO */
   .cantidad-input {
     width: 100% !important;
@@ -128,10 +147,35 @@
       font-size: 1.125rem;
     }
 
-    /* Asegurar que InputNumber no se salga en móvil */
+    .producto-cantidad-row {
+      grid-template-columns: minmax(0, 1fr) 5.8rem;
+      gap: 0.5rem;
+    }
+
+    .cantidad-input {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .cantidad-input .p-inputnumber {
+      width: 100% !important;
+    }
+
+    /* Mantener usables los botones +/- y reducir solo el campo numérico */
     .cantidad-input .p-inputnumber-button {
-      width: 2rem !important;
-      min-width: 2rem !important;
+      width: 1.9rem !important;
+      min-width: 1.9rem !important;
+    }
+
+    .cantidad-input .cantidad-input-field,
+    .cantidad-input .p-inputnumber-input {
+      width: calc(100% - 3.8rem) !important;
+      min-width: 1.7rem !important;
+      max-width: 2rem !important;
+      flex: 1 1 auto !important;
+      text-align: center !important;
+      padding-left: 0.15rem !important;
+      padding-right: 0.15rem !important;
     }
 
     /* En móvil: reducir el ancho total del InputNumber */
@@ -176,6 +220,11 @@
   @media (min-width: 1024px) {
     .scanner-modal .p-dialog {
       max-width: 1200px;
+    }
+
+    .producto-cantidad-row {
+      grid-template-columns: minmax(0, 1fr) 8.5rem;
+      gap: 0.75rem;
     }
   }
 }
