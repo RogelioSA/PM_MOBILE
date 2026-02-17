@@ -178,6 +178,23 @@
       padding-right: 0.15rem !important;
     }
 
+    /* En móvil: reducir el ancho total del InputNumber */
+    .cantidad-input {
+      width: 6rem !important;
+      max-width: 6rem !important;
+    }
+
+    .cantidad-input .cantidad-input-field,
+    .cantidad-input .p-inputnumber-input {
+      flex: 0 0 1.8rem !important;
+      width: 1.8rem !important;
+      min-width: 1.8rem !important;
+      max-width: 1.8rem !important;
+      text-align: center !important;
+      padding-left: 0.2rem !important;
+      padding-right: 0.2rem !important;
+    }
+
     /* Calendario móvil */
     .p-datepicker {
       font-size: 0.875rem;
