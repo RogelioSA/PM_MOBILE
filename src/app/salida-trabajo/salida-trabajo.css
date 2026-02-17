@@ -134,6 +134,17 @@
       min-width: 2rem !important;
     }
 
+    /* En móvil: reducir solo el campo numérico para ~2 dígitos */
+    .cantidad-input .p-inputnumber-input {
+      flex: 0 0 2.5rem !important;
+      width: 2.5rem !important;
+      min-width: 2.5rem !important;
+      max-width: 2.5rem !important;
+      text-align: center;
+      padding-left: 0.25rem !important;
+      padding-right: 0.25rem !important;
+    }
+
     /* Calendario móvil */
     .p-datepicker {
       font-size: 0.875rem;
