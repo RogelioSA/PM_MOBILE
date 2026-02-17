@@ -115,12 +115,12 @@
               <input #idProductoInputElement pInputText type="text" [(ngModel)]="idProductoInput" 
   placeholder="idProducto..." class="w-full h-11 text-sm" (keyup.enter)="agregarProducto()" />
             </div>
-            <div class="w-36 flex-shrink-0">
+            <div class="w-36 flex-shrink-0 cantidad-col">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                 Cantidad
               </label>
               <p-inputnumber [(ngModel)]="cantidad" [showButtons]="true" buttonLayout="horizontal" [step]="1" [min]="1"
-                [max]="999" styleClass="w-full cantidad-input" inputStyleClass="h-11 text-sm text-center">
+                [max]="999" styleClass="w-full cantidad-input" inputStyleClass="h-11 text-sm text-center cantidad-input-field">
                 <ng-template #incrementbuttonicon>
                   <span class="pi pi-plus text-xs"></span>
                 </ng-template>
