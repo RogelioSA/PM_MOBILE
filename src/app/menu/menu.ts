@@ -24,7 +24,7 @@ export class Menu implements OnInit {
     this.items = [
       {
         label: 'Recepción de Vehículos',
-        command: () => this.navigateTo('recepcion')
+        command: () => this.navigateTo('recepcionvehiculos')
       },
       {
         label: 'Traslado entre Establecimientos',

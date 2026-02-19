@@ -6,6 +6,7 @@ import { Traslado } from './traslado/traslado';
 import { Checklist } from './checklist/checklist';
 import { Listarchecklist } from './listarchecklist/listarchecklist';
 import { Detallechecklist } from './detallechecklist/detallechecklist';
+import { Recepcionvehiculos } from './recepcionvehiculos/recepcionvehiculos';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -19,6 +20,13 @@ export const routes: Routes = [
     path: 'salidaTrabajo',
     component: SalidaTrabajo,
     canActivate: [authGuard]  // 🔒 Protección
+  },
+
+
+  {
+    path: 'recepcionvehiculos',
+    component: Recepcionvehiculos,
+    canActivate: [authGuard]
   },
 
   {

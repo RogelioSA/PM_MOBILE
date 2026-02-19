@@ -36,6 +36,38 @@ export interface ChecklistPDI {
   FechaRecepcion: Date | null;
 }
 
+export interface SucursalRecepcion {
+  id: string;
+  nombre: string;
+}
+
+export interface AlmacenRecepcion {
+  id: string;
+  nombre: string;
+}
+
+export interface VehiculoRecepcion {
+  vin: string;
+  idVehiculo: string;
+  marca: string;
+  modelo: string;
+  color: string;
+}
+
+export interface VehiculoRecepcionPayload {
+  idEmpresa: string;
+  idVehiculo: string;
+  idSucursal: string;
+  idAlmacen: string;
+  fecha: string;
+}
+
+export interface DocumentoRecepcion {
+  tipoDoc?: string;
+  serie?: string;
+  numeroDocumento?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -249,6 +281,47 @@ export class Api {
       }
     ).pipe(
       map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  getSucursalesRecepcion(): Observable<SucursalRecepcion[]> {
+    return this.https.get<SucursalRecepcion[]>(
+      `${this.baseUrl}/Sucursal`,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map((response: SucursalRecepcion[]) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  getAlmacenesRecepcion(idSucursal: string): Observable<AlmacenRecepcion[]> {
+    return this.https.get<AlmacenRecepcion[]>(
+      `${this.baseUrl}/Almacen/${idSucursal}`,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map((response: AlmacenRecepcion[]) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  getVehiculoPorVinRecepcion(vin: string): Observable<VehiculoRecepcion> {
+    return this.https.get<VehiculoRecepcion>(
+      `${this.baseUrl}/Car/${vin}`,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map((response: VehiculoRecepcion) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  guardarVehiculoRecepcion(payload: VehiculoRecepcionPayload): Observable<DocumentoRecepcion> {
+    return this.https.post<DocumentoRecepcion>(
+      `${this.baseUrl}/Car/ingreso`,
+      payload,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map((response: DocumentoRecepcion) => response),
       catchError(error => throwError(() => error))
     );
   }
