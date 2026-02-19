@@ -137,8 +137,25 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.setupCalendarioListener();
+    this.preventSelectAutoFocus();
   }
 
+  private preventSelectAutoFocus() {
+    // Interceptar eventos de focus en los p-select
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      const isSelectTrigger = target.closest('.p-select') || target.closest('p-select');
+      
+      if (isSelectTrigger) {
+        setTimeout(() => {
+          const filterInput = document.querySelector('.p-select-filter') as HTMLInputElement;
+          if (filterInput) {
+            filterInput.blur();
+          }
+        }, 10);
+      }
+    });
+  }
   setupCalendarioListener() {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
