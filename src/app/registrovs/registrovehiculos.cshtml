@@ -1,0 +1,187 @@
+@{
+    ViewData["Title"] = "RegistroVehiculos";
+}
+@section Styles {
+    <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- NUEVO: Bootstrap Icons para los íconos de QR / BarCode -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <style>
+        .pm-wrap {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 12px;
+        }
+
+        .pm-label {
+            font-weight: 600;
+            font-size: .9rem;
+            color: #0f172a;
+            margin-bottom: .35rem;
+        }
+
+        .pm-select, .pm-input, .pm-btn {
+            min-height: 2.9rem;
+            border-radius: .75rem;
+            font-size: 1rem;
+        }
+
+        .pm-video-wrapper {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+
+        #scannerVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Botones full-width en móviles */
+        @@media (max-width: 576px) {
+            .pm-actions .btn {
+                width: 100%;
+                margin-bottom: .5rem;
+            }
+        }
+
+        /* Tabla compacta */
+        #tblVehiculos th, #tblVehiculos td {
+            font-size: 0.75rem;
+            padding: 0.35rem;
+        }
+    </style>
+}
+@section Scripts {
+    <script src="~/lib/moment/moment.min.js"></script>
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- ZXing (QR y fallback 1D) - fija versión -->
+    <script src="https://unpkg.com/@@zxing/library@0.21.2"></script>
+
+    <!-- Tu JS -->
+    <script src="~/js/Logistica/RegistroVehiculos.js?v=@DateTime.UtcNow.Ticks"></script>
+    <script>
+        $(document).ready(function () {
+            console.log('ZXing:', typeof window.ZXing, 'BarcodeDetector:', ('BarcodeDetector' in window));
+            inicializarComponentes();
+        });
+    </script>
+}
+@section Modals {
+    <div class="modal modal-fullscreen-sm-down" tabindex="-1" id="modalScanner">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header flex-column align-items-start">
+                    <h5 class="modal-title">Scanner de vehículos</h5>
+                    <!-- Mensaje dinámico -->
+                    <small id="scanStatus" class="text-muted"></small>
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2"
+                            data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Video -->
+                    <div class="pm-video-wrapper mb-3">
+                        <div class="ratio ratio-4x3">
+                            <video id="scannerVideo" autoplay playsinline muted></video>
+                        </div>
+                    </div>
+
+                    <!-- Controles de modo + VIN manual (EN LA MISMA FILA) -->
+                    <div class="d-flex align-items-center flex-wrap gap-3 my-2">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="scanMode" id="rbQR" value="qr" checked>
+                            <label class="form-check-label" for="rbQR">
+                                <i class="bi bi-qr-code me-1"></i> QR
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="scanMode" id="rbBar" value="barcode">
+                            <label class="form-check-label" for="rbBar">
+                                <i class="bi bi-upc-scan me-1"></i> BarCode
+                            </label>
+                        </div>
+
+                        <div class="ms-auto flex-grow-1" style="min-width:220px;">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">VIN</span>
+                                <input id="txtVinManual" type="text" class="form-control" placeholder="Ingresar VIN manual...">
+                                <button id="btnVinManual" class="btn btn-outline-primary">Agregar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de resultados -->
+                    <div class="table-responsive mt-3">
+                        <table class="table table-bordered table-sm table-striped align-middle mb-0" id="tblVehiculos">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>VIN</th>
+                                    <th>STOCK</th>
+                                    <th>MODELO</th>
+                                    <th>COLOR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Las filas se insertarán desde JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Fecha y Documento -->
+                    <div class="row g-2 mt-3">
+                        <div class="col-12 col-sm-4 d-flex align-items-center">
+                            <span class="pm-label me-sm-2 mb-0">Fecha</span>
+                        </div>
+                        <div class="col-12 col-sm-8">
+                            <input type="date" class="form-control pm-input" id="dtpFecha"
+                                   value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mt-2">
+                        <div class="col-12 col-sm-4 d-flex align-items-center">
+                            <span class="pm-label me-sm-2 mb-0">Documento Generado</span>
+                        </div>
+                        <div class="col-12 col-sm-8">
+                            <span id="lblDocGenerado"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer pm-actions">
+                    <button type="button" class="btn btn-secondary pm-btn" id="btnReiniciar">Reiniciar</button>
+                    <button type="button" class="btn btn-success pm-btn" id="btnNewScan">Nuevo scaneo</button>
+                    <button type="button" class="btn btn-primary pm-btn" id="btnGuardar">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="pm-wrap">
+    <div class="row mb-3">
+        <div class="col-12 text-center">
+            <h2 class="fw-bold m-0">RECEPCIÓN DE VEHÍCULOS PERUMOTOR</h2>
+        </div>
+    </div>
+
+    <div class="row g-3 align-items-end mb-3">
+        <div class="col-12 col-md-6">
+            <label for="cbSucursal" class="pm-label">Sucursal</label>
+            <select class="form-select pm-select" id="cbSucursal"></select>
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="cbAlmacen" class="pm-label">Almacén</label>
+            <select class="form-select pm-select" id="cbAlmacen"></select>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 d-grid d-sm-inline-flex gap-2">
+            <button type="button" class="btn btn-success pm-btn" id="btnScan">📷 Scannear</button>
+        </div>
+    </div>
+</div>
