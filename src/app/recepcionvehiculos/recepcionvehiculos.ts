@@ -15,12 +15,11 @@ import { ZXingScannerModule } from '@zxing/ngx-scanner';
 import { firstValueFrom } from 'rxjs';
 import {
   Api,
-  AlmacenRecepcion,
   DocumentoRecepcion,
-  SucursalRecepcion,
   VehiculoRecepcion,
   VehiculoRecepcionPayload
 } from '../services/api';
+import { Master } from '../services/master';
 
 interface Opcion {
   label: string;
@@ -67,6 +66,7 @@ export class Recepcionvehiculos implements OnInit {
 
   constructor(
     private api: Api,
+    private master: Master,
     private messageService: MessageService
   ) {}
 
@@ -81,12 +81,14 @@ export class Recepcionvehiculos implements OnInit {
   }
 
   cargarSucursales() {
-    this.api.getSucursalesRecepcion().subscribe({
-      next: (data: SucursalRecepcion[]) => {
-        this.sucursales = data.map(element => ({
-          label: element.nombre,
-          value: element.id
-        }));
+    this.master.getSucursales().subscribe({
+      next: (response) => {
+        if (response?.success && Array.isArray(response.data)) {
+          this.sucursales = response.data.map((item: any) => ({
+            label: item.descripcion,
+            value: item.idSucursal
+          }));
+        }
 
         if (this.sucursalSeleccionada) {
           this.cambiarSucursal(this.sucursalSeleccionada, false);
@@ -117,12 +119,14 @@ export class Recepcionvehiculos implements OnInit {
       localStorage.removeItem('cbAlmacen');
     }
 
-    this.api.getAlmacenesRecepcion(idSucursal).subscribe({
-      next: (data: AlmacenRecepcion[]) => {
-        this.almacenes = data.map(element => ({
-          label: element.nombre,
-          value: element.id
-        }));
+    this.master.getAlmacenesPorSucursal(idSucursal).subscribe({
+      next: (response) => {
+        if (Array.isArray(response)) {
+          this.almacenes = response.map((item: any) => ({
+            label: item.nombre,
+            value: item.id
+          }));
+        }
 
         if (this.almacenSeleccionado && this.almacenes.some(x => x.value === this.almacenSeleccionado)) {
           return;
