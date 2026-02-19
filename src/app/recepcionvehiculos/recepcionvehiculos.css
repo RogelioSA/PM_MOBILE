@@ -1,0 +1,11 @@
+:host {
+  display: block;
+}
+
+zxing-scanner {
+  display: block;
+  width: 100%;
+  min-height: 250px;
+  border-radius: 12px;
+  overflow: hidden;
+}

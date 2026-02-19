@@ -1,0 +1,96 @@
+<p-toast></p-toast>
+<app-menu></app-menu>
+
+<div class="max-w-5xl mx-auto p-4 space-y-4">
+  <h2 class="text-center text-2xl font-bold">RECEPCIÓN DE VEHÍCULOS PERUMOTOR</h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div>
+      <label class="block text-sm font-semibold mb-1">Sucursal</label>
+      <p-select
+        [options]="sucursales"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="sucursalSeleccionada"
+        (ngModelChange)="cambiarSucursal($event)"
+        placeholder="Seleccionar sucursal"
+        styleClass="w-full"
+      ></p-select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1">Almacén</label>
+      <p-select
+        [options]="almacenes"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="almacenSeleccionado"
+        (ngModelChange)="cambiarAlmacen($event)"
+        placeholder="Seleccionar almacén"
+        styleClass="w-full"
+      ></p-select>
+    </div>
+  </div>
+
+  <button pButton type="button" label="📷 Scannear" (click)="abrirScanner()"></button>
+
+  <p-dialog
+    header="Scanner de vehículos"
+    [(visible)]="modalVisible"
+    [modal]="true"
+    [style]="{ width: '95vw', maxWidth: '900px' }"
+    (onHide)="cerrarScanner()"
+  >
+    <div class="space-y-3">
+      <zxing-scanner
+        [formats]="formatsEnabled"
+        [enable]="scannerActivo"
+        (scanSuccess)="onScanSuccess($event)"
+      ></zxing-scanner>
+
+      <div class="flex gap-2">
+        <input
+          pInputText
+          class="w-full"
+          placeholder="Ingresar VIN manual..."
+          [(ngModel)]="vinManual"
+          (keyup.enter)="agregarVinManual()"
+        />
+        <button pButton type="button" label="Agregar" (click)="agregarVinManual()"></button>
+      </div>
+
+      <p-table [value]="vehiculos" [tableStyle]="{ 'min-width': '40rem' }">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>VIN</th>
+            <th>STOCK</th>
+            <th>MODELO</th>
+            <th>COLOR</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-vehiculo>
+          <tr>
+            <td>{{ vehiculo.vin }}</td>
+            <td>{{ vehiculo.idVehiculo }}</td>
+            <td>{{ vehiculo.marca }} {{ vehiculo.modelo }}</td>
+            <td>{{ vehiculo.color }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+        <label class="font-semibold">Fecha</label>
+        <p-datepicker [(ngModel)]="fechaSeleccionada" dateFormat="yy-mm-dd" [showIcon]="true"></p-datepicker>
+
+        <label class="font-semibold">Documento generado</label>
+        <span>{{ documentoGenerado }}</span>
+      </div>
+
+      <div class="flex flex-wrap gap-2 justify-end">
+        <button pButton type="button" severity="secondary" label="Reiniciar" (click)="reiniciar()"></button>
+        <button pButton type="button" severity="success" label="Nuevo scaneo" (click)="nuevoScaneo()"></button>
+        <button pButton type="button" [loading]="guardando" label="Guardar" (click)="guardar()"></button>
+      </div>
+    </div>
+  </p-dialog>
+</div>
