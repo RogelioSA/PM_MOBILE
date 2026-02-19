@@ -1,0 +1,55 @@
+<app-menu></app-menu>
+<p-toast></p-toast>
+
+<div class="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-6 pt-20 sm:pt-24">
+  <div class="max-w-7xl mx-auto">
+    <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white mb-4 sm:mb-6">
+      Ingreso/Salida Taller
+    </h1>
+
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+      <h2 class="text-base sm:text-lg font-bold text-gray-800 dark:text-white mb-4">
+        DATOS DEL VEHÍCULO
+      </h2>
+
+      <form [formGroup]="form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Sucursal <span class="text-red-500">*</span>
+          </label>
+          <p-select formControlName="sucursal" [options]="sucursales" optionLabel="label" optionValue="value"
+            placeholder="Seleccione sucursal" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Almacén <span class="text-red-500">*</span>
+          </label>
+          <p-select formControlName="almacen" [options]="almacenes" optionLabel="label" optionValue="value"
+            placeholder="Seleccione almacén" [disabled]="!form.get('sucursal')?.value" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Nro de Chasis <span class="text-red-500">*</span>
+          </label>
+          <input type="text" pInputText formControlName="chasis" placeholder="Ingrese Nro de Chasis"
+            class="w-full h-11" [disabled]="!form.get('almacen')?.value" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Placa <span class="text-red-500">*</span>
+          </label>
+          <input type="text" pInputText formControlName="placa" placeholder="Ingrese placa (6 dígitos)"
+            class="w-full h-11" maxlength="6" inputmode="numeric" (input)="onPlacaInput($event)" />
+        </div>
+      </form>
+
+      <div class="mt-6">
+        <button pButton type="button" label="REGISTRAR INGRESO" class="w-full sm:w-auto"
+          (click)="registrarIngreso()"></button>
+      </div>
+    </div>
+  </div>
+</div>
