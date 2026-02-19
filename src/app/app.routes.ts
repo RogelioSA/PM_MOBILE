@@ -7,6 +7,7 @@ import { Checklist } from './checklist/checklist';
 import { Listarchecklist } from './listarchecklist/listarchecklist';
 import { Detallechecklist } from './detallechecklist/detallechecklist';
 import { Recepcionvehiculos } from './recepcionvehiculos/recepcionvehiculos';
+import { Ingresosalidataller } from './ingresosalidataller/ingresosalidataller';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -49,6 +50,11 @@ export const routes: Routes = [
   {
     path: 'detallechecklist/:id',
     component: Detallechecklist,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'ingresosalidataller',
+    component: Ingresosalidataller,
     canActivate: [authGuard]
   },
   // Cualquier ruta no válida vuelve al login
