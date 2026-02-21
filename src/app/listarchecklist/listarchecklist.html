@@ -1,3 +1,4 @@
+<!-- listarchecklist.html -->
 <app-menu></app-menu>
 
 <div class="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-6 pt-20 sm:pt-24">
@@ -403,6 +404,7 @@
                 </div>
             </div>
         </div>
+
         <!-- FOTOS DEL VEHÍCULO -->
         <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
             <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
@@ -456,6 +458,42 @@
         </div>
 
     </div>
+
+</p-dialog>
+
+<!-- MODAL DE IMAGEN -->
+<p-dialog 
+  [(visible)]="mostrarImagenModal" 
+  [modal]="true" 
+  [closable]="true" 
+  [closeOnEscape]="true" 
+  [dismissableMask]="true"
+  [style]="{width: '95vw', maxWidth: '1200px'}"
+  [contentStyle]="{padding: '0', background: '#000'}"
+  [header]="imagenSeleccionada?.nombre || 'Imagen'"
+  (onHide)="cerrarImagenModal()">
+
+  <div class="relative bg-black" *ngIf="imagenSeleccionada">
+    
+    <!-- Imagen -->
+    <div class="flex items-center justify-center" style="min-height: 60vh; max-height: 80vh;">
+      <img 
+        [src]="imagenSeleccionada.url" 
+        [alt]="imagenSeleccionada.nombre"
+        class="max-w-full max-h-full object-contain"
+        style="max-height: 80vh;" />
+    </div>
+
+    <!-- Contador de imagen -->
+    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+      <div class="flex justify-center">
+        <span class="text-white text-sm font-medium">
+          {{ indiceImagenActual + 1 }} de {{ fotos.length }}
+        </span>
+      </div>
+    </div>
+
+  </div>
 
 </p-dialog>
 

@@ -1,3 +1,4 @@
+// checklist.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -55,7 +56,11 @@ interface FotoChecklist {
 })
 export class Checklist implements OnInit {
   form!: FormGroup;
-  
+
+  // Control de validación
+  vehiculoValidado: boolean = false;
+  validandoVehiculo: boolean = false;
+
   // Opciones para selects
   sucursales: Opcion[] = [];
   almacenes: Opcion[] = [];
@@ -70,52 +75,52 @@ export class Checklist implements OnInit {
   nroChasis: string = '';
   nroStock: string = '';
 
-  // Equipamiento (columna izquierda) - AHORA CON CÓDIGO
+  // Equipamiento (columna izquierda)
   equipamientoCol1: EquipamientoItem[] = [
-    { codigo: 'EQ001', descripcion: 'TAPA DE PIN', valor: null },
-    { codigo: 'EQ002', descripcion: 'ANTENA', valor: null },
-    { codigo: 'EQ003', descripcion: 'LLAVES DE CONTACTO/SIMPLES', valor: null },
-    { codigo: 'EQ004', descripcion: 'LLAVES DE COMANDO', valor: null },
-    { codigo: 'EQ005', descripcion: 'RADIO FABRICA', valor: null },
-    { codigo: 'EQ006', descripcion: 'CHIP GPS', valor: null },
-    { codigo: 'EQ007', descripcion: 'MANUAL DE USO', valor: null },
-    { codigo: 'EQ008', descripcion: 'CENISERO', valor: null },
-    { codigo: 'EQ009', descripcion: 'ENCENDEDOR', valor: null },
-    { codigo: 'EQ010', descripcion: 'TAPA DE FUSIBLES', valor: null },
-    { codigo: 'EQ011', descripcion: 'TARJETA CODE', valor: null },
-    { codigo: 'EQ012', descripcion: 'CABLE AUXILIAR', valor: null },
-    { codigo: 'EQ013', descripcion: 'COBERTOR', valor: null },
-    { codigo: 'EQ014', descripcion: 'LLANTA DE REPUESTO', valor: null },
-    { codigo: 'EQ015', descripcion: 'LLAVE DE BOCA', valor: null },
-    { codigo: 'EQ016', descripcion: 'LLAVE DE RUEDA', valor: null },
-    { codigo: 'EQ017', descripcion: 'TRIANGULO DE SEGURIDAD', valor: null },
-    { codigo: 'EQ018', descripcion: 'PIN DE REMOLQUE', valor: null },
-    { codigo: 'EQ019', descripcion: 'DESARMADOR', valor: null },
-    { codigo: 'EQ020', descripcion: 'ACOPLE', valor: null }
+    { codigo: '1', descripcion: 'TAPA DE PIN', valor: null },
+    { codigo: '2', descripcion: 'ANTENA', valor: null },
+    { codigo: '3', descripcion: 'LLAVES DE CONTACTO/SIMPLES', valor: null },
+    { codigo: '4', descripcion: 'LLAVES DE COMANDO', valor: null },
+    { codigo: '5', descripcion: 'RADIO FABRICA', valor: null },
+    { codigo: '6', descripcion: 'CHIP GPS', valor: null },
+    { codigo: '7', descripcion: 'MANUAL DE USO', valor: null },
+    { codigo: '8', descripcion: 'CENISERO', valor: null },
+    { codigo: '9', descripcion: 'ENCENDEDOR', valor: null },
+    { codigo: '10', descripcion: 'TAPA DE FUSIBLES', valor: null },
+    { codigo: '11', descripcion: 'TARJETA CODE', valor: null },
+    { codigo: '12', descripcion: 'CABLE AUXILIAR', valor: null },
+    { codigo: '13', descripcion: 'COBERTOR', valor: null },
+    { codigo: '14', descripcion: 'LLANTA DE REPUESTO', valor: null },
+    { codigo: '15', descripcion: 'LLAVE DE BOCA', valor: null },
+    { codigo: '16', descripcion: 'LLAVE DE RUEDA', valor: null },
+    { codigo: '17', descripcion: 'TRIANGULO DE SEGURIDAD', valor: null },
+    { codigo: '18', descripcion: 'PIN DE REMOLQUE', valor: null },
+    { codigo: '19', descripcion: 'DESARMADOR', valor: null },
+    { codigo: '20', descripcion: 'ACOPLE', valor: null }
   ];
 
-  // Equipamiento (columna derecha) - AHORA CON CÓDIGO
+  // Equipamiento (columna derecha)
   equipamientoCol2: EquipamientoItem[] = [
-    { codigo: 'EQ021', descripcion: 'LLAVE ALLEN', valor: null },
-    { codigo: 'EQ022', descripcion: 'LLAVE TUBULAR', valor: null },
-    { codigo: 'EQ023', descripcion: 'EXTINTOR', valor: null },
-    { codigo: 'EQ024', descripcion: 'MARTILLO', valor: null },
-    { codigo: 'EQ025', descripcion: 'LLAVE FRANCESA', valor: null },
-    { codigo: 'EQ026', descripcion: 'LLAVE CORONA', valor: null },
-    { codigo: 'EQ027', descripcion: 'ALICATE', valor: null },
-    { codigo: 'EQ028', descripcion: 'MANIVELA', valor: null },
-    { codigo: 'EQ029', descripcion: 'COPAS DE AROS', valor: null },
-    { codigo: 'EQ030', descripcion: 'TACOS METALICOS', valor: null },
-    { codigo: 'EQ031', descripcion: 'VASOS DE AROS', valor: null },
-    { codigo: 'EQ032', descripcion: 'LLAVEROS', valor: null },
-    { codigo: 'EQ033', descripcion: 'MANUAL DE GARANTIA', valor: null },
-    { codigo: 'EQ034', descripcion: 'PISOS', valor: null },
-    { codigo: 'EQ035', descripcion: 'PORTADOCUMENTO', valor: null },
-    { codigo: 'EQ036', descripcion: 'EMBLEMA', valor: null },
-    { codigo: 'EQ037', descripcion: 'BOLSA DE SEGUROS', valor: null },
-    { codigo: 'EQ038', descripcion: 'VALVULA DE GAS', valor: null },
-    { codigo: 'EQ039', descripcion: 'GATA/PALANCA', valor: null },
-    { codigo: 'EQ040', descripcion: 'PORTA PLACAS', valor: null }
+    { codigo: '21', descripcion: 'LLAVE ALLEN', valor: null },
+    { codigo: '22', descripcion: 'LLAVE TUBULAR', valor: null },
+    { codigo: '23', descripcion: 'EXTINTOR', valor: null },
+    { codigo: '24', descripcion: 'MARTILLO', valor: null },
+    { codigo: '25', descripcion: 'LLAVE FRANCESA', valor: null },
+    { codigo: '26', descripcion: 'LLAVE CORONA', valor: null },
+    { codigo: '27', descripcion: 'ALICATE', valor: null },
+    { codigo: '28', descripcion: 'MANIVELA', valor: null },
+    { codigo: '29', descripcion: 'COPAS DE AROS', valor: null },
+    { codigo: '30', descripcion: 'TACOS METALICOS', valor: null },
+    { codigo: '31', descripcion: 'VASOS DE AROS', valor: null },
+    { codigo: '32', descripcion: 'LLAVEROS', valor: null },
+    { codigo: '33', descripcion: 'MANUAL DE GARANTIA', valor: null },
+    { codigo: '34', descripcion: 'PISOS', valor: null },
+    { codigo: '35', descripcion: 'PORTADOCUMENTO', valor: null },
+    { codigo: '36', descripcion: 'EMBLEMA', valor: null },
+    { codigo: '37', descripcion: 'BOLSA DE SEGUROS', valor: null },
+    { codigo: '38', descripcion: 'VALVULA DE GAS', valor: null },
+    { codigo: '39', descripcion: 'GATA/PALANCA', valor: null },
+    { codigo: '40', descripcion: 'PORTA PLACAS', valor: null }
   ];
 
   // Datos de transporte
@@ -138,7 +143,7 @@ export class Checklist implements OnInit {
     private api: Api,
     private master: Master,
     private sanitizer: DomSanitizer
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -149,12 +154,10 @@ export class Checklist implements OnInit {
       color: [null]
     });
 
-    // Cargar catálogos iniciales
     this.cargarSucursales();
     this.cargarMarcas();
     this.cargarColores();
 
-    // Reaccionar a cambios para cargar dependencias
     this.form.get('sucursal')?.valueChanges.subscribe(idSucursal => {
       if (idSucursal) {
         this.cargarAlmacenesPorSucursal(idSucursal);
@@ -173,6 +176,94 @@ export class Checklist implements OnInit {
       }
     });
   }
+
+  // ==================== VALIDACIÓN DE VEHÍCULO ====================
+
+  validarVehiculo(): void {
+  if (!this.nroStock || this.nroStock.trim() === '') {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Campo vacío',
+      detail: 'Ingrese el número de stock',
+      life: 3000
+    });
+    return;
+  }
+
+  this.validandoVehiculo = true;
+  
+  this.master.getCarPorVin(this.nroStock.trim()).subscribe({
+    next: (response) => {
+      this.validandoVehiculo = false;
+
+      if (response && response.vin) {
+        // Vehículo encontrado - autocompletar datos
+        this.vehiculoValidado = true;
+        
+        // Limpiar y asignar VIN
+        this.nroStock = response.vin.trim();
+        this.nroChasis = response.nroChasis?.trim() || '';
+
+        // Asignar marca
+        if (response.idMarca) {
+          this.form.patchValue({ marca: response.idMarca });
+          
+          // Cargar modelos y luego asignar
+          this.cargarModelosPorMarca(response.idMarca);
+          
+          // Esperar a que se carguen los modelos y buscar por nombre
+          setTimeout(() => {
+            if (response.modelo) {
+              // Buscar el modelo por nombre (label) en lugar de ID
+              const modeloEncontrado = this.modelos.find(m => 
+                m.label.toUpperCase().trim() === response.modelo.toUpperCase().trim()
+              );
+              
+              if (modeloEncontrado) {
+                this.form.patchValue({ modelo: modeloEncontrado.value });
+              } else {
+                console.warn('No se encontró el modelo en la lista:', response.modelo);
+              }
+            }
+          }, 800);
+        }
+
+        // Asignar color
+        if (response.idColor) {
+          this.form.patchValue({ color: response.idColor });
+        }
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Vehículo encontrado',
+          detail: `${response.marca || ''} ${response.modelo || ''}`.trim(),
+          life: 4000
+        });
+      } else {
+        this.vehiculoValidado = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'No encontrado',
+          detail: 'No se encontró el vehículo con ese VIN/Stock',
+          life: 3000
+        });
+      }
+    },
+    error: (error) => {
+      this.validandoVehiculo = false;
+      this.vehiculoValidado = false;
+      
+      console.error('Error al validar vehículo:', error);
+      
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error de validación',
+        detail: error?.error?.message || 'No se pudo validar el vehículo',
+        life: 4000
+      });
+    }
+  });
+}
 
   // ==================== CARGA DE CATÁLOGOS ====================
 
@@ -296,7 +387,7 @@ export class Checklist implements OnInit {
 
   onFileSelect(event: any) {
     const files = event.files || event.target.files;
-        
+
     if (!files || files.length === 0) {
       console.warn('⚠️ No se recibieron archivos');
       return;
@@ -312,7 +403,7 @@ export class Checklist implements OnInit {
       return;
     }
 
-    for (let file of files) {      
+    for (let file of files) {
       if (this.fotos.length >= this.maxFotos) break;
 
       if (!file.type.startsWith('image/')) {
@@ -338,7 +429,7 @@ export class Checklist implements OnInit {
       }
 
       const reader = new FileReader();
-      reader.onload = (e: any) => {        
+      reader.onload = (e: any) => {
         const dataUrl = e.target.result;
         const nuevaFoto: FotoChecklist = {
           id: Date.now().toString() + Math.random(),
@@ -348,7 +439,7 @@ export class Checklist implements OnInit {
           preview: dataUrl
         };
 
-        this.fotos.push(nuevaFoto);        
+        this.fotos.push(nuevaFoto);
         this.messageService.add({
           severity: 'success',
           summary: 'Foto agregada',
@@ -376,7 +467,7 @@ export class Checklist implements OnInit {
     input.type = 'file';
     input.accept = 'image/*';
     input.capture = 'environment';
-    
+
     input.onchange = (event: any) => {
       this.onFileSelect(event);
     };
@@ -385,7 +476,7 @@ export class Checklist implements OnInit {
   }
 
   eliminarFoto(fotoId: string) {
-    this.fotos = this.fotos.filter(f => f.id !== fotoId);    
+    this.fotos = this.fotos.filter(f => f.id !== fotoId);
     this.messageService.add({
       severity: 'info',
       summary: 'Foto eliminada',
@@ -397,7 +488,6 @@ export class Checklist implements OnInit {
   // ==================== GUARDAR CHECKLIST ====================
 
   guardarChecklist(): void {
-    // Validar campos obligatorios del formulario
     if (this.form.invalid) {
       this.messageService.add({
         severity: 'warn',
@@ -408,7 +498,6 @@ export class Checklist implements OnInit {
       return;
     }
 
-    // Validar campos obligatorios adicionales
     if (!this.nroChasis) {
       this.messageService.add({
         severity: 'warn',
@@ -429,13 +518,11 @@ export class Checklist implements OnInit {
       return;
     }
 
-    // Mapear equipamiento al formato de la API (SOLO codigo y valor)
     const equipamientoCompleto = [...this.equipamientoCol1, ...this.equipamientoCol2].map(item => ({
       codigo: item.codigo,
-      valor: item.valor || 'NC' // Valor por defecto si no se seleccionó
+      valor: item.valor || 'NC'
     }));
 
-    // Crear objeto según la interface ChecklistPDI de la API
     const checklist: ChecklistPDI = {
       Sucursal: this.form.get('sucursal')?.value,
       Almacen: this.form.get('almacen')?.value,
@@ -456,11 +543,8 @@ export class Checklist implements OnInit {
       FechaRecepcion: this.fechaRecepcion
     };
 
-
-    // PASO 1: Guardar el checklist
     this.api.guardarChecklistPDI(checklist).subscribe({
       next: (response) => {
-        
         this.messageService.add({
           severity: 'success',
           summary: 'Checklist guardado',
@@ -468,7 +552,6 @@ export class Checklist implements OnInit {
           life: 3000
         });
 
-        // PASO 2: Subir fotos si existen
         if (this.fotos.length > 0) {
           this.subirFotosSecuencial(this.nroStock);
         } else {
@@ -477,7 +560,6 @@ export class Checklist implements OnInit {
       },
       error: (error) => {
         console.error('❌ Error al guardar checklist:', error);
-        
         this.messageService.add({
           severity: 'error',
           summary: 'Error al guardar',
@@ -488,7 +570,6 @@ export class Checklist implements OnInit {
     });
   }
 
-  // Método para subir fotos de forma secuencial
   subirFotosSecuencial(stock: string): void {
     let fotosSubidas = 0;
     let erroresSubida = 0;
@@ -498,8 +579,7 @@ export class Checklist implements OnInit {
       if (!foto.file) {
         console.warn(`⚠️ Foto ${index + 1} no tiene archivo adjunto`);
         erroresSubida++;
-        
-        // Verificar si terminamos de procesar todas
+
         if (fotosSubidas + erroresSubida === totalFotos) {
           this.finalizarSubidaFotos(stock, fotosSubidas, erroresSubida);
         }
@@ -511,7 +591,6 @@ export class Checklist implements OnInit {
       this.api.subirArchivoChecklist(stock, foto.file, tipoArchivo).subscribe({
         next: (response) => {
           fotosSubidas++;
-          // Verificar si terminamos de subir todas
           if (fotosSubidas + erroresSubida === totalFotos) {
             this.finalizarSubidaFotos(stock, fotosSubidas, erroresSubida);
           }
@@ -520,7 +599,6 @@ export class Checklist implements OnInit {
           erroresSubida++;
           console.error(`❌ Error al subir foto ${index + 1}:`, error);
 
-          // Verificar si terminamos de procesar todas
           if (fotosSubidas + erroresSubida === totalFotos) {
             this.finalizarSubidaFotos(stock, fotosSubidas, erroresSubida);
           }
@@ -529,10 +607,7 @@ export class Checklist implements OnInit {
     });
   }
 
-  // Método para finalizar la subida de fotos
   finalizarSubidaFotos(stock: string, fotosSubidas: number, erroresSubida: number): void {
-
-    // Mostrar mensaje de resultado
     if (erroresSubida === 0) {
       this.messageService.add({
         severity: 'success',
@@ -556,7 +631,6 @@ export class Checklist implements OnInit {
       });
     }
 
-    // Limpiar formulario
     setTimeout(() => {
       this.limpiarFormulario();
     }, 2000);
@@ -569,6 +643,7 @@ export class Checklist implements OnInit {
     this.condicionActivo = false;
     this.nroChasis = '';
     this.nroStock = '';
+    this.vehiculoValidado = false;
     this.equipamientoCol1.forEach(item => item.valor = null);
     this.equipamientoCol2.forEach(item => item.valor = null);
     this.transportista = '';

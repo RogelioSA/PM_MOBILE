@@ -82,53 +82,53 @@ export class Detallechecklist implements OnInit {
 
   // Mapeo de códigos a descripciones
   private readonly equipamientoDescripciones: { [key: string]: string } = {
-    'EQ001': 'TAPA DE PIN',
-    'EQ002': 'ANTENA',
-    'EQ003': 'LLAVES DE CONTACTO/SIMPLES',
-    'EQ004': 'LLAVES DE COMANDO',
-    'EQ005': 'RADIO FABRICA',
-    'EQ006': 'CHIP GPS',
-    'EQ007': 'MANUAL DE USO',
-    'EQ008': 'CENISERO',
-    'EQ009': 'ENCENDEDOR',
-    'EQ010': 'TAPA DE FUSIBLES',
-    'EQ011': 'TARJETA CODE',
-    'EQ012': 'CABLE AUXILIAR',
-    'EQ013': 'COBERTOR',
-    'EQ014': 'LLANTA DE REPUESTO',
-    'EQ015': 'LLAVE DE BOCA',
-    'EQ016': 'LLAVE DE RUEDA',
-    'EQ017': 'TRIANGULO DE SEGURIDAD',
-    'EQ018': 'PIN DE REMOLQUE',
-    'EQ019': 'DESARMADOR',
-    'EQ020': 'ACOPLE',
-    'EQ021': 'LLAVE ALLEN',
-    'EQ022': 'LLAVE TUBULAR',
-    'EQ023': 'EXTINTOR',
-    'EQ024': 'MARTILLO',
-    'EQ025': 'LLAVE FRANCESA',
-    'EQ026': 'LLAVE CORONA',
-    'EQ027': 'ALICATE',
-    'EQ028': 'MANIVELA',
-    'EQ029': 'COPAS DE AROS',
-    'EQ030': 'TACOS METALICOS',
-    'EQ031': 'VASOS DE AROS',
-    'EQ032': 'LLAVEROS',
-    'EQ033': 'MANUAL DE GARANTIA',
-    'EQ034': 'PISOS',
-    'EQ035': 'PORTADOCUMENTO',
-    'EQ036': 'EMBLEMA',
-    'EQ037': 'BOLSA DE SEGUROS',
-    'EQ038': 'VALVULA DE GAS',
-    'EQ039': 'GATA/PALANCA',
-    'EQ040': 'PORTA PLACAS'
+    '1': 'TAPA DE PIN',
+    '2': 'ANTENA',
+    '3': 'LLAVES DE CONTACTO/SIMPLES',
+    '4': 'LLAVES DE COMANDO',
+    '5': 'RADIO FABRICA',
+    '6': 'CHIP GPS',
+    '7': 'MANUAL DE USO',
+    '8': 'CENISERO',
+    '9': 'ENCENDEDOR',
+    '10': 'TAPA DE FUSIBLES',
+    '11': 'TARJETA CODE',
+    '12': 'CABLE AUXILIAR',
+    '13': 'COBERTOR',
+    '14': 'LLANTA DE REPUESTO',
+    '15': 'LLAVE DE BOCA',
+    '16': 'LLAVE DE RUEDA',
+    '17': 'TRIANGULO DE SEGURIDAD',
+    '18': 'PIN DE REMOLQUE',
+    '19': 'DESARMADOR',
+    '20': 'ACOPLE',
+    '21': 'LLAVE ALLEN',
+    '22': 'LLAVE TUBULAR',
+    '23': 'EXTINTOR',
+    '24': 'MARTILLO',
+    '25': 'LLAVE FRANCESA',
+    '26': 'LLAVE CORONA',
+    '27': 'ALICATE',
+    '28': 'MANIVELA',
+    '29': 'COPAS DE AROS',
+    '30': 'TACOS METALICOS',
+    '31': 'VASOS DE AROS',
+    '32': 'LLAVEROS',
+    '33': 'MANUAL DE GARANTIA',
+    '34': 'PISOS',
+    '35': 'PORTADOCUMENTO',
+    '36': 'EMBLEMA',
+    '37': 'BOLSA DE SEGUROS',
+    '38': 'VALVULA DE GAS',
+    '39': 'GATA/PALANCA',
+    '40': 'PORTA PLACAS'
   };
 
   constructor(
     private route: ActivatedRoute,
     private api: Api,
     private messageService: MessageService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -189,14 +189,14 @@ export class Detallechecklist implements OnInit {
       },
       error: (error) => {
         console.error('❌ Error al cargar checklist:', error);
-        
+
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
           detail: error?.error?.message || 'No se pudo cargar el checklist',
           life: 3000
         });
-        
+
         this.cargando = false;
       }
     });
@@ -231,14 +231,14 @@ export class Detallechecklist implements OnInit {
       },
       error: (error) => {
         console.error('❌ Error al cargar fotos:', error);
-        
+
         this.messageService.add({
           severity: 'warn',
           summary: 'Aviso',
           detail: 'No se pudieron cargar las fotos del checklist',
           life: 3000
         });
-        
+
         this.fotos = [];
         this.cargandoFotos = false;
       }
