@@ -206,6 +206,7 @@
           class="h-11 sm:w-auto" severity="help"></button>
         <div class="sm:flex-1"></div>
         <button pButton type="button" label="Guardar" icon="pi pi-save" (click)="guardar()"
+          [disabled]="guardando" [loading]="guardando"
           class="h-11 sm:w-auto sm:min-w-[200px]" severity="primary"></button>
       </div>
     </div>

@@ -85,6 +85,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   // Fecha y documento
   fechaSeleccionada: Date = new Date();
   documentoGenerado = '';
+  guardando = false;
 
   // Control de escaneo
   private ultimoCodigoEscaneado = '';
@@ -502,11 +503,15 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   }
 
   guardar() {
+    if (this.guardando) return;
+    this.guardando = true;
+
     if (this.productos.length === 0) {
       this.messageService.add({
         severity: 'warn', summary: 'Sin productos',
         detail: 'Debe agregar al menos un producto', life: 3000
       });
+      this.guardando = false;
       return;
     }
 
@@ -519,6 +524,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
         severity: 'error', summary: 'Error',
         detail: 'Datos incompletos del formulario', life: 3000
       });
+      this.guardando = false;
       return;
     }
 
@@ -539,12 +545,14 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
         });
 
         this.cerrarModal();
+        this.guardando = false;
       },
       error: (error) => {
         this.messageService.add({
           severity: 'error', summary: 'Error al guardar',
           detail: error?.error?.message || 'No se pudo registrar la salida', life: 4000
         });
+        this.guardando = false;
       }
     });
   }
