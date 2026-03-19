@@ -109,4 +109,15 @@ export class Master {
       catchError(error => throwError(() => error))
     );
   }
+
+  // Proveedores
+  listarProveedorTramite(): Observable<any> {
+    return this.https.get<any>(
+      `${this.baseUrl}/ResumeBySeller/listarProveedorTramite`,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
 }

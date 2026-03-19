@@ -8,6 +8,8 @@ import { Listarchecklist } from './listarchecklist/listarchecklist';
 import { Detallechecklist } from './detallechecklist/detallechecklist';
 import { Recepcionvehiculos } from './recepcionvehiculos/recepcionvehiculos';
 import { Ingresosalidataller } from './ingresosalidataller/ingresosalidataller';
+import { Mantenimiento } from './mantenimiento/mantenimiento';
+import { MantenimientoEstados } from './mantenimiento-estados/mantenimiento-estados';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -55,6 +57,16 @@ export const routes: Routes = [
   {
     path: 'ingresosalidataller',
     component: Ingresosalidataller,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'mantenimiento',
+    component: Mantenimiento,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'mantenimientoestados',
+    component: MantenimientoEstados,
     canActivate: [authGuard]
   },
   // Cualquier ruta no válida vuelve al login

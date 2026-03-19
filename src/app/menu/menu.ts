@@ -42,10 +42,18 @@ export class Menu implements OnInit {
         label: 'Ingreso/Salida Taller',
         command: () => this.navigateTo('ingresosalidataller')
       },
-            {
+      {
         label: 'Listar Checklist',
         command: () => this.navigateTo('listarchecklist')
-      }
+      },
+      {
+        label: 'Mantenimiento',
+        command: () => this.navigateTo('mantenimiento')
+      },
+      {
+        label: 'Gestor Mantenimiento',
+        command: () => this.navigateTo('mantenimientoestados')
+      },
     ];
 
     // Cargar tema desde localStorage

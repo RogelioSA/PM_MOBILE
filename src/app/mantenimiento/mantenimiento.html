@@ -1,0 +1,452 @@
+<!-- mantenimiento.html -->
+<app-menu></app-menu>
+
+<div class="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-6 pt-20 sm:pt-24">
+    <div class="max-w-[1600px] mx-auto">
+
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
+                Solicitudes de Mantenimiento
+            </h1>
+            <button pButton type="button" label="Nueva Solicitud" icon="pi pi-plus" 
+                (click)="nuevaSolicitud()" class="h-11"></button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                
+                <!-- Estado -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Estado
+                    </label>
+                    <p-select [(ngModel)]="estadoFiltro" [options]="estados" 
+                        optionLabel="label" optionValue="value" placeholder="Seleccione estado" 
+                        styleClass="w-full" />
+                </div>
+
+                <!-- Prioridad -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Prioridad
+                    </label>
+                    <p-select [(ngModel)]="prioridadFiltro" [options]="prioridades" 
+                        optionLabel="label" optionValue="value" placeholder="Todas" 
+                        styleClass="w-full">
+                        <ng-template let-option pTemplate="item">
+                            <span *ngIf="option.value === ''">Todas</span>
+                            <span *ngIf="option.value !== ''">{{ option.label }}</span>
+                        </ng-template>
+                    </p-select>
+                </div>
+
+                <!-- Fecha Desde -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Fecha Desde
+                    </label>
+                    <input type="date" pInputText [(ngModel)]="fechaDesde" class="w-full h-11" />
+                </div>
+
+                <!-- Fecha Hasta -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Fecha Hasta
+                    </label>
+                    <input type="date" pInputText [(ngModel)]="fechaHasta" class="w-full h-11" />
+                </div>
+
+                <!-- Botones -->
+                <div class="flex flex-col gap-2 justify-end">
+                    <div class="flex gap-2">
+                        <button pButton type="button" label="Filtrar" icon="pi pi-search" 
+                            (click)="aplicarFiltros()" class="h-11 flex-1"></button>
+                        <button pButton type="button" icon="pi pi-times" 
+                            (click)="limpiarFiltros()" severity="secondary" 
+                            class="h-11" pTooltip="Limpiar filtros"></button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Tabla de solicitudes -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
+
+            <!-- Vista Desktop/Tablet -->
+            <div class="hidden md:block overflow-x-auto">
+                <p-table [value]="solicitudes" [loading]="cargando" styleClass="p-datatable-sm"
+                    responsiveLayout="scroll" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
+
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                ID
+                            </th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Prioridad
+                            </th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Tipo
+                            </th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Descripción
+                            </th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Sitio
+                            </th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Estado
+                            </th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Fecha
+                            </th>
+                            <th class="text-center p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Acciones
+                            </th>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="body" let-item>
+                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                            <td class="p-3 text-sm text-gray-800 dark:text-gray-200 font-medium">
+                                #{{ item.id }}
+                            </td>
+                            <td class="p-3">
+                                <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getPrioridadColor(item.prioridad)">
+                                    {{ item.prioridadNombre }}
+                                </span>
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+                                {{ item.tipoNombre }}
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate">
+                                {{ item.descripcion }}
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+                                {{ item.sitioNombre }}
+                            </td>
+                            <td class="p-3">
+                                <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getEstadoColor(item.estado)">
+                                    {{ item.estadoNombre }}
+                                </span>
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+                                {{ item.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}
+                            </td>
+                            <td class="p-3 text-center">
+                                <button pButton type="button" icon="pi pi-eye" (click)="verDetalle(item)"
+                                    class="p-button-sm p-button-text" pTooltip="Ver detalle" tooltipPosition="left"></button>
+                            </td>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="9" class="text-center py-8">
+                                <div class="text-gray-500 dark:text-gray-400">
+                                    <i class="pi pi-inbox text-4xl mb-3 block opacity-50"></i>
+                                    <p class="text-sm font-medium">No hay solicitudes de mantenimiento</p>
+                                    <p class="text-xs mt-1">Crea una nueva solicitud para comenzar</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+
+            <!-- Vista Mobile (cards) -->
+            <div class="md:hidden p-4 space-y-4">
+                <div *ngIf="cargando" class="text-center py-8">
+                    <i class="pi pi-spin pi-spinner text-3xl text-blue-500"></i>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Cargando...</p>
+                </div>
+
+                <div *ngIf="!cargando && solicitudes.length === 0" class="text-center py-8">
+                    <div class="text-gray-500 dark:text-gray-400">
+                        <i class="pi pi-inbox text-4xl mb-3 block opacity-50"></i>
+                        <p class="text-sm font-medium">No hay solicitudes de mantenimiento</p>
+                        <p class="text-xs mt-1">Crea una nueva solicitud para comenzar</p>
+                    </div>
+                </div>
+
+                <div *ngFor="let item of solicitudes"
+                    class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <p class="text-sm font-bold text-gray-800 dark:text-white">
+                                #{{ item.id }} - {{ item.tipoNombre }}
+                            </p>
+                            <span [class]="'inline-block mt-1 px-2 py-1 rounded-full text-xs font-medium ' + getPrioridadColor(item.prioridad)">
+                                {{ item.prioridadNombre }}
+                            </span>
+                        </div>
+                        <button pButton type="button" icon="pi pi-eye" (click)="verDetalle(item)"
+                            class="p-button-sm p-button-rounded" severity="secondary"></button>
+                    </div>
+
+                    <div class="space-y-2 text-sm">
+                        <p class="text-gray-700 dark:text-gray-300 line-clamp-2">
+                            {{ item.descripcion }}
+                        </p>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Sitio:</span>
+                            <span class="text-gray-800 dark:text-white">{{ item.sitioNombre }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 dark:text-gray-400">Estado:</span>
+                            <span [class]="'px-2 py-1 rounded-full text-xs font-medium ' + getEstadoColor(item.estado)">
+                                {{ item.estadoNombre }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Fecha:</span>
+                            <span class="text-gray-800 dark:text-white">
+                                {{ item.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- MODAL CREAR/EDITAR -->
+<p-dialog [(visible)]="mostrarFormulario" [modal]="true" [closable]="true" [closeOnEscape]="true"
+    [dismissableMask]="true" [style]="{width: '95vw', maxWidth: '900px'}"
+    [contentStyle]="{padding: '0', 'max-height': '85vh', 'overflow-y': 'auto'}"
+    [header]="'Nueva Solicitud de Mantenimiento'">
+
+    <div class="p-4 sm:p-6">
+
+        <!-- Formulario -->
+        <div class="space-y-4">
+
+            <!-- Prioridad y Tipo -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Prioridad <span class="text-red-500">*</span>
+                    </label>
+                    <p-select [(ngModel)]="prioridadSeleccionada" [options]="prioridadesForm" 
+                        optionLabel="label" optionValue="value" placeholder="Seleccione prioridad" 
+                        styleClass="w-full" />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Tipo <span class="text-red-500">*</span>
+                    </label>
+                    <p-select [(ngModel)]="tipoSeleccionado" [options]="tipos" 
+                        optionLabel="label" optionValue="value" placeholder="Seleccione tipo" 
+                        styleClass="w-full" />
+                </div>
+            </div>
+
+            <!-- Sitio -->
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Sitio (Sucursal) <span class="text-red-500">*</span>
+                </label>
+                <p-select [(ngModel)]="sitioSeleccionado" [options]="sucursales" 
+                    optionLabel="label" optionValue="value" placeholder="Seleccione sucursal" 
+                    styleClass="w-full" />
+            </div>
+
+            <!-- Descripción -->
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Descripción / Observación <span class="text-red-500">*</span>
+                </label>
+                <textarea pTextarea [(ngModel)]="descripcion" rows="4" 
+                    placeholder="Describa detalladamente el problema o necesidad de mantenimiento..."
+                    class="w-full">
+                </textarea>
+            </div>
+
+            <!-- Subir fotos -->
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Fotos (Opcional)
+                </label>
+                
+                <p-fileupload mode="basic" chooseLabel="Seleccionar fotos" 
+                    [multiple]="true" accept="image/*" [maxFileSize]="5000000"
+                    (onSelect)="onFileSelect($event)" [auto]="true"
+                    styleClass="w-full">
+                </p-fileupload>
+
+                <!-- Preview de fotos -->
+                <div *ngIf="fotosNuevas.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                    <div *ngFor="let foto of fotosNuevas" 
+                        class="relative group rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-600">
+                        
+                        <img [src]="foto.url" [alt]="foto.nombre" 
+                            class="w-full h-32 object-cover" />
+                        
+                        <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 
+                            transition-opacity flex items-center justify-center">
+                            <button type="button" (click)="eliminarFoto(foto)"
+                                class="bg-red-500 hover:bg-red-600 text-white rounded-full p-2">
+                                <i class="pi pi-trash text-sm"></i>
+                            </button>
+                        </div>
+
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-1">
+                            <p class="text-white text-xs truncate">{{ foto.nombre }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Footer botones -->
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800">
+        <button pButton type="button" label="Cancelar" icon="pi pi-times" 
+            (click)="cerrarFormulario()" severity="secondary" class="h-11"></button>
+        <button pButton type="button" label="Guardar" icon="pi pi-check" 
+            (click)="guardarSolicitud()" [loading]="cargando" class="h-11"></button>
+    </div>
+
+</p-dialog>
+
+<!-- MODAL DETALLE -->
+<p-dialog [(visible)]="mostrarDetalle" [modal]="true" [closable]="true" [closeOnEscape]="true"
+    [dismissableMask]="true" [style]="{width: '95vw', maxWidth: '1000px'}"
+    [contentStyle]="{padding: '0', 'max-height': '85vh', 'overflow-y': 'auto'}"
+    [header]="'Detalle Solicitud #' + (solicitudSeleccionada?.id || '')">
+
+    <div *ngIf="solicitudSeleccionada" class="p-4 sm:p-6">
+
+        <!-- Información general -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+            <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+                INFORMACIÓN GENERAL
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">ID Solicitud</label>
+                    <input pInputText class="w-full h-11" [value]="'#' + solicitudSeleccionada.id" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Creación</label>
+                    <input pInputText class="w-full h-11" 
+                        [value]="solicitudSeleccionada.fechaCreacion | date:'dd/MM/yyyy HH:mm'" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Prioridad</label>
+                    <div class="flex items-center h-11">
+                        <span [class]="'px-4 py-2 rounded-lg text-sm font-medium ' + getPrioridadColor(solicitudSeleccionada.prioridad)">
+                            {{ solicitudSeleccionada.prioridadNombre }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+                    <div class="flex items-center h-11">
+                        <span [class]="'px-4 py-2 rounded-lg text-sm font-medium ' + getEstadoColor(solicitudSeleccionada.estado)">
+                            {{ solicitudSeleccionada.estadoNombre }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</label>
+                    <input pInputText class="w-full h-11" [value]="solicitudSeleccionada.tipoNombre" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Sitio</label>
+                    <input pInputText class="w-full h-11" [value]="solicitudSeleccionada.sitioNombre" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2 sm:col-span-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Descripción</label>
+                    <textarea pTextarea rows="4" class="w-full" 
+                        [value]="solicitudSeleccionada.descripcion" disabled>
+                    </textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fotos adjuntas -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
+            <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+                FOTOS ADJUNTAS
+                <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+                    ({{ solicitudSeleccionada.fotos?.length || 0 }})
+                </span>
+            </h2>
+
+            <div *ngIf="solicitudSeleccionada.fotos && solicitudSeleccionada.fotos.length > 0" class="space-y-2">
+                <div *ngFor="let foto of solicitudSeleccionada.fotos; let i = index"
+                    class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 
+                        hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <div class="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                            <i class="pi pi-image text-blue-600 dark:text-blue-400 text-lg"></i>
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
+                                {{ foto.nombre }}
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Foto #{{ i + 1 }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <button pButton type="button" icon="pi pi-eye" 
+                        (click)="verImagen(foto, solicitudSeleccionada.fotos)"
+                        class="p-button-sm p-button-rounded p-button-text" 
+                        pTooltip="Ver imagen" tooltipPosition="left" severity="secondary"></button>
+                </div>
+            </div>
+
+            <div *ngIf="!solicitudSeleccionada.fotos || solicitudSeleccionada.fotos.length === 0"
+                class="text-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                <i class="pi pi-images text-4xl mb-3 block opacity-50"></i>
+                <p class="text-sm font-medium">No se adjuntaron fotos</p>
+                <p class="text-xs mt-1">Esta solicitud no tiene fotos adjuntas</p>
+            </div>
+        </div>
+
+    </div>
+
+</p-dialog>
+
+<!-- MODAL IMAGEN -->
+<p-dialog [(visible)]="mostrarImagenModal" [modal]="true" [closable]="true" [closeOnEscape]="true"
+    [dismissableMask]="true" [style]="{width: '95vw', maxWidth: '1200px'}"
+    [contentStyle]="{padding: '0', background: '#000'}"
+    [header]="imagenSeleccionada?.nombre || 'Imagen'"
+    (onHide)="cerrarImagenModal()">
+
+    <div class="relative bg-black" *ngIf="imagenSeleccionada">
+
+        <!-- Imagen -->
+        <div class="flex items-center justify-center" style="min-height: 60vh; max-height: 80vh;">
+            <img [src]="imagenSeleccionada.url" [alt]="imagenSeleccionada.nombre"
+                class="max-w-full max-h-full object-contain" style="max-height: 80vh;" />
+        </div>
+
+    </div>
+
+</p-dialog>
+
+<p-toast position="top-right"></p-toast>

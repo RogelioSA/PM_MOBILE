@@ -326,4 +326,185 @@ export class Api {
     );
   }
 
+
+  getSolicitudMantenimiento(params: {
+    solicitanteUsuario: string;
+    estado: string;
+    prioridad: string;
+    fechaDesde: string;
+    fechaHasta: string;
+  }): Observable<any> {
+
+    const queryParams = new HttpParams()
+      .set('solicitanteUsuario', params.solicitanteUsuario)
+      .set('estado', params.estado)
+      .set('prioridad', params.prioridad)
+      .set('fechaDesde', params.fechaDesde)
+      .set('fechaHasta', params.fechaHasta);
+
+    return this.https.get<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/ListarSolicitudMantenimiento`,
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  crearSolicitudMantenimiento(params: {
+    prioridad: string;
+    tipo: string;
+    solicitanteUsuario: string;
+    sucursal: string;
+    descripcion: string;
+  }): Observable<any> {
+
+    const queryParams = new HttpParams()
+      .set('prioridad', params.prioridad)
+      .set('tipo', params.tipo)
+      .set('solicitanteUsuario', params.solicitanteUsuario)
+      .set('sucursal', params.sucursal)
+      .set('descripcion', params.descripcion);
+
+    return this.https.post<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/CrearSolicitudMantenimiento`,
+      {},
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  editarSolicitudMantenimiento(params: {
+    id: number;
+    estado: string;
+    usuario: string;
+    fechaInicio: string;
+    fechaFin: string;
+    fechaCierre: string;
+    proveedor: string;
+    tipoDocumento: string;
+    serie: string;
+    numero: string;
+  }): Observable<any> {
+
+    const queryParams = new HttpParams()
+      .set('id', params.id.toString())
+      .set('estado', params.estado)
+      .set('usuario', params.usuario)
+      .set('fechaInicio', params.fechaInicio)
+      .set('fechaFin', params.fechaFin)
+      .set('fechaCierre', params.fechaCierre)
+      .set('proveedor', params.proveedor)
+      .set('tipoDocumento', params.tipoDocumento)
+      .set('serie', params.serie)
+      .set('numero', params.numero);
+
+    return this.https.put<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/EditarSolicitudMantenimiento`,
+      {},
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  consultarSolicitudMantenimiento(id: number): Observable<any> {
+    const queryParams = new HttpParams()
+      .set('id', id.toString());
+
+    return this.https.get<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/ConsultarSolicitudMantenimiento`,
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  consultarLogSolicitudMantenimiento(idSolicitudMantenimiento: number): Observable<any> {
+    const queryParams = new HttpParams()
+      .set('idSolicitudMantenimiento', idSolicitudMantenimiento.toString());
+
+    return this.https.get<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/ConsultarLogSolicitudMantenimiento`,
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  guardarSolicitudMantenimientoPresupuesto(params: {
+    id: number;
+    idSolicitudMantenimiento: number;
+    idClieProv: string;
+    monto: number;
+    fecha: string;
+  }): Observable<any> {
+
+    const queryParams = new HttpParams()
+      .set('id', params.id.toString())
+      .set('idSolicitudMantenimiento', params.idSolicitudMantenimiento.toString())
+      .set('idClieProv', params.idClieProv)
+      .set('monto', params.monto.toString())
+      .set('fecha', params.fecha);
+
+    return this.https.post<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/GuardarSolicitudMantenimientoPresupuesto`,
+      {},
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  listarSolicitudMantenimientoPresupuesto(idSolicitudMantenimiento: number): Observable<any> {
+    const queryParams = new HttpParams()
+      .set('idSolicitudMantenimiento', idSolicitudMantenimiento.toString());
+
+    return this.https.get<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/ListarSolicitudMantenimientoPresupuesto`,
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  subirArchivo(params: {
+    carpeta: string;
+    archivo: string;
+    tipoArchivo: string;
+  }): Observable<any> {
+
+    const queryParams = new HttpParams()
+      .set('carpeta', params.carpeta)
+      .set('archivo', params.archivo)
+      .set('tipoArchivo', params.tipoArchivo);
+
+    return this.https.get<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/subirArchivoChecklist`,
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  listarArchivos(ruta: string): Observable<any> {
+    const queryParams = new HttpParams()
+      .set('ruta', ruta);
+
+    return this.https.get<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/listarArchivosChecklist`,
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
 }
