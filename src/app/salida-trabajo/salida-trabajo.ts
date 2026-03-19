@@ -64,7 +64,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
 
   placaSeleccionada = '';
   idProductoSeleccionado = '';
-
+  idSucursalSeleccionado = '';
   // Modal Scanner
   modalVisible = false;
   idProductoInput = '';
@@ -85,6 +85,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   // Fecha y documento
   fechaSeleccionada: Date = new Date();
   documentoGenerado = '';
+  guardando = false;
 
   // Control de escaneo
   private ultimoCodigoEscaneado = '';
@@ -109,7 +110,9 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
 
     this.form.get('sucursal')?.valueChanges.subscribe(idSucursal => {
       if (idSucursal) {
+        this.idSucursalSeleccionado = idSucursal;
         this.cargarAlmacenesPorSucursal(idSucursal);
+        this.cargarOrdenesTrabajo();
       } else {
         this.almacenes = [];
         this.form.get('almacen')?.reset();
@@ -125,7 +128,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    this.cargarOrdenesTrabajo();
+    //this.cargarOrdenesTrabajo();
     this.solicitarPermisoCamara();
   }
 
@@ -145,7 +148,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
     document.addEventListener('click', (event) => {
       const target = event.target as HTMLElement;
       const isSelectTrigger = target.closest('.p-select') || target.closest('p-select');
-      
+
       if (isSelectTrigger) {
         setTimeout(() => {
           const filterInput = document.querySelector('.p-select-filter') as HTMLInputElement;
@@ -347,7 +350,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   }
 
   cargarOrdenesTrabajo() {
-    const idTaller = '001';
+    const idTaller = this.idSucursalSeleccionado;
     this.ordenesTrabajo = [];
     this.form.get('ordenTrabajo')?.reset();
 
@@ -370,7 +373,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   }
 
   cargarDetalleOrdenTrabajo(idOrdenTrabajo: string) {
-    const idTaller = '001';
+    const idTaller = this.idSucursalSeleccionado;
 
     this.master.getOrdenesProduccionPorSucursal(idTaller).subscribe({
       next: (response) => {
@@ -500,11 +503,15 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
   }
 
   guardar() {
+    if (this.guardando) return;
+    this.guardando = true;
+
     if (this.productos.length === 0) {
       this.messageService.add({
         severity: 'warn', summary: 'Sin productos',
         detail: 'Debe agregar al menos un producto', life: 3000
       });
+      this.guardando = false;
       return;
     }
 
@@ -517,6 +524,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
         severity: 'error', summary: 'Error',
         detail: 'Datos incompletos del formulario', life: 3000
       });
+      this.guardando = false;
       return;
     }
 
@@ -537,12 +545,14 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
         });
 
         this.cerrarModal();
+        this.guardando = false;
       },
       error: (error) => {
         this.messageService.add({
           severity: 'error', summary: 'Error al guardar',
           detail: error?.error?.message || 'No se pudo registrar la salida', life: 4000
         });
+        this.guardando = false;
       }
     });
   }
