@@ -30,7 +30,25 @@ interface SolicitudMantenimiento {
   estado: number;
   estadoNombre: string;
   fechaCreacion: string;
+  fechaInicio: string;
+  fechaFin: string | null;
+  fechaCierre: string | null;
+  proveedor: string | null;
+  nombreProveedor: string | null;
+  tipoDocumento: string | null;
+  serie: string | null;
+  numero: string | null;
   fotos: FotoMantenimiento[];
+  cargandoFotos: boolean;
+}
+
+interface LogMantenimiento {
+  id: number;
+  idSolicitudMantenimiento: number;
+  estadoInicial: string;
+  estadoFinal: string;
+  usuario: string;
+  fecha: string;
 }
 
 interface FotoMantenimiento {
@@ -38,6 +56,8 @@ interface FotoMantenimiento {
   url: string;
   nombre: string;
   archivo?: File;
+  size?: number;
+  lastModified?: string;
 }
 
 @Component({
@@ -125,6 +145,8 @@ export class Mantenimiento implements OnInit {
   // Modal detalle
   mostrarDetalle = false;
   solicitudSeleccionada: SolicitudMantenimiento | null = null;
+  logsSolicitud: LogMantenimiento[] = [];
+  cargandoLogs = false;
 
   // Modal imagen
   mostrarImagenModal = false;
@@ -166,6 +188,14 @@ export class Mantenimiento implements OnInit {
     const month = String(fecha.getMonth() + 1).padStart(2, '0');
     const day = String(fecha.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  formatBytes(bytes?: number): string {
+    if (!bytes || bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   }
 
   cargarSucursales() {
@@ -241,11 +271,20 @@ export class Mantenimiento implements OnInit {
             descripcion: item.descripcion,
             solicitante: item.solicitanteUsuario,
             sitio: item.sucursal,
-            sitioNombre: item.nombreSucursal || item.sucursal, // Usar nombreSucursal del API
+            sitioNombre: item.nombreSucursal || item.sucursal,
             estado: this.convertirEstadoANumero(item.estado),
             estadoNombre: this.obtenerNombreEstadoPorCodigo(item.estado),
             fechaCreacion: item.fechaCreacion,
-            fotos: []
+            fechaInicio: item.fechaInicio,
+            fechaFin: item.fechaFin,
+            fechaCierre: item.fechaCierre,
+            proveedor: item.proveedor,
+            nombreProveedor: item.nombreProveedor,
+            tipoDocumento: item.tipoDocumento,
+            serie: item.serie,
+            numero: item.numero,
+            fotos: [],
+            cargandoFotos: false
           }));
           
           console.log('Solicitudes mapeadas:', this.solicitudes);
@@ -265,6 +304,45 @@ export class Mantenimiento implements OnInit {
           detail: 'No se pudieron cargar las solicitudes',
           life: 3000
         });
+      }
+    });
+  }
+
+  cargarFotosDesdeS3(idSolicitud: number) {
+    if (!this.solicitudSeleccionada) return;
+
+    const ruta = `SM${idSolicitud}`;
+    this.solicitudSeleccionada.cargandoFotos = true;
+    this.solicitudSeleccionada.fotos = [];
+
+    this.apiService.listarArchivos(ruta).subscribe({
+      next: (response) => {
+        if (Array.isArray(response) && this.solicitudSeleccionada) {
+          this.solicitudSeleccionada.fotos = response.map((foto: any) => ({
+            id: foto.key,
+            url: foto.url,
+            nombre: foto.name,
+            size: foto.size,
+            lastModified: foto.lastModified
+          }));
+        }
+        if (this.solicitudSeleccionada) {
+          this.solicitudSeleccionada.cargandoFotos = false;
+        }
+      },
+      error: (error) => {
+        if (this.solicitudSeleccionada) {
+          this.solicitudSeleccionada.cargandoFotos = false;
+        }
+        // Error 404 silencioso (carpeta vacía)
+        if (error.status !== 404) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron cargar las fotos',
+            life: 3000
+          });
+        }
       }
     });
   }
@@ -355,17 +433,39 @@ export class Mantenimiento implements OnInit {
   }
 
   onFileSelect(event: any) {
-    const files = event.currentFiles || event.files;
+    console.log('=== onFileSelect DISPARADO ===');
+    console.log('Event completo:', event);
+    console.log('event.files:', event.files);
+    console.log('event.currentFiles:', event.currentFiles);
+    
+    // IMPORTANTE: event.files son los NUEVOS archivos seleccionados
+    // event.currentFiles son TODOS los archivos (incluidos los previos)
+    // Usamos event.files para evitar duplicados
+    const files = event.files; // ← CAMBIO: solo archivos nuevos
+    
+    if (!files || files.length === 0) {
+      console.warn('⚠️ No se recibieron archivos');
+      return;
+    }
+
+    console.log(`📁 Procesando ${files.length} archivo(s) NUEVO(S)`);
     
     for (const file of files) {
+      console.log('Archivo:', file.name, 'Tipo:', file.type, 'Tamaño:', file.size);
+      
       const reader = new FileReader();
       reader.onload = (e: any) => {
+        console.log('✅ Archivo leído:', file.name);
         this.fotosNuevas.push({
           id: Date.now().toString() + Math.random(),
           url: e.target.result,
           nombre: file.name,
           archivo: file
         });
+        console.log('Total fotos en memoria:', this.fotosNuevas.length);
+      };
+      reader.onerror = (error) => {
+        console.error('❌ Error al leer archivo:', error);
       };
       reader.readAsDataURL(file);
     }
@@ -424,45 +524,89 @@ export class Mantenimiento implements OnInit {
 
     this.apiService.crearSolicitudMantenimiento(params).subscribe({
       next: (response) => {
-        // Validación defensiva de respuesta
-        if (!response) {
-          this.cargando = false;
-          console.warn('Respuesta vacía del API');
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se recibió respuesta del servidor',
-            life: 3000
-          });
-          return;
-        }
+        console.log('📥 Respuesta del API crear solicitud:', response);
 
-        if (response.success) {
-          const idSolicitud = response.data?.id || response.id;
+        // El API crea la solicitud pero devuelve vacío
+        // Necesitamos recargar para obtener el ID de la última solicitud creada
+        
+        if (this.fotosNuevas.length > 0) {
+          console.log('📸 Hay fotos para subir, buscando ID de la solicitud recién creada...');
           
-          // Si hay fotos, subirlas
-          if (this.fotosNuevas.length > 0 && idSolicitud) {
-            this.subirFotos(idSolicitud);
-          } else {
-            this.cargando = false;
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Solicitud creada',
-              detail: 'La solicitud de mantenimiento ha sido creada exitosamente',
-              life: 3000
-            });
+          // Recargar solicitudes para obtener la última creada
+          const paramsRecargar = {
+            solicitanteUsuario: this.usuarioActual,
+            estado: '',
+            prioridad: '',
+            fechaDesde: this.formatearFecha(new Date()), // Solo hoy
+            fechaHasta: this.formatearFecha(new Date())
+          };
 
-            this.cerrarFormulario();
-            this.cargarSolicitudes();
-          }
+          this.apiService.getSolicitudMantenimiento(paramsRecargar).subscribe({
+            next: (responseListado) => {
+              console.log('📥 Listado de solicitudes:', responseListado);
+
+              let datos = [];
+              if (Array.isArray(responseListado)) {
+                datos = responseListado;
+              } else if (responseListado.success && responseListado.data) {
+                datos = responseListado.data;
+              } else if (responseListado.data && Array.isArray(responseListado.data)) {
+                datos = responseListado.data;
+              }
+
+              if (datos.length > 0) {
+                // Ordenar por ID descendente para obtener la última
+                datos.sort((a: any, b: any) => b.id - a.id);
+                const ultimaSolicitud = datos[0];
+                const idSolicitud = ultimaSolicitud.id;
+
+                console.log('🆔 ID de última solicitud creada:', idSolicitud);
+                console.log('📸 Iniciando subida de fotos...');
+
+                // Ahora sí, subir fotos con el ID correcto
+                this.subirFotos(idSolicitud);
+              } else {
+                this.cargando = false;
+                console.warn('⚠️ No se encontraron solicitudes después de crear');
+                
+                this.messageService.add({
+                  severity: 'warn',
+                  summary: 'Solicitud creada',
+                  detail: 'La solicitud fue creada pero no se pudieron subir las fotos',
+                  life: 4000
+                });
+
+                this.cerrarFormulario();
+                this.cargarSolicitudes();
+              }
+            },
+            error: (error) => {
+              this.cargando = false;
+              console.error('❌ Error al recargar solicitudes:', error);
+              
+              this.messageService.add({
+                severity: 'warn',
+                summary: 'Solicitud creada',
+                detail: 'La solicitud fue creada pero no se pudieron subir las fotos',
+                life: 4000
+              });
+
+              this.cerrarFormulario();
+              this.cargarSolicitudes();
+            }
+          });
         } else {
+          // No hay fotos, solo mostrar éxito
           this.cargando = false;
           this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: response.message || 'No se pudo crear la solicitud',
+            severity: 'success',
+            summary: 'Solicitud creada',
+            detail: 'La solicitud de mantenimiento ha sido creada exitosamente',
             life: 3000
           });
+
+          this.cerrarFormulario();
+          this.cargarSolicitudes();
         }
       },
       error: (error) => {
@@ -486,47 +630,51 @@ export class Mantenimiento implements OnInit {
     let fotosSubidas = 0;
     let errores = 0;
 
+    console.log('=== INICIANDO SUBIDA DE FOTOS ===');
+    console.log('ID Solicitud:', idSolicitud);
+    console.log('Carpeta:', carpeta);
+    console.log('Total fotos a subir:', this.fotosNuevas.length);
+
     this.fotosNuevas.forEach((foto, index) => {
       if (!foto.archivo) {
+        console.warn(`⚠️ Foto ${index + 1} no tiene archivo adjunto`);
         fotosSubidas++;
         return;
       }
 
-      // Convertir archivo a base64
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        const base64 = e.target.result.split(',')[1]; // Quitar el prefijo data:image/...;base64,
-        const extension = foto.nombre.split('.').pop() || 'jpg';
+      console.log(`--- Foto ${index + 1}/${this.fotosNuevas.length} ---`);
+      console.log('Nombre:', foto.nombre);
+      console.log('Tipo archivo.type:', foto.archivo.type);
+      console.log('Tamaño:', (foto.archivo.size / 1024).toFixed(2), 'KB');
 
-        const params = {
-          carpeta: carpeta,
-          archivo: base64,
-          tipoArchivo: extension
-        };
+      // Determinar tipo de archivo (imagen o pdf)
+      const tipoArchivo = foto.archivo.type.includes('pdf') ? 'pdf' : 'imagen';
+      console.log('Tipo determinado:', tipoArchivo);
 
-        this.apiService.subirArchivo(params).subscribe({
-          next: (response) => {
-            fotosSubidas++;
-            console.log(`Foto ${index + 1} subida:`, response);
+      // Llamar API con File directamente (como en checklist.ts)
+      this.apiService.subirArchivo(idSolicitud, foto.archivo, tipoArchivo).subscribe({
+        next: (response) => {
+          fotosSubidas++;
+          console.log(`✅ Foto ${index + 1} subida exitosamente`);
+          console.log('Respuesta S3:', response);
 
-            // Cuando todas las fotos terminen (éxito o error)
-            if (fotosSubidas + errores === this.fotosNuevas.length) {
-              this.finalizarSubida(fotosSubidas, errores);
-            }
-          },
-          error: (error) => {
-            errores++;
-            console.error(`Error al subir foto ${index + 1}:`, error);
-
-            // Cuando todas las fotos terminen (éxito o error)
-            if (fotosSubidas + errores === this.fotosNuevas.length) {
-              this.finalizarSubida(fotosSubidas, errores);
-            }
+          // Cuando todas las fotos terminen (éxito o error)
+          if (fotosSubidas + errores === this.fotosNuevas.length) {
+            this.finalizarSubida(fotosSubidas, errores);
           }
-        });
-      };
+        },
+        error: (error) => {
+          errores++;
+          console.error(`❌ Error al subir foto ${index + 1}:`, error);
+          console.error('Status:', error.status);
+          console.error('Error completo:', error);
 
-      reader.readAsDataURL(foto.archivo);
+          // Cuando todas las fotos terminen (éxito o error)
+          if (fotosSubidas + errores === this.fotosNuevas.length) {
+            this.finalizarSubida(fotosSubidas, errores);
+          }
+        }
+      });
     });
   }
 
@@ -568,11 +716,56 @@ export class Mantenimiento implements OnInit {
   verDetalle(solicitud: SolicitudMantenimiento) {
     this.solicitudSeleccionada = solicitud;
     this.mostrarDetalle = true;
+    this.cargarLogs(solicitud.id);
+    this.cargarFotosDesdeS3(solicitud.id);
+  }
+
+  cargarLogs(idSolicitud: number) {
+    this.cargandoLogs = true;
+    this.logsSolicitud = [];
+
+    this.apiService.consultarLogSolicitudMantenimiento(idSolicitud).subscribe({
+      next: (response) => {
+        this.cargandoLogs = false;
+        
+        let datos = [];
+        
+        if (Array.isArray(response)) {
+          datos = response;
+        } else if (response.success && response.data) {
+          datos = response.data;
+        } else if (response.data && Array.isArray(response.data)) {
+          datos = response.data;
+        }
+
+        this.logsSolicitud = datos.map((log: any) => ({
+          id: log.id,
+          idSolicitudMantenimiento: log.idSolicitudMantenimiento,
+          estadoInicial: log.estadoInicial,
+          estadoFinal: log.estadoFinal,
+          usuario: log.usuario,
+          fecha: log.fecha
+        }));
+
+        console.log('Logs cargados:', this.logsSolicitud);
+      },
+      error: (error) => {
+        this.cargandoLogs = false;
+        console.error('Error al cargar logs:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los logs de seguimiento',
+          life: 3000
+        });
+      }
+    });
   }
 
   cerrarDetalle() {
     this.mostrarDetalle = false;
     this.solicitudSeleccionada = null;
+    this.logsSolicitud = [];
   }
 
   verImagen(foto: FotoMantenimiento, fotos: FotoMantenimiento[]) {

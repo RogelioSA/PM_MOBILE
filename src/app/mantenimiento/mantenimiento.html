@@ -276,10 +276,25 @@
                     Fotos (Opcional)
                 </label>
                 
-                <p-fileupload mode="basic" chooseLabel="Seleccionar fotos" 
-                    [multiple]="true" accept="image/*" [maxFileSize]="5000000"
-                    (onSelect)="onFileSelect($event)" [auto]="true"
+                <p-fileupload 
+                    name="fotos[]"
+                    [multiple]="true" 
+                    accept="image/*" 
+                    [maxFileSize]="5000000"
+                    (onSelect)="onFileSelect($event)"
+                    [showUploadButton]="false"
+                    [showCancelButton]="false"
+                    chooseLabel="Seleccionar fotos"
+                    chooseIcon="pi pi-images"
                     styleClass="w-full">
+                    <ng-template pTemplate="content">
+                        <div class="text-center py-4">
+                            <i class="pi pi-cloud-upload text-4xl text-gray-400"></i>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                Arrastra fotos aquí o haz clic para seleccionar
+                            </p>
+                        </div>
+                    </ng-template>
                 </p-fileupload>
 
                 <!-- Preview de fotos -->
@@ -340,9 +355,12 @@
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Creación</label>
-                    <input pInputText class="w-full h-11" 
-                        [value]="solicitudSeleccionada.fechaCreacion | date:'dd/MM/yyyy HH:mm'" disabled />
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+                    <div class="flex items-center h-11">
+                        <span [class]="'px-4 py-2 rounded-lg text-sm font-medium ' + getEstadoColor(solicitudSeleccionada.estado)">
+                            {{ solicitudSeleccionada.estadoNombre }}
+                        </span>
+                    </div>
                 </div>
 
                 <div class="flex flex-col gap-2">
@@ -355,76 +373,223 @@
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
-                    <div class="flex items-center h-11">
-                        <span [class]="'px-4 py-2 rounded-lg text-sm font-medium ' + getEstadoColor(solicitudSeleccionada.estado)">
-                            {{ solicitudSeleccionada.estadoNombre }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-2">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</label>
                     <input pInputText class="w-full h-11" [value]="solicitudSeleccionada.tipoNombre" disabled />
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Sitio</label>
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Sitio / Sucursal</label>
                     <input pInputText class="w-full h-11" [value]="solicitudSeleccionada.sitioNombre" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Solicitante</label>
+                    <input pInputText class="w-full h-11" [value]="solicitudSeleccionada.solicitante" disabled />
                 </div>
 
                 <div class="flex flex-col gap-2 sm:col-span-2">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Descripción</label>
-                    <textarea pTextarea rows="4" class="w-full" 
+                    <textarea pTextarea rows="3" class="w-full" 
                         [value]="solicitudSeleccionada.descripcion" disabled>
                     </textarea>
                 </div>
             </div>
         </div>
 
-        <!-- Fotos adjuntas -->
-        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
+        <!-- Fechas -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
             <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
-                FOTOS ADJUNTAS
+                FECHAS
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Creación</label>
+                    <input pInputText class="w-full h-11" 
+                        [value]="solicitudSeleccionada.fechaCreacion | date:'dd/MM/yyyy HH:mm'" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Inicio</label>
+                    <input pInputText class="w-full h-11" 
+                        [value]="solicitudSeleccionada.fechaInicio ? (solicitudSeleccionada.fechaInicio | date:'dd/MM/yyyy HH:mm') : 'Sin iniciar'" 
+                        disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Fin</label>
+                    <input pInputText class="w-full h-11" 
+                        [value]="solicitudSeleccionada.fechaFin ? (solicitudSeleccionada.fechaFin | date:'dd/MM/yyyy HH:mm') : 'Pendiente'" 
+                        disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Cierre</label>
+                    <input pInputText class="w-full h-11" 
+                        [value]="solicitudSeleccionada.fechaCierre ? (solicitudSeleccionada.fechaCierre | date:'dd/MM/yyyy HH:mm') : 'Sin cerrar'" 
+                        disabled />
+                </div>
+            </div>
+        </div>
+
+        <!-- Información financiera -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+            <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+                INFORMACIÓN FINANCIERA
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Proveedor</label>
+                    <input pInputText class="w-full h-11" 
+                        [value]="solicitudSeleccionada.nombreProveedor || solicitudSeleccionada.proveedor || 'Sin proveedor'" 
+                        disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo Documento</label>
+                    <input pInputText class="w-full h-11" 
+                        [value]="solicitudSeleccionada.tipoDocumento || 'Sin documento'" 
+                        disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Serie</label>
+                    <input pInputText class="w-full h-11" 
+                        [value]="solicitudSeleccionada.serie || 'N/A'" 
+                        disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Número</label>
+                    <input pInputText class="w-full h-11" 
+                        [value]="solicitudSeleccionada.numero || 'N/A'" 
+                        disabled />
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial de cambios (Logs) -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+            <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+                HISTORIAL DE CAMBIOS
                 <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
-                    ({{ solicitudSeleccionada.fotos?.length || 0 }})
+                    ({{ logsSolicitud.length }})
                 </span>
             </h2>
 
-            <div *ngIf="solicitudSeleccionada.fotos && solicitudSeleccionada.fotos.length > 0" class="space-y-2">
-                <div *ngFor="let foto of solicitudSeleccionada.fotos; let i = index"
-                    class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 
-                        hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+            <div *ngIf="cargandoLogs" class="text-center py-8">
+                <i class="pi pi-spin pi-spinner text-3xl text-blue-500"></i>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Cargando historial...</p>
+            </div>
 
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <div class="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                            <i class="pi pi-image text-blue-600 dark:text-blue-400 text-lg"></i>
-                        </div>
+            <div *ngIf="!cargandoLogs && logsSolicitud.length > 0" class="space-y-3">
+                <div *ngFor="let log of logsSolicitud; let i = index"
+                    class="relative border-l-4 pl-4 pb-4"
+                    [class.border-blue-500]="i === 0"
+                    [class.border-gray-300]="i !== 0"
+                    [class.dark:border-gray-600]="i !== 0">
 
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
-                                {{ foto.nombre }}
-                            </p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Foto #{{ i + 1 }}
-                            </p>
-                        </div>
+                    <!-- Punto en la línea -->
+                    <div class="absolute -left-2 top-1 w-4 h-4 rounded-full"
+                        [class.bg-blue-500]="i === 0"
+                        [class.bg-gray-400]="i !== 0">
                     </div>
 
-                    <button pButton type="button" icon="pi pi-eye" 
-                        (click)="verImagen(foto, solicitudSeleccionada.fotos)"
-                        class="p-button-sm p-button-rounded p-button-text" 
-                        pTooltip="Ver imagen" tooltipPosition="left" severity="secondary"></button>
+                    <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                    {{ obtenerNombreEstadoPorCodigo(log.estadoInicial) }}
+                                </span>
+                                <i class="pi pi-arrow-right text-gray-400 text-xs"></i>
+                                <span class="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                    {{ obtenerNombreEstadoPorCodigo(log.estadoFinal) }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                <i class="pi pi-user"></i>
+                                <span class="font-medium">{{ log.usuario }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                            <i class="pi pi-clock"></i>
+                            <span>{{ log.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div *ngIf="!solicitudSeleccionada.fotos || solicitudSeleccionada.fotos.length === 0"
+            <div *ngIf="!cargandoLogs && logsSolicitud.length === 0"
                 class="text-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                <i class="pi pi-images text-4xl mb-3 block opacity-50"></i>
-                <p class="text-sm font-medium">No se adjuntaron fotos</p>
-                <p class="text-xs mt-1">Esta solicitud no tiene fotos adjuntas</p>
+                <i class="pi pi-history text-4xl mb-3 block opacity-50"></i>
+                <p class="text-sm font-medium">Sin historial de cambios</p>
+                <p class="text-xs mt-1">No se han registrado cambios de estado</p>
             </div>
         </div>
+
+<!-- Fotos adjuntas -->
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
+    <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+        FOTOS ADJUNTAS
+        <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+            <ng-container *ngIf="!solicitudSeleccionada.cargandoFotos">
+                ({{ solicitudSeleccionada.fotos?.length || 0 }})
+            </ng-container>
+        </span>
+    </h2>
+
+    <!-- Loading -->
+    <div *ngIf="solicitudSeleccionada.cargandoFotos" class="text-center py-8">
+        <i class="pi pi-spin pi-spinner text-3xl text-blue-500"></i>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Cargando fotos...</p>
+    </div>
+
+    <!-- Lista de fotos -->
+    <div *ngIf="!solicitudSeleccionada.cargandoFotos && solicitudSeleccionada.fotos && solicitudSeleccionada.fotos.length > 0" 
+         class="space-y-2">
+        <div *ngFor="let foto of solicitudSeleccionada.fotos; let i = index"
+            class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 
+                hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+                <!-- Thumbnail preview -->
+                <div class="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                    <img [src]="foto.url" [alt]="foto.nombre" 
+                         class="w-full h-full object-cover cursor-pointer"
+                         (click)="verImagen(foto, solicitudSeleccionada.fotos)"
+                         (error)="$event.target.src='assets/image-placeholder.png'" />
+                </div>
+
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
+                        {{ foto.nombre }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ formatBytes(foto.size) }}
+                        <span *ngIf="foto.lastModified" class="ml-2">
+                            • {{ foto.lastModified | date:'dd/MM/yyyy HH:mm' }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <button pButton type="button" icon="pi pi-eye" 
+                (click)="verImagen(foto, solicitudSeleccionada.fotos)"
+                class="p-button-sm p-button-rounded p-button-text" 
+                pTooltip="Ver imagen" tooltipPosition="left" severity="secondary"></button>
+        </div>
+    </div>
+
+    <!-- Sin fotos -->
+    <div *ngIf="!solicitudSeleccionada.cargandoFotos && (!solicitudSeleccionada.fotos || solicitudSeleccionada.fotos.length === 0)"
+        class="text-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
+        <i class="pi pi-images text-4xl mb-3 block opacity-50"></i>
+        <p class="text-sm font-medium">No se adjuntaron fotos</p>
+        <p class="text-xs mt-1">Esta solicitud no tiene fotos adjuntas</p>
+    </div>
+</div>
 
     </div>
 

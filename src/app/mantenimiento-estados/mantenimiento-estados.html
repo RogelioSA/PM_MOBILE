@@ -14,14 +14,14 @@
         <!-- Filtros -->
         <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 mb-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-                
+
                 <!-- Solicitante -->
                 <div class="flex flex-col gap-2">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Solicitante
                     </label>
-                    <input type="text" pInputText [(ngModel)]="solicitanteFiltro" 
-                        placeholder="Usuario solicitante" class="w-full h-11" />
+                    <input type="text" pInputText [(ngModel)]="solicitanteFiltro" placeholder="Usuario solicitante"
+                        class="w-full h-11" />
                 </div>
 
                 <!-- Estado -->
@@ -29,9 +29,8 @@
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Estado
                     </label>
-                    <p-select [(ngModel)]="estadoFiltro" [options]="estados" 
-                        optionLabel="label" optionValue="value" placeholder="Seleccione estado" 
-                        styleClass="w-full" />
+                    <p-select [(ngModel)]="estadoFiltro" [options]="estados" optionLabel="label" optionValue="value"
+                        placeholder="Seleccione estado" styleClass="w-full" />
                 </div>
 
                 <!-- Prioridad -->
@@ -39,9 +38,8 @@
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Prioridad
                     </label>
-                    <p-select [(ngModel)]="prioridadFiltro" [options]="prioridades" 
-                        optionLabel="label" optionValue="value" placeholder="Todas" 
-                        styleClass="w-full">
+                    <p-select [(ngModel)]="prioridadFiltro" [options]="prioridades" optionLabel="label"
+                        optionValue="value" placeholder="Todas" styleClass="w-full">
                         <ng-template let-option pTemplate="item">
                             <span *ngIf="option.value === ''">Todas</span>
                             <span *ngIf="option.value !== ''">{{ option.label }}</span>
@@ -68,10 +66,9 @@
                 <!-- Botones -->
                 <div class="flex flex-col gap-2 justify-end">
                     <div class="flex gap-2">
-                        <button pButton type="button" label="Filtrar" icon="pi pi-search" 
-                            (click)="aplicarFiltros()" class="h-11 flex-1"></button>
-                        <button pButton type="button" icon="pi pi-times" 
-                            (click)="limpiarFiltros()" severity="secondary" 
+                        <button pButton type="button" label="Filtrar" icon="pi pi-search" (click)="aplicarFiltros()"
+                            class="h-11 flex-1"></button>
+                        <button pButton type="button" icon="pi pi-times" (click)="limpiarFiltros()" severity="secondary"
                             class="h-11" pTooltip="Limpiar filtros"></button>
                     </div>
                 </div>
@@ -90,31 +87,40 @@
 
                     <ng-template pTemplate="header">
                         <tr>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
                                 ID
                             </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
                                 Solicitante
                             </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
                                 Prioridad
                             </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
                                 Tipo
                             </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
                                 Descripción
                             </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
                                 Sitio
                             </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
                                 Estado
                             </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                            <th
+                                class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
                                 Fecha
                             </th>
-                            <th class="text-center p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                            <th
+                                class="text-center p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
                                 Acciones
                             </th>
                         </tr>
@@ -129,7 +135,8 @@
                                 {{ item.solicitante }}
                             </td>
                             <td class="p-3">
-                                <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getPrioridadColor(item.prioridad)">
+                                <span
+                                    [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getPrioridadColor(item.prioridad)">
                                     {{ item.prioridadNombre }}
                                 </span>
                             </td>
@@ -143,7 +150,8 @@
                                 {{ item.sitioNombre }}
                             </td>
                             <td class="p-3">
-                                <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getEstadoColor(item.estado)">
+                                <span
+                                    [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getEstadoColor(item.estado)">
                                     {{ item.estadoNombre }}
                                 </span>
                             </td>
@@ -151,42 +159,34 @@
                                 {{ item.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}
                             </td>
                             <td class="p-3 text-center">
-                                <button *ngIf="esPendiente(item)" pButton type="button" 
-                                    label="Solicitar Presupuesto" icon="pi pi-dollar" 
-                                    (click)="solicitarPresupuesto(item)"
-                                    class="p-button-sm p-button-warning" 
-                                    pTooltip="Cambiar a espera de presupuesto" tooltipPosition="left"></button>
-                                
-                                <button *ngIf="esEsperaPresupuesto(item)" pButton type="button" 
-                                    label="Escoger Proveedores" icon="pi pi-users" 
-                                    (click)="abrirSeleccionProveedores(item)"
-                                    class="p-button-sm p-button-success" 
+                                <button *ngIf="esPendiente(item)" pButton type="button" label="Solicitar Presupuesto"
+                                    icon="pi pi-dollar" (click)="solicitarPresupuesto(item)"
+                                    class="p-button-sm p-button-warning" pTooltip="Cambiar a espera de presupuesto"
+                                    tooltipPosition="left"></button>
+
+                                <button *ngIf="esEsperaPresupuesto(item)" pButton type="button"
+                                    label="Escoger Proveedores" icon="pi pi-users"
+                                    (click)="abrirSeleccionProveedores(item)" class="p-button-sm p-button-success"
                                     pTooltip="Seleccionar proveedores" tooltipPosition="left"></button>
-                                
-                                <button *ngIf="esControl(item)" pButton type="button" 
-                                    label="Asignar" icon="pi pi-check-circle" 
-                                    (click)="abrirAsignacion(item)"
-                                    class="p-button-sm p-button-info" 
-                                    pTooltip="Asignar proveedor" tooltipPosition="left"></button>
-                                
-                                <button *ngIf="esAsignado(item)" pButton type="button" 
-                                    label="Ejecución" icon="pi pi-play" 
-                                    (click)="abrirEjecucion(item)"
-                                    class="p-button-sm p-button-help" 
+
+                                <button *ngIf="esControl(item)" pButton type="button" label="Asignar"
+                                    icon="pi pi-check-circle" (click)="abrirAsignacion(item)"
+                                    class="p-button-sm p-button-info" pTooltip="Asignar proveedor"
+                                    tooltipPosition="left"></button>
+
+                                <button *ngIf="esAsignado(item)" pButton type="button" label="Ejecución"
+                                    icon="pi pi-play" (click)="abrirEjecucion(item)" class="p-button-sm p-button-help"
                                     pTooltip="Poner en ejecución" tooltipPosition="left"></button>
-                                
-                                <button *ngIf="esEnEjecucion(item)" pButton type="button" 
-                                    label="Contabilidad" icon="pi pi-calculator" 
-                                    (click)="abrirContabilidad(item)"
-                                    class="p-button-sm" 
-                                    severity="contrast"
-                                    pTooltip="Enviar a contabilidad" tooltipPosition="left"></button>
-                                
-                                <button *ngIf="esContabilidad(item)" pButton type="button" 
-                                    label="Finalizar" icon="pi pi-check" 
-                                    (click)="abrirFinalizacion(item)"
-                                    class="p-button-sm p-button-success" 
-                                    pTooltip="Finalizar mantenimiento" tooltipPosition="left"></button>
+
+                                <button *ngIf="esEnEjecucion(item)" pButton type="button" label="Contabilidad"
+                                    icon="pi pi-calculator" (click)="abrirContabilidad(item)" class="p-button-sm"
+                                    severity="contrast" pTooltip="Enviar a contabilidad"
+                                    tooltipPosition="left"></button>
+
+                                <button *ngIf="esContabilidad(item)" pButton type="button" label="Finalizar"
+                                    icon="pi pi-check" (click)="abrirFinalizacion(item)"
+                                    class="p-button-sm p-button-success" pTooltip="Finalizar mantenimiento"
+                                    tooltipPosition="left"></button>
                             </td>
                         </tr>
                     </ng-template>
@@ -228,17 +228,17 @@
                             <p class="text-sm font-bold text-gray-800 dark:text-white">
                                 #{{ item.id }} - {{ item.tipoNombre }}
                             </p>
-                            <span [class]="'inline-block mt-1 px-2 py-1 rounded-full text-xs font-medium ' + getPrioridadColor(item.prioridad)">
+                            <span
+                                [class]="'inline-block mt-1 px-2 py-1 rounded-full text-xs font-medium ' + getPrioridadColor(item.prioridad)">
                                 {{ item.prioridadNombre }}
                             </span>
                         </div>
-                        
-                        <button *ngIf="esPendiente(item)" pButton type="button" icon="pi pi-dollar" 
-                            (click)="solicitarPresupuesto(item)"
-                            class="p-button-sm p-button-rounded p-button-warning"
+
+                        <button *ngIf="esPendiente(item)" pButton type="button" icon="pi pi-dollar"
+                            (click)="solicitarPresupuesto(item)" class="p-button-sm p-button-rounded p-button-warning"
                             pTooltip="Solicitar presupuesto"></button>
-                        
-                        <button *ngIf="esEsperaPresupuesto(item)" pButton type="button" icon="pi pi-users" 
+
+                        <button *ngIf="esEsperaPresupuesto(item)" pButton type="button" icon="pi pi-users"
                             (click)="abrirSeleccionProveedores(item)"
                             class="p-button-sm p-button-rounded p-button-success"
                             pTooltip="Escoger proveedores"></button>
@@ -279,13 +279,14 @@
     [header]="'Registrar Presupuestos - Solicitud #' + (solicitudProveedores?.id || '')">
 
     <!-- Contenido con scroll -->
-    <div class="flex flex-col md:flex-row gap-4 p-4 sm:p-6 overflow-y-auto flex-1">
-        
+    <div class="flex flex-col md:flex-row gap-4 p-4 sm:p-6 overflow-y-auto flex-1 h-full">
+
         <!-- LADO IZQUIERDO: Información y Logs -->
+        <!-- LADO IZQUIERDO: Información, Logs y Fotos -->
         <div class="md:w-1/2 flex flex-col gap-4">
-            
+
             <!-- Info completa de la solicitud -->
-            <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 flex-shrink-0">
+            <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
                 <h3 class="text-sm font-bold mb-3 text-blue-800 dark:text-blue-200 flex items-center gap-2">
                     <i class="pi pi-info-circle"></i>
                     INFORMACIÓN GENERAL
@@ -299,17 +300,20 @@
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Solicitante:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudProveedores?.solicitante }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudProveedores?.solicitante
+                            }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Fecha Creación:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.fechaCreacion |
+                            date:'dd/MM/yyyy HH:mm' }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Prioridad:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudProveedores?.prioridadNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{
+                            solicitudProveedores?.prioridadNombre }}</p>
                     </div>
 
                     <div>
@@ -330,7 +334,7 @@
             </div>
 
             <!-- Historial de cambios -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4 flex-1 min-h-0">
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
                 <h3 class="text-sm font-bold mb-3 text-gray-800 dark:text-white flex items-center gap-2">
                     <i class="pi pi-history text-purple-500"></i>
                     HISTORIAL DE CAMBIOS
@@ -346,30 +350,35 @@
                 </div>
 
                 <!-- Timeline de logs -->
-                <div *ngIf="!cargandoLogs && logs.length > 0" class="space-y-3 overflow-y-auto max-h-96 pr-2">
+                <div *ngIf="!cargandoLogs && logs.length > 0" class="space-y-3 max-h-64 overflow-y-auto pr-2">
                     <div *ngFor="let log of logs; let last = last" class="relative flex gap-3">
-                        
+
                         <!-- Timeline line -->
                         <div class="flex flex-col items-center">
-                            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 dark:bg-purple-400 z-10 flex-shrink-0"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 dark:bg-purple-400 z-10 flex-shrink-0">
+                            </div>
                             <div *ngIf="!last" class="w-0.5 flex-1 bg-gray-300 dark:bg-gray-600 mt-1"></div>
                         </div>
 
                         <!-- Log content -->
                         <div class="flex-1 pb-3">
-                            <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600">
+                            <div
+                                class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600">
                                 <div class="flex flex-wrap items-center gap-2 mb-2">
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                    <span
+                                        class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
                                         {{ obtenerNombreEstadoLog(log.estadoInicial) }}
                                     </span>
                                     <i class="pi pi-arrow-right text-gray-400" style="font-size: 0.7rem;"></i>
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                    <span
+                                        class="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                                         {{ obtenerNombreEstadoLog(log.estadoFinal) }}
                                     </span>
                                 </div>
                                 <div class="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
                                     <p><i class="pi pi-user mr-1" style="font-size: 0.7rem;"></i> {{ log.usuario }}</p>
-                                    <p><i class="pi pi-calendar mr-1" style="font-size: 0.7rem;"></i> {{ log.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+                                    <p><i class="pi pi-calendar mr-1" style="font-size: 0.7rem;"></i> {{ log.fecha |
+                                        date:'dd/MM/yyyy HH:mm' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -384,44 +393,107 @@
                 </div>
             </div>
 
+            <!-- Fotos adjuntas -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+                <h3 class="text-sm font-bold mb-3 text-gray-800 dark:text-white flex items-center gap-2">
+                    <i class="pi pi-images text-blue-500"></i>
+                    FOTOS ADJUNTAS
+                    <span *ngIf="!solicitudProveedores?.cargandoFotos"
+                        class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-auto">
+                        ({{ solicitudProveedores?.fotos?.length || 0 }})
+                    </span>
+                </h3>
+
+                <!-- Loading -->
+                <div *ngIf="solicitudProveedores?.cargandoFotos" class="text-center py-6">
+                    <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">Cargando fotos...</p>
+                </div>
+
+                <!-- Lista de fotos -->
+                <div *ngIf="!solicitudProveedores?.cargandoFotos && solicitudProveedores?.fotos && solicitudProveedores?.fotos!.length > 0"
+                    class="space-y-2">
+                    <div *ngFor="let foto of solicitudProveedores?.fotos" class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 
+                    hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                            <!-- Thumbnail preview -->
+                            <div
+                                class="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                                <img [src]="foto.url" [alt]="foto.nombre"
+                                    class="w-full h-full object-cover cursor-pointer"
+                                    (click)="verImagen(foto, solicitudProveedores?.fotos || [])"
+                                    (error)="$event.target.src='assets/image-placeholder.png'" />
+                            </div>
+
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
+                                    {{ foto.nombre }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ formatBytes(foto.size) }}
+                                    <span *ngIf="foto.lastModified" class="ml-2">
+                                        • {{ foto.lastModified | date:'dd/MM/yyyy HH:mm' }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <button pButton type="button" icon="pi pi-eye"
+                            (click)="verImagen(foto, solicitudProveedores?.fotos || [])"
+                            class="p-button-sm p-button-rounded p-button-text" pTooltip="Ver imagen"
+                            tooltipPosition="left" severity="secondary"></button>
+                    </div>
+                </div>
+
+                <!-- Sin fotos -->
+                <div *ngIf="!solicitudProveedores?.cargandoFotos && (!solicitudProveedores?.fotos || solicitudProveedores?.fotos?.length === 0)"
+                    class="text-center py-6 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                    <i class="pi pi-images text-3xl mb-2 block opacity-50"></i>
+                    <p class="text-xs font-medium">No hay fotos adjuntas</p>
+                </div>
+            </div>
+
         </div>
 
         <!-- LADO DERECHO: Agregar Proveedores -->
         <div class="md:w-1/2 flex flex-col gap-4">
-            
+
             <!-- Agregar proveedor -->
             <div class="flex gap-3 flex-shrink-0">
                 <div class="flex-1">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                         Seleccionar Proveedor
                     </label>
-                    <p-select [(ngModel)]="proveedorSeleccionado" [options]="proveedores" 
-                        optionLabel="razon_social" optionValue="idclieprov" 
-                        placeholder="Seleccione un proveedor" 
-                        styleClass="w-full" [filter]="true" filterPlaceholder="Buscar proveedor...">
+                    <p-select [(ngModel)]="proveedorSeleccionado" [options]="proveedores" optionLabel="razon_social"
+                        optionValue="idclieprov" placeholder="Seleccione un proveedor" styleClass="w-full"
+                        [filter]="true" filterPlaceholder="Buscar proveedor...">
                     </p-select>
                 </div>
                 <div class="flex items-end">
-                    <button pButton type="button" label="Agregar" icon="pi pi-plus" 
-                        (click)="agregarProveedor()" class="h-11"></button>
+                    <button pButton type="button" label="Agregar" icon="pi pi-plus" (click)="agregarProveedor()"
+                        class="h-11"></button>
                 </div>
             </div>
 
             <!-- Tabla de presupuestos -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 flex-1 min-h-0 flex flex-col">
+            <div
+                class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 flex-1 min-h-0 flex flex-col">
                 <div class="overflow-auto flex-1">
-                    <p-table [value]="presupuestos" dataKey="idclieprov" editMode="row"
-                        styleClass="p-datatable-sm">
-                        
+                    <p-table [value]="presupuestos" dataKey="idclieprov" editMode="row" styleClass="p-datatable-sm">
+
                         <ng-template pTemplate="header">
                             <tr>
-                                <th class="text-left p-2 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold text-xs" style="width:45%">
+                                <th class="text-left p-2 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold text-xs"
+                                    style="width:45%">
                                     Proveedor
                                 </th>
-                                <th class="text-left p-2 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold text-xs" style="width:35%">
+                                <th class="text-left p-2 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold text-xs"
+                                    style="width:35%">
                                     Monto
                                 </th>
-                                <th class="text-center p-2 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold text-xs" style="width:20%">
+                                <th class="text-center p-2 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold text-xs"
+                                    style="width:20%">
                                     Acciones
                                 </th>
                             </tr>
@@ -431,46 +503,49 @@
                             <tr [pEditableRow]="presupuesto">
                                 <td class="p-2">
                                     <div class="text-xs">
-                                        <p class="font-medium text-gray-800 dark:text-white">{{ presupuesto.razon_social }}</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">RUC: {{ presupuesto.idclieprov }}</p>
+                                        <p class="font-medium text-gray-800 dark:text-white">{{ presupuesto.razon_social
+                                            }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">RUC: {{
+                                            presupuesto.idclieprov }}</p>
                                     </div>
                                 </td>
                                 <td class="p-2">
                                     <p-cellEditor>
                                         <ng-template pTemplate="input">
-                                            <p-inputNumber [(ngModel)]="presupuesto.monto" 
-                                                mode="currency" currency="PEN" locale="es-PE"
-                                                [minFractionDigits]="2" [maxFractionDigits]="2"
-                                                styleClass="w-full text-sm">
+                                            <p-inputNumber [(ngModel)]="presupuesto.monto" mode="currency"
+                                                currency="PEN" locale="es-PE" [minFractionDigits]="2"
+                                                [maxFractionDigits]="2" styleClass="w-full text-sm">
                                             </p-inputNumber>
                                         </ng-template>
                                         <ng-template pTemplate="output">
-                                            <span class="font-medium text-sm" [class.text-gray-400]="!presupuesto.monto">
-                                                {{ presupuesto.monto ? (presupuesto.monto | currency:'S/ ':'symbol':'1.2-2') : 'Sin monto' }}
+                                            <span class="font-medium text-sm"
+                                                [class.text-gray-400]="!presupuesto.monto">
+                                                {{ presupuesto.monto ? (presupuesto.monto | currency:'S/
+                                                ':'symbol':'1.2-2') : 'Sin monto' }}
                                             </span>
                                         </ng-template>
                                     </p-cellEditor>
                                 </td>
                                 <td class="p-2">
                                     <div class="flex items-center justify-center gap-1">
-                                        <button *ngIf="!editing" pButton type="button" icon="pi pi-pencil" 
+                                        <button *ngIf="!editing" pButton type="button" icon="pi pi-pencil"
                                             pInitEditableRow (click)="onRowEditInit(presupuesto)"
-                                            class="p-button-sm p-button-text p-button-rounded" 
+                                            class="p-button-sm p-button-text p-button-rounded"
                                             pTooltip="Editar"></button>
-                                        
-                                        <button *ngIf="editing" pButton type="button" icon="pi pi-check" 
+
+                                        <button *ngIf="editing" pButton type="button" icon="pi pi-check"
                                             pSaveEditableRow (click)="onRowEditSave(presupuesto)"
-                                            class="p-button-sm p-button-text p-button-rounded p-button-success" 
+                                            class="p-button-sm p-button-text p-button-rounded p-button-success"
                                             pTooltip="Guardar"></button>
-                                        
-                                        <button *ngIf="editing" pButton type="button" icon="pi pi-times" 
+
+                                        <button *ngIf="editing" pButton type="button" icon="pi pi-times"
                                             pCancelEditableRow (click)="onRowEditCancel(presupuesto)"
-                                            class="p-button-sm p-button-text p-button-rounded p-button-danger" 
+                                            class="p-button-sm p-button-text p-button-rounded p-button-danger"
                                             pTooltip="Cancelar"></button>
-                                        
-                                        <button *ngIf="!editing" pButton type="button" icon="pi pi-trash" 
+
+                                        <button *ngIf="!editing" pButton type="button" icon="pi pi-trash"
                                             (click)="eliminarProveedor(presupuesto)"
-                                            class="p-button-sm p-button-text p-button-rounded p-button-danger" 
+                                            class="p-button-sm p-button-text p-button-rounded p-button-danger"
                                             pTooltip="Eliminar"></button>
                                     </div>
                                 </td>
@@ -503,12 +578,10 @@
                 {{ presupuestos.length }} proveedor(es) agregado(s)
             </span>
             <div class="flex gap-3">
-                <button pButton type="button" label="Cancelar" icon="pi pi-times" 
-                    (click)="cerrarSeleccionProveedores()" severity="secondary" class="h-11"></button>
-                <button pButton type="button" label="Guardar y Enviar a Control" icon="pi pi-check" 
-                    (click)="guardarProveedores()" 
-                    [disabled]="presupuestos.length === 0"
-                    [loading]="cargando"
+                <button pButton type="button" label="Cancelar" icon="pi pi-times" (click)="cerrarSeleccionProveedores()"
+                    severity="secondary" class="h-11"></button>
+                <button pButton type="button" label="Guardar y Enviar a Control" icon="pi pi-check"
+                    (click)="guardarProveedores()" [disabled]="presupuestos.length === 0" [loading]="cargando"
                     class="h-11"></button>
             </div>
         </div>
@@ -523,13 +596,14 @@
     [header]="'Asignar Proveedor - Solicitud #' + (solicitudAsignacion?.id || '')">
 
     <!-- Contenido con scroll -->
-    <div class="flex flex-col md:flex-row gap-4 p-4 sm:p-6 overflow-y-auto flex-1">
-        
+    <div class="flex flex-col md:flex-row gap-4 p-4 sm:p-6 overflow-y-auto flex-1 h-full">
+
         <!-- LADO IZQUIERDO: Información y Logs -->
+        <!-- LADO IZQUIERDO: Información, Logs y Fotos -->
         <div class="md:w-1/2 flex flex-col gap-4">
-            
+
             <!-- Info completa de la solicitud -->
-            <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 flex-shrink-0">
+            <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
                 <h3 class="text-sm font-bold mb-3 text-blue-800 dark:text-blue-200 flex items-center gap-2">
                     <i class="pi pi-info-circle"></i>
                     INFORMACIÓN GENERAL
@@ -538,43 +612,46 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">ID:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">#{{ solicitudAsignacion?.id }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">#{{ solicitudProveedores?.id }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Solicitante:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudAsignacion?.solicitante }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudProveedores?.solicitante
+                            }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Fecha Creación:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudAsignacion?.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.fechaCreacion |
+                            date:'dd/MM/yyyy HH:mm' }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Prioridad:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudAsignacion?.prioridadNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{
+                            solicitudProveedores?.prioridadNombre }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Tipo:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudAsignacion?.tipoNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.tipoNombre }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Sitio:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudAsignacion?.sitioNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.sitioNombre }}</p>
                     </div>
 
                     <div class="sm:col-span-2">
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Descripción:</span>
-                        <p class="text-blue-900 dark:text-blue-100 mt-1">{{ solicitudAsignacion?.descripcion }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 mt-1">{{ solicitudProveedores?.descripcion }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- Historial de cambios -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4 flex-1 min-h-0">
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
                 <h3 class="text-sm font-bold mb-3 text-gray-800 dark:text-white flex items-center gap-2">
                     <i class="pi pi-history text-purple-500"></i>
                     HISTORIAL DE CAMBIOS
@@ -590,30 +667,35 @@
                 </div>
 
                 <!-- Timeline de logs -->
-                <div *ngIf="!cargandoLogs && logs.length > 0" class="space-y-3 overflow-y-auto max-h-96 pr-2">
+                <div *ngIf="!cargandoLogs && logs.length > 0" class="space-y-3 max-h-64 overflow-y-auto pr-2">
                     <div *ngFor="let log of logs; let last = last" class="relative flex gap-3">
-                        
+
                         <!-- Timeline line -->
                         <div class="flex flex-col items-center">
-                            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 dark:bg-purple-400 z-10 flex-shrink-0"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 dark:bg-purple-400 z-10 flex-shrink-0">
+                            </div>
                             <div *ngIf="!last" class="w-0.5 flex-1 bg-gray-300 dark:bg-gray-600 mt-1"></div>
                         </div>
 
                         <!-- Log content -->
                         <div class="flex-1 pb-3">
-                            <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600">
+                            <div
+                                class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600">
                                 <div class="flex flex-wrap items-center gap-2 mb-2">
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                    <span
+                                        class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
                                         {{ obtenerNombreEstadoLog(log.estadoInicial) }}
                                     </span>
                                     <i class="pi pi-arrow-right text-gray-400" style="font-size: 0.7rem;"></i>
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                    <span
+                                        class="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                                         {{ obtenerNombreEstadoLog(log.estadoFinal) }}
                                     </span>
                                 </div>
                                 <div class="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
                                     <p><i class="pi pi-user mr-1" style="font-size: 0.7rem;"></i> {{ log.usuario }}</p>
-                                    <p><i class="pi pi-calendar mr-1" style="font-size: 0.7rem;"></i> {{ log.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+                                    <p><i class="pi pi-calendar mr-1" style="font-size: 0.7rem;"></i> {{ log.fecha |
+                                        date:'dd/MM/yyyy HH:mm' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -628,12 +710,74 @@
                 </div>
             </div>
 
+            <!-- Fotos adjuntas -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+                <h3 class="text-sm font-bold mb-3 text-gray-800 dark:text-white flex items-center gap-2">
+                    <i class="pi pi-images text-blue-500"></i>
+                    FOTOS ADJUNTAS
+                    <span *ngIf="!solicitudProveedores?.cargandoFotos"
+                        class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-auto">
+                        ({{ solicitudProveedores?.fotos?.length || 0 }})
+                    </span>
+                </h3>
+
+                <!-- Loading -->
+                <div *ngIf="solicitudProveedores?.cargandoFotos" class="text-center py-6">
+                    <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">Cargando fotos...</p>
+                </div>
+
+                <!-- Lista de fotos -->
+                <div *ngIf="!solicitudProveedores?.cargandoFotos && solicitudProveedores?.fotos && solicitudProveedores?.fotos!.length > 0"
+                    class="space-y-2">
+                    <div *ngFor="let foto of solicitudProveedores?.fotos" class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 
+                    hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                            <!-- Thumbnail preview -->
+                            <div
+                                class="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                                <img [src]="foto.url" [alt]="foto.nombre"
+                                    class="w-full h-full object-cover cursor-pointer"
+                                    (click)="verImagen(foto, solicitudProveedores?.fotos || [])"
+                                    (error)="$event.target.src='assets/image-placeholder.png'" />
+                            </div>
+
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
+                                    {{ foto.nombre }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ formatBytes(foto.size) }}
+                                    <span *ngIf="foto.lastModified" class="ml-2">
+                                        • {{ foto.lastModified | date:'dd/MM/yyyy HH:mm' }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <button pButton type="button" icon="pi pi-eye"
+                            (click)="verImagen(foto, solicitudProveedores?.fotos || [])"
+                            class="p-button-sm p-button-rounded p-button-text" pTooltip="Ver imagen"
+                            tooltipPosition="left" severity="secondary"></button>
+                    </div>
+                </div>
+
+                <!-- Sin fotos -->
+                <div *ngIf="!solicitudProveedores?.cargandoFotos && (!solicitudProveedores?.fotos || solicitudProveedores?.fotos?.length === 0)"
+                    class="text-center py-6 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                    <i class="pi pi-images text-3xl mb-2 block opacity-50"></i>
+                    <p class="text-xs font-medium">No hay fotos adjuntas</p>
+                </div>
+            </div>
+
         </div>
 
         <!-- LADO DERECHO: Lista de Presupuestos -->
         <div class="md:w-1/2 flex flex-col gap-4">
-            
-            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 flex-1 min-h-0 flex flex-col">
+
+            <div
+                class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 flex-1 min-h-0 flex flex-col">
                 <div class="p-4 border-b border-gray-200 dark:border-gray-600 flex-shrink-0">
                     <h3 class="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
                         <i class="pi pi-users text-green-500"></i>
@@ -656,20 +800,16 @@
                 <!-- Lista de presupuestos -->
                 <div *ngIf="!cargando || presupuestosListado.length > 0" class="overflow-y-auto flex-1 p-4">
                     <div class="space-y-3">
-                        <div *ngFor="let presupuesto of presupuestosListado" 
-                            (click)="seleccionarProveedor(presupuesto)"
+                        <div *ngFor="let presupuesto of presupuestosListado" (click)="seleccionarProveedor(presupuesto)"
                             [class]="'border rounded-lg p-4 cursor-pointer transition-all ' + 
                                     (presupuesto.seleccionado ? 
                                      'border-green-500 bg-green-50 dark:bg-green-900/20' : 
                                      'border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-700 hover:bg-gray-50 dark:hover:bg-slate-700')">
-                            
+
                             <div class="flex items-start gap-3">
                                 <!-- Checkbox -->
                                 <div class="flex-shrink-0 mt-1">
-                                    <p-checkbox 
-                                        [(ngModel)]="presupuesto.seleccionado" 
-                                        [binary]="true"
-                                        [disabled]="true"
+                                    <p-checkbox [(ngModel)]="presupuesto.seleccionado" [binary]="true" [disabled]="true"
                                         styleClass="pointer-events-none">
                                     </p-checkbox>
                                 </div>
@@ -678,7 +818,7 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-start justify-between gap-2 mb-2">
                                         <div class="flex-1 min-w-0">
-                                            <h4 class="font-semibold text-sm text-gray-800 dark:text-white truncate" 
+                                            <h4 class="font-semibold text-sm text-gray-800 dark:text-white truncate"
                                                 [title]="presupuesto.proveedor">
                                                 {{ presupuesto.proveedor }}
                                             </h4>
@@ -701,9 +841,10 @@
                             </div>
 
                             <!-- Indicador seleccionado -->
-                            <div *ngIf="presupuesto.seleccionado" 
+                            <div *ngIf="presupuesto.seleccionado"
                                 class="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
-                                <p class="text-xs font-medium text-green-700 dark:text-green-300 flex items-center gap-1">
+                                <p
+                                    class="text-xs font-medium text-green-700 dark:text-green-300 flex items-center gap-1">
                                     <i class="pi pi-check-circle"></i>
                                     Proveedor seleccionado
                                 </p>
@@ -732,13 +873,10 @@
                 {{ proveedorAsignado ? 'Proveedor seleccionado' : 'Ningún proveedor seleccionado' }}
             </span>
             <div class="flex gap-3">
-                <button pButton type="button" label="Cancelar" icon="pi pi-times" 
-                    (click)="cerrarAsignacion()" severity="secondary" class="h-11"></button>
-                <button pButton type="button" label="Asignar Proveedor" icon="pi pi-check" 
-                    (click)="asignarProveedor()" 
-                    [disabled]="!proveedorAsignado"
-                    [loading]="cargando"
-                    class="h-11"></button>
+                <button pButton type="button" label="Cancelar" icon="pi pi-times" (click)="cerrarAsignacion()"
+                    severity="secondary" class="h-11"></button>
+                <button pButton type="button" label="Asignar Proveedor" icon="pi pi-check" (click)="asignarProveedor()"
+                    [disabled]="!proveedorAsignado" [loading]="cargando" class="h-11"></button>
             </div>
         </div>
     </ng-template>
@@ -752,13 +890,14 @@
     [header]="'Poner en Ejecución - Solicitud #' + (solicitudEjecucion?.id || '')">
 
     <!-- Contenido con scroll -->
-    <div class="flex flex-col md:flex-row gap-4 p-4 sm:p-6 overflow-y-auto flex-1">
-        
+    <div class="flex flex-col md:flex-row gap-4 p-4 sm:p-6 overflow-y-auto flex-1 h-full">
+
         <!-- LADO IZQUIERDO: Información y Logs -->
+        <!-- LADO IZQUIERDO: Información, Logs y Fotos -->
         <div class="md:w-1/2 flex flex-col gap-4">
-            
+
             <!-- Info completa de la solicitud -->
-            <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 flex-shrink-0">
+            <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
                 <h3 class="text-sm font-bold mb-3 text-blue-800 dark:text-blue-200 flex items-center gap-2">
                     <i class="pi pi-info-circle"></i>
                     INFORMACIÓN GENERAL
@@ -767,43 +906,46 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">ID:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">#{{ solicitudEjecucion?.id }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">#{{ solicitudProveedores?.id }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Solicitante:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudEjecucion?.solicitante }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudProveedores?.solicitante
+                            }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Fecha Creación:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudEjecucion?.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.fechaCreacion |
+                            date:'dd/MM/yyyy HH:mm' }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Prioridad:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudEjecucion?.prioridadNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{
+                            solicitudProveedores?.prioridadNombre }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Tipo:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudEjecucion?.tipoNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.tipoNombre }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Sitio:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudEjecucion?.sitioNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.sitioNombre }}</p>
                     </div>
 
                     <div class="sm:col-span-2">
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Descripción:</span>
-                        <p class="text-blue-900 dark:text-blue-100 mt-1">{{ solicitudEjecucion?.descripcion }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 mt-1">{{ solicitudProveedores?.descripcion }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- Historial de cambios -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4 flex-1 min-h-0">
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
                 <h3 class="text-sm font-bold mb-3 text-gray-800 dark:text-white flex items-center gap-2">
                     <i class="pi pi-history text-purple-500"></i>
                     HISTORIAL DE CAMBIOS
@@ -819,30 +961,35 @@
                 </div>
 
                 <!-- Timeline de logs -->
-                <div *ngIf="!cargandoLogs && logs.length > 0" class="space-y-3 overflow-y-auto max-h-96 pr-2">
+                <div *ngIf="!cargandoLogs && logs.length > 0" class="space-y-3 max-h-64 overflow-y-auto pr-2">
                     <div *ngFor="let log of logs; let last = last" class="relative flex gap-3">
-                        
+
                         <!-- Timeline line -->
                         <div class="flex flex-col items-center">
-                            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 dark:bg-purple-400 z-10 flex-shrink-0"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 dark:bg-purple-400 z-10 flex-shrink-0">
+                            </div>
                             <div *ngIf="!last" class="w-0.5 flex-1 bg-gray-300 dark:bg-gray-600 mt-1"></div>
                         </div>
 
                         <!-- Log content -->
                         <div class="flex-1 pb-3">
-                            <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600">
+                            <div
+                                class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600">
                                 <div class="flex flex-wrap items-center gap-2 mb-2">
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                    <span
+                                        class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
                                         {{ obtenerNombreEstadoLog(log.estadoInicial) }}
                                     </span>
                                     <i class="pi pi-arrow-right text-gray-400" style="font-size: 0.7rem;"></i>
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                    <span
+                                        class="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                                         {{ obtenerNombreEstadoLog(log.estadoFinal) }}
                                     </span>
                                 </div>
                                 <div class="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
                                     <p><i class="pi pi-user mr-1" style="font-size: 0.7rem;"></i> {{ log.usuario }}</p>
-                                    <p><i class="pi pi-calendar mr-1" style="font-size: 0.7rem;"></i> {{ log.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+                                    <p><i class="pi pi-calendar mr-1" style="font-size: 0.7rem;"></i> {{ log.fecha |
+                                        date:'dd/MM/yyyy HH:mm' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -857,15 +1004,77 @@
                 </div>
             </div>
 
+            <!-- Fotos adjuntas -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+                <h3 class="text-sm font-bold mb-3 text-gray-800 dark:text-white flex items-center gap-2">
+                    <i class="pi pi-images text-blue-500"></i>
+                    FOTOS ADJUNTAS
+                    <span *ngIf="!solicitudProveedores?.cargandoFotos"
+                        class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-auto">
+                        ({{ solicitudProveedores?.fotos?.length || 0 }})
+                    </span>
+                </h3>
+
+                <!-- Loading -->
+                <div *ngIf="solicitudProveedores?.cargandoFotos" class="text-center py-6">
+                    <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">Cargando fotos...</p>
+                </div>
+
+                <!-- Lista de fotos -->
+                <div *ngIf="!solicitudProveedores?.cargandoFotos && solicitudProveedores?.fotos && solicitudProveedores?.fotos!.length > 0"
+                    class="space-y-2">
+                    <div *ngFor="let foto of solicitudProveedores?.fotos" class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 
+                    hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                            <!-- Thumbnail preview -->
+                            <div
+                                class="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                                <img [src]="foto.url" [alt]="foto.nombre"
+                                    class="w-full h-full object-cover cursor-pointer"
+                                    (click)="verImagen(foto, solicitudProveedores?.fotos || [])"
+                                    (error)="$event.target.src='assets/image-placeholder.png'" />
+                            </div>
+
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
+                                    {{ foto.nombre }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ formatBytes(foto.size) }}
+                                    <span *ngIf="foto.lastModified" class="ml-2">
+                                        • {{ foto.lastModified | date:'dd/MM/yyyy HH:mm' }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <button pButton type="button" icon="pi pi-eye"
+                            (click)="verImagen(foto, solicitudProveedores?.fotos || [])"
+                            class="p-button-sm p-button-rounded p-button-text" pTooltip="Ver imagen"
+                            tooltipPosition="left" severity="secondary"></button>
+                    </div>
+                </div>
+
+                <!-- Sin fotos -->
+                <div *ngIf="!solicitudProveedores?.cargandoFotos && (!solicitudProveedores?.fotos || solicitudProveedores?.fotos?.length === 0)"
+                    class="text-center py-6 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                    <i class="pi pi-images text-3xl mb-2 block opacity-50"></i>
+                    <p class="text-xs font-medium">No hay fotos adjuntas</p>
+                </div>
+            </div>
+
         </div>
 
         <!-- LADO DERECHO: Fecha de Inicio -->
         <div class="md:w-1/2 flex flex-col gap-4">
-            
+
             <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-6 flex-1">
                 <div class="flex flex-col items-center justify-center h-full">
                     <div class="text-center mb-8">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-900/30 mb-4">
+                        <div
+                            class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-900/30 mb-4">
                             <i class="pi pi-play text-3xl text-orange-600 dark:text-orange-400"></i>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">
@@ -881,15 +1090,9 @@
                             <i class="pi pi-calendar mr-2"></i>
                             Fecha de Inicio *
                         </label>
-                        <p-datepicker 
-                            [(ngModel)]="fechaInicio" 
-                            [showIcon]="true"
-                            dateFormat="dd/mm/yy"
-                            [showButtonBar]="true"
-                            placeholder="Seleccione fecha y hora"
-                            [showTime]="true"
-                            hourFormat="24"
-                            styleClass="w-full text-sm">
+                        <p-datepicker [(ngModel)]="fechaInicio" [showIcon]="true" dateFormat="dd/mm/yy"
+                            [showButtonBar]="true" placeholder="Seleccione fecha y hora" [showTime]="true"
+                            hourFormat="24" styleClass="w-full text-sm">
                         </p-datepicker>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             <i class="pi pi-info-circle mr-1"></i>
@@ -898,7 +1101,8 @@
                     </div>
 
                     <div class="mt-8 w-full max-w-md">
-                        <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                        <div
+                            class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
                             <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
                                 <i class="pi pi-exclamation-circle mr-1"></i>
                                 Importante
@@ -924,13 +1128,10 @@
                 {{ fechaInicio ? ('Fecha: ' + (fechaInicio | date:'dd/MM/yyyy HH:mm')) : 'Seleccione una fecha' }}
             </span>
             <div class="flex gap-3">
-                <button pButton type="button" label="Cancelar" icon="pi pi-times" 
-                    (click)="cerrarEjecucion()" severity="secondary" class="h-11"></button>
-                <button pButton type="button" label="Ejecutar" icon="pi pi-play" 
-                    (click)="ejecutarMantenimiento()" 
-                    [disabled]="!fechaInicio"
-                    [loading]="cargando"
-                    class="h-11"></button>
+                <button pButton type="button" label="Cancelar" icon="pi pi-times" (click)="cerrarEjecucion()"
+                    severity="secondary" class="h-11"></button>
+                <button pButton type="button" label="Ejecutar" icon="pi pi-play" (click)="ejecutarMantenimiento()"
+                    [disabled]="!fechaInicio" [loading]="cargando" class="h-11"></button>
             </div>
         </div>
     </ng-template>
@@ -945,12 +1146,13 @@
 
     <!-- Contenido con scroll -->
     <div class="flex flex-col md:flex-row gap-4 p-4 sm:p-6 overflow-y-auto flex-1">
-        
+
         <!-- LADO IZQUIERDO: Información y Logs -->
+        <!-- LADO IZQUIERDO: Información, Logs y Fotos -->
         <div class="md:w-1/2 flex flex-col gap-4">
-            
+
             <!-- Info completa de la solicitud -->
-            <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 flex-shrink-0">
+            <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
                 <h3 class="text-sm font-bold mb-3 text-blue-800 dark:text-blue-200 flex items-center gap-2">
                     <i class="pi pi-info-circle"></i>
                     INFORMACIÓN GENERAL
@@ -959,43 +1161,46 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">ID:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">#{{ solicitudContabilidad?.id }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">#{{ solicitudProveedores?.id }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Solicitante:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudContabilidad?.solicitante }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudProveedores?.solicitante
+                            }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Fecha Creación:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudContabilidad?.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.fechaCreacion |
+                            date:'dd/MM/yyyy HH:mm' }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Prioridad:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudContabilidad?.prioridadNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{
+                            solicitudProveedores?.prioridadNombre }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Tipo:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudContabilidad?.tipoNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.tipoNombre }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Sitio:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudContabilidad?.sitioNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.sitioNombre }}</p>
                     </div>
 
                     <div class="sm:col-span-2">
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Descripción:</span>
-                        <p class="text-blue-900 dark:text-blue-100 mt-1">{{ solicitudContabilidad?.descripcion }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 mt-1">{{ solicitudProveedores?.descripcion }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- Historial de cambios -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4 flex-1 min-h-0">
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
                 <h3 class="text-sm font-bold mb-3 text-gray-800 dark:text-white flex items-center gap-2">
                     <i class="pi pi-history text-purple-500"></i>
                     HISTORIAL DE CAMBIOS
@@ -1011,30 +1216,35 @@
                 </div>
 
                 <!-- Timeline de logs -->
-                <div *ngIf="!cargandoLogs && logs.length > 0" class="space-y-3 overflow-y-auto max-h-96 pr-2">
+                <div *ngIf="!cargandoLogs && logs.length > 0" class="space-y-3 max-h-64 overflow-y-auto pr-2">
                     <div *ngFor="let log of logs; let last = last" class="relative flex gap-3">
-                        
+
                         <!-- Timeline line -->
                         <div class="flex flex-col items-center">
-                            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 dark:bg-purple-400 z-10 flex-shrink-0"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 dark:bg-purple-400 z-10 flex-shrink-0">
+                            </div>
                             <div *ngIf="!last" class="w-0.5 flex-1 bg-gray-300 dark:bg-gray-600 mt-1"></div>
                         </div>
 
                         <!-- Log content -->
                         <div class="flex-1 pb-3">
-                            <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600">
+                            <div
+                                class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600">
                                 <div class="flex flex-wrap items-center gap-2 mb-2">
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                    <span
+                                        class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
                                         {{ obtenerNombreEstadoLog(log.estadoInicial) }}
                                     </span>
                                     <i class="pi pi-arrow-right text-gray-400" style="font-size: 0.7rem;"></i>
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                    <span
+                                        class="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                                         {{ obtenerNombreEstadoLog(log.estadoFinal) }}
                                     </span>
                                 </div>
                                 <div class="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
                                     <p><i class="pi pi-user mr-1" style="font-size: 0.7rem;"></i> {{ log.usuario }}</p>
-                                    <p><i class="pi pi-calendar mr-1" style="font-size: 0.7rem;"></i> {{ log.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+                                    <p><i class="pi pi-calendar mr-1" style="font-size: 0.7rem;"></i> {{ log.fecha |
+                                        date:'dd/MM/yyyy HH:mm' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -1049,15 +1259,77 @@
                 </div>
             </div>
 
+            <!-- Fotos adjuntas -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+                <h3 class="text-sm font-bold mb-3 text-gray-800 dark:text-white flex items-center gap-2">
+                    <i class="pi pi-images text-blue-500"></i>
+                    FOTOS ADJUNTAS
+                    <span *ngIf="!solicitudProveedores?.cargandoFotos"
+                        class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-auto">
+                        ({{ solicitudProveedores?.fotos?.length || 0 }})
+                    </span>
+                </h3>
+
+                <!-- Loading -->
+                <div *ngIf="solicitudProveedores?.cargandoFotos" class="text-center py-6">
+                    <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">Cargando fotos...</p>
+                </div>
+
+                <!-- Lista de fotos -->
+                <div *ngIf="!solicitudProveedores?.cargandoFotos && solicitudProveedores?.fotos && solicitudProveedores?.fotos!.length > 0"
+                    class="space-y-2">
+                    <div *ngFor="let foto of solicitudProveedores?.fotos" class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 
+                    hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                            <!-- Thumbnail preview -->
+                            <div
+                                class="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                                <img [src]="foto.url" [alt]="foto.nombre"
+                                    class="w-full h-full object-cover cursor-pointer"
+                                    (click)="verImagen(foto, solicitudProveedores?.fotos || [])"
+                                    (error)="$event.target.src='assets/image-placeholder.png'" />
+                            </div>
+
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
+                                    {{ foto.nombre }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ formatBytes(foto.size) }}
+                                    <span *ngIf="foto.lastModified" class="ml-2">
+                                        • {{ foto.lastModified | date:'dd/MM/yyyy HH:mm' }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <button pButton type="button" icon="pi pi-eye"
+                            (click)="verImagen(foto, solicitudProveedores?.fotos || [])"
+                            class="p-button-sm p-button-rounded p-button-text" pTooltip="Ver imagen"
+                            tooltipPosition="left" severity="secondary"></button>
+                    </div>
+                </div>
+
+                <!-- Sin fotos -->
+                <div *ngIf="!solicitudProveedores?.cargandoFotos && (!solicitudProveedores?.fotos || solicitudProveedores?.fotos?.length === 0)"
+                    class="text-center py-6 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                    <i class="pi pi-images text-3xl mb-2 block opacity-50"></i>
+                    <p class="text-xs font-medium">No hay fotos adjuntas</p>
+                </div>
+            </div>
+
         </div>
 
         <!-- LADO DERECHO: Fecha de Fin -->
         <div class="md:w-1/2 flex flex-col gap-4">
-            
+
             <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-6 flex-1">
                 <div class="flex flex-col items-center justify-center h-full">
                     <div class="text-center mb-8">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-100 dark:bg-teal-900/30 mb-4">
+                        <div
+                            class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-100 dark:bg-teal-900/30 mb-4">
                             <i class="pi pi-calculator text-3xl text-teal-600 dark:text-teal-400"></i>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">
@@ -1073,15 +1345,9 @@
                             <i class="pi pi-calendar mr-2"></i>
                             Fecha de Finalización *
                         </label>
-                        <p-datepicker 
-                            [(ngModel)]="fechaFin" 
-                            [showIcon]="true"
-                            dateFormat="dd/mm/yy"
-                            [showButtonBar]="true"
-                            placeholder="Seleccione fecha y hora"
-                            [showTime]="true"
-                            hourFormat="24"
-                            styleClass="w-full text-sm">
+                        <p-datepicker [(ngModel)]="fechaFin" [showIcon]="true" dateFormat="dd/mm/yy"
+                            [showButtonBar]="true" placeholder="Seleccione fecha y hora" [showTime]="true"
+                            hourFormat="24" styleClass="w-full text-sm">
                         </p-datepicker>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             <i class="pi pi-info-circle mr-1"></i>
@@ -1090,7 +1356,8 @@
                     </div>
 
                     <div class="mt-8 w-full max-w-md">
-                        <div class="bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-700 rounded-lg p-4">
+                        <div
+                            class="bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-700 rounded-lg p-4">
                             <h4 class="text-sm font-semibold text-teal-800 dark:text-teal-200 mb-2">
                                 <i class="pi pi-exclamation-circle mr-1"></i>
                                 Importante
@@ -1116,13 +1383,10 @@
                 {{ fechaFin ? ('Fecha fin: ' + (fechaFin | date:'dd/MM/yyyy HH:mm')) : 'Seleccione una fecha' }}
             </span>
             <div class="flex gap-3">
-                <button pButton type="button" label="Cancelar" icon="pi pi-times" 
-                    (click)="cerrarContabilidad()" severity="secondary" class="h-11"></button>
-                <button pButton type="button" label="Enviar a Contabilidad" icon="pi pi-calculator" 
-                    (click)="enviarAContabilidad()" 
-                    [disabled]="!fechaFin"
-                    [loading]="cargando"
-                    class="h-11"></button>
+                <button pButton type="button" label="Cancelar" icon="pi pi-times" (click)="cerrarContabilidad()"
+                    severity="secondary" class="h-11"></button>
+                <button pButton type="button" label="Enviar a Contabilidad" icon="pi pi-calculator"
+                    (click)="enviarAContabilidad()" [disabled]="!fechaFin" [loading]="cargando" class="h-11"></button>
             </div>
         </div>
     </ng-template>
@@ -1137,12 +1401,13 @@
 
     <!-- Contenido con scroll -->
     <div class="flex flex-col md:flex-row gap-4 p-4 sm:p-6 overflow-y-auto flex-1">
-        
+
         <!-- LADO IZQUIERDO: Información y Logs -->
+        <!-- LADO IZQUIERDO: Información, Logs y Fotos -->
         <div class="md:w-1/2 flex flex-col gap-4">
-            
+
             <!-- Info completa de la solicitud -->
-            <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 flex-shrink-0">
+            <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
                 <h3 class="text-sm font-bold mb-3 text-blue-800 dark:text-blue-200 flex items-center gap-2">
                     <i class="pi pi-info-circle"></i>
                     INFORMACIÓN GENERAL
@@ -1151,43 +1416,46 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">ID:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">#{{ solicitudFinalizacion?.id }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">#{{ solicitudProveedores?.id }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Solicitante:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudFinalizacion?.solicitante }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudProveedores?.solicitante
+                            }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Fecha Creación:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudFinalizacion?.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.fechaCreacion |
+                            date:'dd/MM/yyyy HH:mm' }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Prioridad:</span>
-                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{ solicitudFinalizacion?.prioridadNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 font-semibold">{{
+                            solicitudProveedores?.prioridadNombre }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Tipo:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudFinalizacion?.tipoNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.tipoNombre }}</p>
                     </div>
 
                     <div>
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Sitio:</span>
-                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudFinalizacion?.sitioNombre }}</p>
+                        <p class="text-blue-900 dark:text-blue-100">{{ solicitudProveedores?.sitioNombre }}</p>
                     </div>
 
                     <div class="sm:col-span-2">
                         <span class="text-blue-700 dark:text-blue-300 font-medium">Descripción:</span>
-                        <p class="text-blue-900 dark:text-blue-100 mt-1">{{ solicitudFinalizacion?.descripcion }}</p>
+                        <p class="text-blue-900 dark:text-blue-100 mt-1">{{ solicitudProveedores?.descripcion }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- Historial de cambios -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4 flex-1 min-h-0">
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
                 <h3 class="text-sm font-bold mb-3 text-gray-800 dark:text-white flex items-center gap-2">
                     <i class="pi pi-history text-purple-500"></i>
                     HISTORIAL DE CAMBIOS
@@ -1203,30 +1471,35 @@
                 </div>
 
                 <!-- Timeline de logs -->
-                <div *ngIf="!cargandoLogs && logs.length > 0" class="space-y-3 overflow-y-auto max-h-96 pr-2">
+                <div *ngIf="!cargandoLogs && logs.length > 0" class="space-y-3 max-h-64 overflow-y-auto pr-2">
                     <div *ngFor="let log of logs; let last = last" class="relative flex gap-3">
-                        
+
                         <!-- Timeline line -->
                         <div class="flex flex-col items-center">
-                            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 dark:bg-purple-400 z-10 flex-shrink-0"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-purple-500 dark:bg-purple-400 z-10 flex-shrink-0">
+                            </div>
                             <div *ngIf="!last" class="w-0.5 flex-1 bg-gray-300 dark:bg-gray-600 mt-1"></div>
                         </div>
 
                         <!-- Log content -->
                         <div class="flex-1 pb-3">
-                            <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600">
+                            <div
+                                class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2.5 border border-gray-200 dark:border-gray-600">
                                 <div class="flex flex-wrap items-center gap-2 mb-2">
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                    <span
+                                        class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
                                         {{ obtenerNombreEstadoLog(log.estadoInicial) }}
                                     </span>
                                     <i class="pi pi-arrow-right text-gray-400" style="font-size: 0.7rem;"></i>
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                    <span
+                                        class="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                                         {{ obtenerNombreEstadoLog(log.estadoFinal) }}
                                     </span>
                                 </div>
                                 <div class="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
                                     <p><i class="pi pi-user mr-1" style="font-size: 0.7rem;"></i> {{ log.usuario }}</p>
-                                    <p><i class="pi pi-calendar mr-1" style="font-size: 0.7rem;"></i> {{ log.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+                                    <p><i class="pi pi-calendar mr-1" style="font-size: 0.7rem;"></i> {{ log.fecha |
+                                        date:'dd/MM/yyyy HH:mm' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -1241,15 +1514,77 @@
                 </div>
             </div>
 
+            <!-- Fotos adjuntas -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+                <h3 class="text-sm font-bold mb-3 text-gray-800 dark:text-white flex items-center gap-2">
+                    <i class="pi pi-images text-blue-500"></i>
+                    FOTOS ADJUNTAS
+                    <span *ngIf="!solicitudProveedores?.cargandoFotos"
+                        class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-auto">
+                        ({{ solicitudProveedores?.fotos?.length || 0 }})
+                    </span>
+                </h3>
+
+                <!-- Loading -->
+                <div *ngIf="solicitudProveedores?.cargandoFotos" class="text-center py-6">
+                    <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">Cargando fotos...</p>
+                </div>
+
+                <!-- Lista de fotos -->
+                <div *ngIf="!solicitudProveedores?.cargandoFotos && solicitudProveedores?.fotos && solicitudProveedores?.fotos!.length > 0"
+                    class="space-y-2">
+                    <div *ngFor="let foto of solicitudProveedores?.fotos" class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 
+                    hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                            <!-- Thumbnail preview -->
+                            <div
+                                class="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                                <img [src]="foto.url" [alt]="foto.nombre"
+                                    class="w-full h-full object-cover cursor-pointer"
+                                    (click)="verImagen(foto, solicitudProveedores?.fotos || [])"
+                                    (error)="$event.target.src='assets/image-placeholder.png'" />
+                            </div>
+
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
+                                    {{ foto.nombre }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ formatBytes(foto.size) }}
+                                    <span *ngIf="foto.lastModified" class="ml-2">
+                                        • {{ foto.lastModified | date:'dd/MM/yyyy HH:mm' }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <button pButton type="button" icon="pi pi-eye"
+                            (click)="verImagen(foto, solicitudProveedores?.fotos || [])"
+                            class="p-button-sm p-button-rounded p-button-text" pTooltip="Ver imagen"
+                            tooltipPosition="left" severity="secondary"></button>
+                    </div>
+                </div>
+
+                <!-- Sin fotos -->
+                <div *ngIf="!solicitudProveedores?.cargandoFotos && (!solicitudProveedores?.fotos || solicitudProveedores?.fotos?.length === 0)"
+                    class="text-center py-6 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                    <i class="pi pi-images text-3xl mb-2 block opacity-50"></i>
+                    <p class="text-xs font-medium">No hay fotos adjuntas</p>
+                </div>
+            </div>
+
         </div>
 
         <!-- LADO DERECHO: Datos del documento -->
         <div class="md:w-1/2 flex flex-col gap-4">
-            
+
             <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-6 flex-1">
                 <div class="flex flex-col h-full">
                     <div class="text-center mb-6">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 mb-4">
+                        <div
+                            class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 mb-4">
                             <i class="pi pi-check text-3xl text-emerald-600 dark:text-emerald-400"></i>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">
@@ -1267,12 +1602,8 @@
                                 <i class="pi pi-file mr-2"></i>
                                 Tipo de Documento *
                             </label>
-                            <p-select 
-                                [(ngModel)]="tipoDocumento" 
-                                [options]="tiposDocumento" 
-                                optionLabel="label" 
-                                optionValue="value" 
-                                placeholder="Seleccione tipo de documento" 
+                            <p-select [(ngModel)]="tipoDocumento" [options]="tiposDocumento" optionLabel="label"
+                                optionValue="value" placeholder="Seleccione tipo de documento"
                                 styleClass="w-full text-sm">
                             </p-select>
                         </div>
@@ -1283,11 +1614,7 @@
                                 <i class="pi pi-hashtag mr-2"></i>
                                 Serie *
                             </label>
-                            <input 
-                                pInputText 
-                                [(ngModel)]="serie" 
-                                placeholder="Ej: F001" 
-                                class="w-full text-sm"
+                            <input pInputText [(ngModel)]="serie" placeholder="Ej: F001" class="w-full text-sm"
                                 maxlength="10">
                         </div>
 
@@ -1297,16 +1624,13 @@
                                 <i class="pi pi-sort-numeric-up mr-2"></i>
                                 Número *
                             </label>
-                            <input 
-                                pInputText 
-                                [(ngModel)]="numero" 
-                                placeholder="Ej: 00001234" 
-                                class="w-full text-sm"
+                            <input pInputText [(ngModel)]="numero" placeholder="Ej: 00001234" class="w-full text-sm"
                                 maxlength="20">
                         </div>
 
                         <!-- Info adicional -->
-                        <div class="mt-6 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg p-4">
+                        <div
+                            class="mt-6 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg p-4">
                             <h4 class="text-sm font-semibold text-emerald-800 dark:text-emerald-200 mb-2">
                                 <i class="pi pi-info-circle mr-1"></i>
                                 Información
@@ -1329,20 +1653,34 @@
     <ng-template pTemplate="footer">
         <div class="flex justify-between items-center">
             <span class="text-sm text-gray-600 dark:text-gray-400">
-                {{ tipoDocumento && serie && numero ? (tipoDocumento + ' ' + serie + '-' + numero) : 'Complete los datos del documento' }}
+                {{ tipoDocumento && serie && numero ? (tipoDocumento + ' ' + serie + '-' + numero) : 'Complete los datos
+                del documento' }}
             </span>
             <div class="flex gap-3">
-                <button pButton type="button" label="Cancelar" icon="pi pi-times" 
-                    (click)="cerrarFinalizacion()" severity="secondary" class="h-11"></button>
-                <button pButton type="button" label="Finalizar Mantenimiento" icon="pi pi-check" 
-                    (click)="finalizarMantenimiento()" 
-                    [disabled]="!tipoDocumento || !serie || !numero"
-                    [loading]="cargando"
-                    class="h-11"></button>
+                <button pButton type="button" label="Cancelar" icon="pi pi-times" (click)="cerrarFinalizacion()"
+                    severity="secondary" class="h-11"></button>
+                <button pButton type="button" label="Finalizar Mantenimiento" icon="pi pi-check"
+                    (click)="finalizarMantenimiento()" [disabled]="!tipoDocumento || !serie || !numero"
+                    [loading]="cargando" class="h-11"></button>
             </div>
         </div>
     </ng-template>
 
+</p-dialog>
+
+<!-- MODAL IMAGEN -->
+<p-dialog [(visible)]="mostrarImagenModal" [modal]="true" [closable]="true" [closeOnEscape]="true"
+    [dismissableMask]="true" [style]="{width: '95vw', maxWidth: '1200px'}"
+    [contentStyle]="{padding: '0', background: '#000'}" [header]="imagenSeleccionada?.nombre || 'Imagen'"
+    (onHide)="cerrarImagenModal()">
+
+    <div class="relative bg-black" *ngIf="imagenSeleccionada">
+        <!-- Imagen -->
+        <div class="flex items-center justify-center" style="min-height: 60vh; max-height: 80vh;">
+            <img [src]="imagenSeleccionada.url" [alt]="imagenSeleccionada.nombre"
+                class="max-w-full max-h-full object-contain" style="max-height: 80vh;" />
+        </div>
+    </div>
 </p-dialog>
 
 <p-toast position="top-right"></p-toast>

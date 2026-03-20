@@ -11,3 +11,108 @@
     }
   }
 }
+/* menu.css */
+
+/* Estilos globales para el drawer */
+::ng-deep .p-drawer {
+  background: var(--surface-0);
+}
+
+::ng-deep .p-drawer .p-drawer-header {
+  background: var(--surface-0);
+  border-bottom: 1px solid var(--surface-border);
+  padding: 1.25rem;
+}
+
+::ng-deep .p-drawer .p-drawer-content {
+  padding: 0;
+  background: var(--surface-0);
+}
+
+/* Estilos para los botones del menú */
+::ng-deep .p-drawer .p-button-text {
+  transition: all 0.2s ease-in-out;
+  margin: 0;
+  text-align: left;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+::ng-deep .p-drawer .p-button-text:hover {
+  transform: translateX(2px);
+}
+
+/* Item activo - más específico */
+::ng-deep .p-drawer .p-button-text.active-menu-item {
+  background: rgb(239 246 255) !important; /* blue-50 */
+  color: rgb(29 78 216) !important; /* blue-700 */
+  font-weight: 500;
+  border-left: 4px solid rgb(37 99 235); /* blue-600 */
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+  box-shadow: 0 1px 3px 0 rgba(37, 99, 235, 0.1);
+}
+
+::ng-deep .dark .p-drawer .p-button-text.active-menu-item {
+  background: rgba(29, 78, 216, 0.3) !important; /* blue-900/30 */
+  color: rgb(147 197 253) !important; /* blue-300 */
+  border-left-color: rgb(96 165 250); /* blue-400 */
+}
+
+/* Item normal */
+::ng-deep .p-drawer .p-button-text:not(.active-menu-item) {
+  background: transparent;
+  color: rgb(55 65 81); /* gray-700 */
+  border-left: 4px solid transparent;
+  border-radius: 0.5rem;
+}
+
+::ng-deep .dark .p-drawer .p-button-text:not(.active-menu-item) {
+  color: rgb(209 213 219); /* gray-300 */
+}
+
+::ng-deep .p-drawer .p-button-text:not(.active-menu-item):hover {
+  background: rgb(243 244 246) !important; /* gray-100 */
+}
+
+::ng-deep .dark .p-drawer .p-button-text:not(.active-menu-item):hover {
+  background: rgb(51 65 85) !important; /* slate-700 */
+}
+
+/* Iconos del menú */
+::ng-deep .p-drawer .p-button-text .p-button-icon {
+  font-size: 1.125rem;
+}
+
+/* Label del botón */
+::ng-deep .p-drawer .p-button-text .p-button-label {
+  font-size: 0.875rem;
+  font-weight: inherit;
+}
+
+/* Scrollbar personalizado */
+::ng-deep .p-drawer .p-drawer-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+::ng-deep .p-drawer .p-drawer-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::ng-deep .p-drawer .p-drawer-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::ng-deep .dark .p-drawer .p-drawer-content::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+::ng-deep .p-drawer .p-drawer-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+::ng-deep .dark .p-drawer .p-drawer-content::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}

@@ -34,14 +34,16 @@ interface SolicitudMantenimiento {
   estadoCodigo: string;
   fechaCreacion: string;
   fotos: FotoMantenimiento[];
+  cargandoFotos?: boolean; // ← NUEVO
 }
 
 interface FotoMantenimiento {
   id: string;
   url: string;
   nombre: string;
+  size?: number; // ← NUEVO
+  lastModified?: string; // ← NUEVO
 }
-
 interface PresupuestoProveedor {
   idclieprov: string;
   razon_social: string;
@@ -454,6 +456,7 @@ export class MantenimientoEstados implements OnInit {
     this.proveedorSeleccionado = '';
     this.mostrarProveedores = true;
     this.cargarLogs(solicitud.id);
+    this.cargarFotosDesdeS3(solicitud.id, 'proveedores');
   }
 
   cerrarSeleccionProveedores() {
@@ -669,6 +672,7 @@ export class MantenimientoEstados implements OnInit {
     this.mostrarAsignacion = true;
     this.cargarLogs(solicitud.id);
     this.cargarPresupuestos(solicitud.id);
+    this.cargarFotosDesdeS3(solicitud.id, 'asignacion');
   }
 
   cerrarAsignacion() {
@@ -907,6 +911,7 @@ export class MantenimientoEstados implements OnInit {
     this.fechaInicio = null;
     this.mostrarEjecucion = true;
     this.cargarLogs(solicitud.id);
+    this.cargarFotosDesdeS3(solicitud.id, 'ejecucion');
   }
 
   cerrarEjecucion() {
@@ -1041,6 +1046,7 @@ export class MantenimientoEstados implements OnInit {
     this.fechaFin = null;
     this.mostrarContabilidad = true;
     this.cargarLogs(solicitud.id);
+    this.cargarFotosDesdeS3(solicitud.id, 'contabilidad');
   }
 
   cerrarContabilidad() {
@@ -1177,6 +1183,7 @@ export class MantenimientoEstados implements OnInit {
     this.numero = '';
     this.mostrarFinalizacion = true;
     this.cargarLogs(solicitud.id);
+    this.cargarFotosDesdeS3(solicitud.id, 'finalizacion');
   }
 
   cerrarFinalizacion() {
@@ -1319,4 +1326,96 @@ export class MantenimientoEstados implements OnInit {
       }
     });
   }
+
+  cargarFotosDesdeS3(idSolicitud: number, contexto: 'proveedores' | 'asignacion' | 'ejecucion' | 'contabilidad' | 'finalizacion') {
+  const ruta = `SM${idSolicitud}`;
+  
+  // Determinar qué solicitud actualizar según el contexto
+  let solicitudActual: SolicitudMantenimiento | null = null;
+  
+  switch(contexto) {
+    case 'proveedores':
+      solicitudActual = this.solicitudProveedores;
+      break;
+    case 'asignacion':
+      solicitudActual = this.solicitudAsignacion;
+      break;
+    case 'ejecucion':
+      solicitudActual = this.solicitudEjecucion;
+      break;
+    case 'contabilidad':
+      solicitudActual = this.solicitudContabilidad;
+      break;
+    case 'finalizacion':
+      solicitudActual = this.solicitudFinalizacion;
+      break;
+  }
+
+  if (!solicitudActual) return;
+
+  solicitudActual.cargandoFotos = true;
+  solicitudActual.fotos = [];
+
+  this.apiService.listarArchivos(ruta).subscribe({
+    next: (response) => {
+      console.log('📸 Fotos desde S3:', response);
+
+      if (solicitudActual) {
+        solicitudActual.cargandoFotos = false;
+
+        if (Array.isArray(response)) {
+          solicitudActual.fotos = response.map((foto: any) => ({
+            id: foto.key,
+            url: foto.url,
+            nombre: foto.name,
+            size: foto.size,
+            lastModified: foto.lastModified
+          }));
+
+          console.log(`✅ ${solicitudActual.fotos.length} foto(s) cargadas para ${contexto}`);
+        } else {
+          console.warn('⚠️ Respuesta no es un array');
+        }
+      }
+    },
+    error: (error) => {
+      if (solicitudActual) {
+        solicitudActual.cargandoFotos = false;
+      }
+
+      console.error('❌ Error al cargar fotos desde S3:', error);
+
+      // Solo mostrar error si no es 404 (carpeta vacía)
+      if (error.status !== 404) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar las fotos',
+          life: 3000
+        });
+      }
+    }
+  });
+}
+
+formatBytes(bytes?: number): string {
+  if (!bytes || bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+verImagen(foto: FotoMantenimiento, fotos: FotoMantenimiento[]) {
+  this.imagenSeleccionada = foto;
+  this.indiceImagenActual = fotos.findIndex(f => f.id === foto.id);
+  this.mostrarImagenModal = true;
+}
+
+cerrarImagenModal() {
+  this.mostrarImagenModal = false;
+  this.imagenSeleccionada = null;
+}
 }

@@ -475,25 +475,46 @@ export class Api {
     );
   }
 
-  subirArchivo(params: {
-    carpeta: string;
-    archivo: string;
-    tipoArchivo: string;
-  }): Observable<any> {
+  subirArchivo(
+  idSolicitudMantenimiento: number,
+  archivo: File,
+  tipoArchivo: string
+): Observable<any> {
 
-    const queryParams = new HttpParams()
-      .set('carpeta', params.carpeta)
-      .set('archivo', params.archivo)
-      .set('tipoArchivo', params.tipoArchivo);
+  const carpeta = `SM${idSolicitudMantenimiento}`;
 
-    return this.https.get<any>(
-      `${this.baseUrl}/SolicitudMantenimiento/subirArchivoChecklist`,
-      { headers: this.authService.getHeaders(), params: queryParams }
-    ).pipe(
-      map(response => response),
-      catchError(error => throwError(() => error))
-    );
+  let mimeType = 'application/octet-stream';
+
+  if (tipoArchivo === 'imagen') {
+    mimeType = archivo.type || 'image/jpeg';
+  } else if (tipoArchivo === 'pdf') {
+    mimeType = 'application/pdf';
   }
+
+  const params = new HttpParams()
+    .set('carpeta', carpeta)
+    .set('archivo', archivo.name)
+    .set('tipoArchivo', mimeType);
+  return this.https.get<{ url: string }>(
+    `${this.baseUrl}/SolicitudMantenimiento/subirArchivoChecklist`,
+    {
+      headers: this.authService.getHeaders(),
+      params
+    }
+  ).pipe(
+    switchMap(response => {
+      
+      return this.https.put(response.url, archivo, {
+        headers: { 'Content-Type': mimeType },
+        reportProgress: true
+      });
+    }),
+    catchError(error => {
+      console.error('Error al subir el archivo:', error);
+      return throwError(() => error);
+    })
+  );
+}
 
   listarArchivos(ruta: string): Observable<any> {
     const queryParams = new HttpParams()
