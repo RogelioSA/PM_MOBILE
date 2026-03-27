@@ -401,14 +401,16 @@ export class Api {
       .set('serie', params.serie)
       .set('numero', params.numero);
 
-    return this.https.put<any>(
-      `${this.baseUrl}/SolicitudMantenimiento/EditarSolicitudMantenimiento`,
-      {},
-      { headers: this.authService.getHeaders(), params: queryParams }
-    ).pipe(
-      map(response => response),
-      catchError(error => throwError(() => error))
-    );
+      return this.https.get<any>(
+        `${this.baseUrl}/SolicitudMantenimiento/EditarSolicitudMantenimiento`,
+        { 
+          headers: this.authService.getHeaders(), 
+          params: queryParams 
+        }
+      ).pipe(
+        map(response => response),
+        catchError(error => throwError(() => error))
+      );
   }
 
   consultarSolicitudMantenimiento(id: number): Observable<any> {
