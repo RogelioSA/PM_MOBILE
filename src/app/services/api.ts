@@ -401,7 +401,7 @@ export class Api {
       .set('serie', params.serie)
       .set('numero', params.numero);
 
-    return this.https.put<any>(
+    return this.https.get<any>(
       `${this.baseUrl}/SolicitudMantenimiento/EditarSolicitudMantenimiento`,
       {},
       { headers: this.authService.getHeaders(), params: queryParams }
