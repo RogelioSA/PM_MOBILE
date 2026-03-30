@@ -33,17 +33,24 @@ interface SolicitudMantenimiento {
   estadoNombre: string;
   estadoCodigo: string;
   fechaCreacion: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  fechaCierre?: string;
+  proveedor?: string;
+  nombreProveedor?: string;
+  totalDocumentos?: number;
   fotos: FotoMantenimiento[];
-  cargandoFotos?: boolean; // ← NUEVO
+  cargandoFotos?: boolean;
 }
 
 interface FotoMantenimiento {
   id: string;
   url: string;
   nombre: string;
-  size?: number; // ← NUEVO
-  lastModified?: string; // ← NUEVO
+  size?: number;
+  lastModified?: string;
 }
+
 interface PresupuestoProveedor {
   idclieprov: string;
   razon_social: string;
@@ -59,6 +66,17 @@ interface PresupuestoListado {
   monto: number;
   fecha: string;
   seleccionado?: boolean;
+}
+
+interface DocumentoSeleccionado {
+  idcarpeta: string;
+  tipoDocumento: string;
+  serie: string;
+  numero: string;
+  importebruto: number;
+  importeneto: number;
+  fechaemision: string;
+  editando?: boolean;
 }
 
 @Component({
@@ -98,6 +116,14 @@ export class MantenimientoEstados implements OnInit {
   // Usuario actual
   usuarioActual = '';
 
+  proveedorInfo: any = null;
+  filtroDocumento = '';
+  documentosFiltrados: any[] = [];
+  cargandoDocumentos = false;
+  busquedaDocumentoTimeout: any = null;
+  documentoTemporal: any = null;
+  documentosSeleccionados: DocumentoSeleccionado[] = [];
+
   // Opciones
   prioridades: any[] = [
     { label: 'Todas', value: '' },
@@ -132,7 +158,13 @@ export class MantenimientoEstados implements OnInit {
   ];
 
   sucursales: any[] = [];
-  proveedores: any[] = [];
+
+  // Proveedores - Búsqueda en vivo
+  filtroProveedor = '';
+  proveedoresFiltrados: any[] = [];
+  cargandoProveedores = false;
+  busquedaTimeout: any = null;
+  proveedorSeleccionado: any = null;
 
   // Modal detalle con logs
   mostrarDetalle = false;
@@ -144,7 +176,6 @@ export class MantenimientoEstados implements OnInit {
   mostrarProveedores = false;
   solicitudProveedores: SolicitudMantenimiento | null = null;
   presupuestos: PresupuestoProveedor[] = [];
-  proveedorSeleccionado = '';
 
   // Modal asignación de proveedor
   mostrarAsignacion = false;
@@ -165,9 +196,12 @@ export class MantenimientoEstados implements OnInit {
   // Modal finalización
   mostrarFinalizacion = false;
   solicitudFinalizacion: SolicitudMantenimiento | null = null;
-  tipoDocumento = '';
-  serie = '';
-  numero = '';
+
+  // Modal ver finalizado (FIN)
+  mostrarVerFinalizado = false;
+  solicitudVerFinalizado: SolicitudMantenimiento | null = null;
+  documentosFinalizados: any[] = [];
+  cargandoDocumentosFinalizados = false;
 
   // Modal imagen
   mostrarImagenModal = false;
@@ -179,7 +213,7 @@ export class MantenimientoEstados implements OnInit {
     private apiService: Api,
     private masterService: Master,
     private cookieService: CookieService
-  ) {}
+  ) { }
 
   ngOnInit() {
     console.log('=== MANTENIMIENTO ESTADOS COMPONENT INIT ===');
@@ -188,7 +222,6 @@ export class MantenimientoEstados implements OnInit {
     this.inicializarFechasMes();
     console.log('Fechas inicializadas - Desde:', this.fechaDesde, 'Hasta:', this.fechaHasta);
     this.cargarSucursales();
-    this.cargarProveedores();
     this.cargarSolicitudes();
   }
 
@@ -234,29 +267,72 @@ export class MantenimientoEstados implements OnInit {
     });
   }
 
-  cargarProveedores() {
-    this.masterService.listarProveedorTramite().subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.proveedores = response.data;
-          console.log('Proveedores cargados:', this.proveedores.length);
+  // Método para buscar proveedores mientras escribe
+  buscarProveedoresMientrasEscribe(event: any) {
+    const query = (event.target as HTMLInputElement).value;
+    this.filtroProveedor = query;
+
+    // Limpiar timeout anterior
+    if (this.busquedaTimeout) {
+      clearTimeout(this.busquedaTimeout);
+    }
+
+    // Si tiene menos de 3 caracteres, limpiar resultados
+    if (query.length < 3) {
+      this.proveedoresFiltrados = [];
+      this.proveedorSeleccionado = null;
+      return;
+    }
+
+    // Debounce de 300ms
+    this.busquedaTimeout = setTimeout(() => {
+      this.cargandoProveedores = true;
+
+      this.masterService.buscarProveedores(query).subscribe({
+        next: (response) => {
+          console.log('Proveedores encontrados:', response);
+
+          this.proveedoresFiltrados = Array.isArray(response)
+            ? response.map((p: any) => ({
+              idclieprov: p.idCliente || p.nrodocumento,
+              razon_social: p.name,
+              documento: p.documento,
+              nrodocumento: p.nrodocumento,
+              telefono: p.telefono,
+              email: p.email,
+              direccion: p.direccion
+            }))
+            : [];
+
+          this.cargandoProveedores = false;
+        },
+        error: (error) => {
+          this.cargandoProveedores = false;
+          console.error('Error al buscar proveedores:', error);
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron buscar los proveedores',
+            life: 3000
+          });
         }
-      },
-      error: (error) => {
-        console.error('Error al cargar proveedores:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No se pudieron cargar los proveedores',
-          life: 3000
-        });
-      }
-    });
+      });
+    }, 300);
+  }
+
+  // Seleccionar proveedor de la lista
+  seleccionarProveedorDeLista(proveedor: any) {
+    this.proveedorSeleccionado = proveedor;
+    this.filtroProveedor = proveedor.razon_social;
+    this.proveedoresFiltrados = []; // Ocultar dropdown
+
+    console.log('Proveedor seleccionado:', proveedor);
   }
 
   cargarSolicitudes() {
     const params = {
-      solicitanteUsuario: this.solicitanteFiltro, // Usar filtro en lugar de cookie
+      solicitanteUsuario: this.solicitanteFiltro,
       estado: this.estadoFiltro,
       prioridad: this.prioridadFiltro,
       fechaDesde: this.fechaDesde,
@@ -273,9 +349,8 @@ export class MantenimientoEstados implements OnInit {
 
         console.log('Respuesta completa del API:', response);
 
-        // El API devuelve directamente el array
         let datos = [];
-        
+
         if (Array.isArray(response)) {
           datos = response;
         } else if (response.success && response.data) {
@@ -287,10 +362,9 @@ export class MantenimientoEstados implements OnInit {
         if (datos.length > 0) {
           this.solicitudes = datos.map((item: any) => {
             console.log('Item estado original:', item.estado, 'ID:', item.id);
-            
-            // Normalizar el código de estado
+
             const estadoCodigo = item.estado ? item.estado.trim().toUpperCase() : 'PEN';
-            
+
             return {
               id: item.id,
               prioridad: item.prioridad,
@@ -303,12 +377,18 @@ export class MantenimientoEstados implements OnInit {
               sitioNombre: this.obtenerNombreSucursal(item.sucursal),
               estado: this.convertirEstadoANumero(estadoCodigo),
               estadoNombre: this.obtenerNombreEstadoPorCodigo(estadoCodigo),
-              estadoCodigo: estadoCodigo, // String, no número
+              estadoCodigo: estadoCodigo,
               fechaCreacion: item.fechaCreacion,
+              fechaInicio: item.fechaInicio,
+              fechaFin: item.fechaFin,
+              fechaCierre: item.fechaCierre,
+              proveedor: item.proveedor,
+              nombreProveedor: item.nombreProveedor,
+              totalDocumentos: item.totalDocumentos,
               fotos: []
             };
           });
-          
+
           console.log('Solicitudes mapeadas:', this.solicitudes);
         } else {
           console.warn('No hay datos en la respuesta');
@@ -318,7 +398,7 @@ export class MantenimientoEstados implements OnInit {
       error: (error) => {
         this.cargando = false;
         console.error('Error al cargar solicitudes:', error);
-        
+
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -336,21 +416,20 @@ export class MantenimientoEstados implements OnInit {
 
   convertirEstadoANumero(estado: string): number {
     if (!estado) return 1;
-    
-    // Normalizar: quitar espacios y convertir a mayúsculas
+
     const estadoNormalizado = estado.trim().toUpperCase();
-    
-    switch(estadoNormalizado) {
-      case 'PEN': return 1; // Pendiente
-      case 'ESP': return 2; // Espera de presupuesto
-      case 'CON': return 3; // Control
-      case 'PRO': return 4; // En Proceso
-      case 'COM': return 5; // Completado
-      case 'ASI': return 6; // Asignado
-      case 'EJE': return 7; // En Ejecución
-      case 'COT': return 8; // Contabilidad
-      case 'FIN': return 9; // Finalizado
-      default: 
+
+    switch (estadoNormalizado) {
+      case 'PEN': return 1;
+      case 'ESP': return 2;
+      case 'CON': return 3;
+      case 'PRO': return 4;
+      case 'COM': return 5;
+      case 'ASI': return 6;
+      case 'EJE': return 7;
+      case 'COT': return 8;
+      case 'FIN': return 9;
+      default:
         console.warn('Estado desconocido para conversión:', estado);
         return 1;
     }
@@ -358,11 +437,10 @@ export class MantenimientoEstados implements OnInit {
 
   obtenerNombreEstadoPorCodigo(estado: string): string {
     if (!estado) return 'Desconocido';
-    
-    // Normalizar: quitar espacios y convertir a mayúsculas
+
     const estadoNormalizado = estado.trim().toUpperCase();
-    
-    switch(estadoNormalizado) {
+
+    switch (estadoNormalizado) {
       case 'PEN': return 'Pendiente';
       case 'ESP': return 'Espera de Presupuesto';
       case 'CON': return 'Control';
@@ -372,7 +450,7 @@ export class MantenimientoEstados implements OnInit {
       case 'EJE': return 'En Ejecución';
       case 'COT': return 'Contabilidad';
       case 'FIN': return 'Finalizado';
-      default: 
+      default:
         console.warn('Estado desconocido recibido:', estado);
         return `Desconocido (${estado})`;
     }
@@ -426,7 +504,6 @@ export class MantenimientoEstados implements OnInit {
       next: (response) => {
         this.cargandoLogs = false;
 
-        // Manejar respuesta directa o con data
         let datos = [];
         if (Array.isArray(response)) {
           datos = response;
@@ -436,7 +513,6 @@ export class MantenimientoEstados implements OnInit {
           datos = response.data;
         }
 
-        // Ordenar por fecha descendente (más reciente primero)
         this.logs = datos.sort((a: any, b: any) => {
           return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
         });
@@ -453,7 +529,9 @@ export class MantenimientoEstados implements OnInit {
   abrirSeleccionProveedores(solicitud: SolicitudMantenimiento) {
     this.solicitudProveedores = solicitud;
     this.presupuestos = [];
-    this.proveedorSeleccionado = '';
+    this.proveedorSeleccionado = null;
+    this.filtroProveedor = '';
+    this.proveedoresFiltrados = [];
     this.mostrarProveedores = true;
     this.cargarLogs(solicitud.id);
     this.cargarFotosDesdeS3(solicitud.id, 'proveedores');
@@ -463,8 +541,14 @@ export class MantenimientoEstados implements OnInit {
     this.mostrarProveedores = false;
     this.solicitudProveedores = null;
     this.presupuestos = [];
-    this.proveedorSeleccionado = '';
+    this.proveedorSeleccionado = null;
+    this.filtroProveedor = '';
+    this.proveedoresFiltrados = [];
     this.logs = [];
+
+    if (this.busquedaTimeout) {
+      clearTimeout(this.busquedaTimeout);
+    }
   }
 
   agregarProveedor() {
@@ -472,14 +556,14 @@ export class MantenimientoEstados implements OnInit {
       this.messageService.add({
         severity: 'warn',
         summary: 'Selección requerida',
-        detail: 'Debe seleccionar un proveedor',
+        detail: 'Debe seleccionar un proveedor de la lista',
         life: 3000
       });
       return;
     }
 
     // Verificar si ya está agregado
-    const yaExiste = this.presupuestos.some(p => p.idclieprov === this.proveedorSeleccionado);
+    const yaExiste = this.presupuestos.some(p => p.idclieprov === this.proveedorSeleccionado.idclieprov);
     if (yaExiste) {
       this.messageService.add({
         severity: 'warn',
@@ -490,17 +574,24 @@ export class MantenimientoEstados implements OnInit {
       return;
     }
 
-    const proveedor = this.proveedores.find(p => p.idclieprov === this.proveedorSeleccionado);
-    if (proveedor) {
-      this.presupuestos.push({
-        idclieprov: proveedor.idclieprov,
-        razon_social: proveedor.razon_social,
-        monto: 0,
-        editando: true
-      });
+    this.presupuestos.push({
+      idclieprov: this.proveedorSeleccionado.idclieprov,
+      razon_social: this.proveedorSeleccionado.razon_social,
+      monto: 0,
+      editando: true
+    });
 
-      this.proveedorSeleccionado = '';
-    }
+    // Limpiar después de agregar
+    this.proveedorSeleccionado = null;
+    this.filtroProveedor = '';
+    this.proveedoresFiltrados = [];
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Proveedor agregado',
+      detail: 'El proveedor se agregó correctamente',
+      life: 2000
+    });
   }
 
   eliminarProveedor(proveedor: PresupuestoProveedor) {
@@ -545,7 +636,6 @@ export class MantenimientoEstados implements OnInit {
       return;
     }
 
-    // Validar que todos tengan monto
     const sinMonto = this.presupuestos.filter(p => !p.monto || p.monto <= 0);
     if (sinMonto.length > 0) {
       this.messageService.add({
@@ -571,14 +661,13 @@ export class MantenimientoEstados implements OnInit {
     const idSolicitud = this.solicitudProveedores.id;
     const fechaActual = new Date().toISOString();
 
-    // Guardar todos los presupuestos
     let presupuestosGuardados = 0;
     const totalPresupuestos = this.presupuestos.length;
 
     this.presupuestos.forEach((presupuesto) => {
       const params = {
-        id: 0, // Nuevo registro
-        idSolicitudMantenimiento: idSolicitud, // ID de la solicitud
+        id: 0,
+        idSolicitudMantenimiento: idSolicitud,
         idClieProv: presupuesto.idclieprov,
         monto: presupuesto.monto,
         fecha: fechaActual
@@ -589,7 +678,6 @@ export class MantenimientoEstados implements OnInit {
           presupuestosGuardados++;
           console.log(`Presupuesto guardado ${presupuestosGuardados}/${totalPresupuestos}:`, presupuesto.razon_social);
 
-          // Cuando todos los presupuestos estén guardados, cambiar estado
           if (presupuestosGuardados === totalPresupuestos) {
             this.cambiarEstadoAControl(idSolicitud);
           }
@@ -612,7 +700,7 @@ export class MantenimientoEstados implements OnInit {
   cambiarEstadoAControl(idSolicitud: number) {
     const params = {
       id: idSolicitud,
-      estado: 'CON', // Estado Control
+      estado: 'CON',
       usuario: this.usuarioActual,
       fechaInicio: '',
       fechaFin: '',
@@ -634,11 +722,9 @@ export class MantenimientoEstados implements OnInit {
           life: 3000
         });
 
-        // 1. Primero cerrar el modal
         this.cerrarSeleccionProveedores();
         this.cargando = false;
 
-        // 2. Luego actualizar la tabla
         setTimeout(() => {
           this.cargarSolicitudes();
         }, 100);
@@ -656,10 +742,6 @@ export class MantenimientoEstados implements OnInit {
       }
     });
   }
-
-  // ============================================
-  // MÉTODOS MODAL ASIGNACIÓN DE PROVEEDOR
-  // ============================================
 
   esControl(solicitud: SolicitudMantenimiento): boolean {
     return solicitud.estadoCodigo === 'CON';
@@ -690,7 +772,6 @@ export class MantenimientoEstados implements OnInit {
       next: (response) => {
         console.log('Presupuestos cargados:', response);
 
-        // Manejar diferentes formatos de respuesta
         let datos = [];
         if (Array.isArray(response)) {
           datos = response;
@@ -728,10 +809,8 @@ export class MantenimientoEstados implements OnInit {
   }
 
   seleccionarProveedor(presupuesto: PresupuestoListado) {
-    // Deseleccionar todos
     this.presupuestosListado.forEach(p => p.seleccionado = false);
-    
-    // Seleccionar el clickeado
+
     presupuesto.seleccionado = true;
     this.proveedorAsignado = presupuesto.idClieProv;
 
@@ -763,7 +842,7 @@ export class MantenimientoEstados implements OnInit {
 
     const params = {
       id: this.solicitudAsignacion.id,
-      estado: 'ASI', // Estado Asignado
+      estado: 'ASI',
       usuario: this.usuarioActual,
       fechaInicio: '',
       fechaFin: '',
@@ -785,7 +864,6 @@ export class MantenimientoEstados implements OnInit {
           life: 3000
         });
 
-        // Cerrar modal y actualizar tabla
         this.cerrarAsignacion();
         this.cargando = false;
 
@@ -820,7 +898,7 @@ export class MantenimientoEstados implements OnInit {
 
     const params = {
       id: solicitud.id,
-      estado: 'ESP', // Cambiar a estado "Espera"
+      estado: 'ESP',
       usuario: this.usuarioActual,
       fechaInicio: '',
       fechaFin: '',
@@ -846,7 +924,6 @@ export class MantenimientoEstados implements OnInit {
 
         this.cargando = false;
 
-        // Actualizar la tabla
         setTimeout(() => {
           this.cargarSolicitudes();
         }, 100);
@@ -874,7 +951,7 @@ export class MantenimientoEstados implements OnInit {
   }
 
   getPrioridadColor(prioridad: string): string {
-    switch(prioridad) {
+    switch (prioridad) {
       case '1': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
       case '2': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
       case '3': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
@@ -884,23 +961,19 @@ export class MantenimientoEstados implements OnInit {
   }
 
   getEstadoColor(estado: number): string {
-    switch(estado) {
-      case 1: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'; // Pendiente
-      case 2: return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'; // Espera
-      case 3: return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300'; // Control
-      case 4: return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'; // En Proceso
-      case 5: return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'; // Completado
-      case 6: return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300'; // Asignado
-      case 7: return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'; // En Ejecución
-      case 8: return 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300'; // Contabilidad
-      case 9: return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300'; // Finalizado
+    switch (estado) {
+      case 1: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 2: return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
+      case 3: return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300';
+      case 4: return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 5: return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 6: return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300';
+      case 7: return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+      case 8: return 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300';
+      case 9: return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
     }
   }
-
-  // ============================================
-  // MÉTODOS MODAL EJECUCIÓN
-  // ============================================
 
   esAsignado(solicitud: SolicitudMantenimiento): boolean {
     return solicitud.estadoCodigo === 'ASI';
@@ -944,10 +1017,8 @@ export class MantenimientoEstados implements OnInit {
 
     this.cargando = true;
 
-    // Convertir fecha a ISO string
     const fechaInicioISO = this.fechaInicio.toISOString();
 
-    // IMPORTANTE: Primero obtener los datos actuales de la solicitud para no perder el proveedor
     const params = {
       solicitanteUsuario: '',
       estado: '',
@@ -958,7 +1029,6 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.getSolicitudMantenimiento(params).subscribe({
       next: (response) => {
-        // Buscar la solicitud actual en la respuesta
         let datos = Array.isArray(response) ? response : (response.data || []);
         const solicitudActual = datos.find((s: any) => s.id === this.solicitudEjecucion!.id);
 
@@ -973,15 +1043,14 @@ export class MantenimientoEstados implements OnInit {
           return;
         }
 
-        // Ahora enviar con los datos completos
         const updateParams = {
           id: this.solicitudEjecucion!.id,
           estado: 'EJE',
           usuario: this.usuarioActual,
-          fechaInicio: fechaInicioISO, // Nueva fecha inicio
-          fechaFin: solicitudActual.fechaFin || '', // Mantener si existe
+          fechaInicio: fechaInicioISO,
+          fechaFin: solicitudActual.fechaFin || '',
           fechaCierre: solicitudActual.fechaCierre || '',
-          proveedor: solicitudActual.proveedor || '', // Mantener el proveedor existente
+          proveedor: solicitudActual.proveedor || '',
           tipoDocumento: solicitudActual.tipoDocumento || '',
           serie: solicitudActual.serie || '',
           numero: solicitudActual.numero || ''
@@ -998,7 +1067,6 @@ export class MantenimientoEstados implements OnInit {
               life: 3000
             });
 
-            // Cerrar modal y actualizar tabla
             this.cerrarEjecucion();
             this.cargando = false;
 
@@ -1032,10 +1100,6 @@ export class MantenimientoEstados implements OnInit {
       }
     });
   }
-
-  // ============================================
-  // MÉTODOS MODAL CONTABILIDAD
-  // ============================================
 
   esEnEjecucion(solicitud: SolicitudMantenimiento): boolean {
     return solicitud.estadoCodigo === 'EJE';
@@ -1079,10 +1143,8 @@ export class MantenimientoEstados implements OnInit {
 
     this.cargando = true;
 
-    // Convertir fecha a ISO string
     const fechaFinISO = this.fechaFin.toISOString();
 
-    // IMPORTANTE: Primero obtener los datos actuales de la solicitud para no perder fechaInicio y proveedor
     const params = {
       solicitanteUsuario: '',
       estado: '',
@@ -1093,7 +1155,6 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.getSolicitudMantenimiento(params).subscribe({
       next: (response) => {
-        // Buscar la solicitud actual en la respuesta
         let datos = Array.isArray(response) ? response : (response.data || []);
         const solicitudActual = datos.find((s: any) => s.id === this.solicitudContabilidad!.id);
 
@@ -1108,15 +1169,14 @@ export class MantenimientoEstados implements OnInit {
           return;
         }
 
-        // Ahora enviar con los datos completos
         const updateParams = {
           id: this.solicitudContabilidad!.id,
           estado: 'COT',
           usuario: this.usuarioActual,
-          fechaInicio: solicitudActual.fechaInicio || '', // Mantener la fecha inicio existente
-          fechaFin: fechaFinISO, // Nueva fecha fin
+          fechaInicio: solicitudActual.fechaInicio || '',
+          fechaFin: fechaFinISO,
           fechaCierre: solicitudActual.fechaCierre || '',
-          proveedor: solicitudActual.proveedor || '', // Mantener el proveedor existente
+          proveedor: solicitudActual.proveedor || '',
           tipoDocumento: solicitudActual.tipoDocumento || '',
           serie: solicitudActual.serie || '',
           numero: solicitudActual.numero || ''
@@ -1133,7 +1193,6 @@ export class MantenimientoEstados implements OnInit {
               life: 3000
             });
 
-            // Cerrar modal y actualizar tabla
             this.cerrarContabilidad();
             this.cargando = false;
 
@@ -1168,59 +1227,363 @@ export class MantenimientoEstados implements OnInit {
     });
   }
 
-  // ============================================
-  // MÉTODOS MODAL FINALIZACIÓN
-  // ============================================
-
   esContabilidad(solicitud: SolicitudMantenimiento): boolean {
     return solicitud.estadoCodigo === 'COT';
   }
 
+  esFinalizado(solicitud: SolicitudMantenimiento): boolean {
+    return solicitud.estadoCodigo === 'FIN';
+  }
+
+  abrirVerFinalizado(solicitud: SolicitudMantenimiento) {
+    this.solicitudVerFinalizado = solicitud;
+    this.documentosFinalizados = [];
+    this.mostrarVerFinalizado = true;
+    this.cargarLogs(solicitud.id);
+    this.cargarFotosDesdeS3(solicitud.id, 'verFinalizado');
+    this.cargarDocumentosFinalizados(solicitud.id);
+  }
+
+  cerrarVerFinalizado() {
+    this.mostrarVerFinalizado = false;
+    this.solicitudVerFinalizado = null;
+    this.documentosFinalizados = [];
+    this.logs = [];
+  }
+
+  cargarDocumentosFinalizados(idSolicitud: number) {
+    this.cargandoDocumentosFinalizados = true;
+
+    this.apiService.listarSolicitudMantenimientoDocumento(idSolicitud).subscribe({
+      next: (response) => {
+        console.log('Documentos finalizados cargados:', response);
+
+        let datos = [];
+        if (Array.isArray(response)) {
+          datos = response;
+        } else if (response && response.data && Array.isArray(response.data)) {
+          datos = response.data;
+        }
+
+        this.documentosFinalizados = datos.map((doc: any) => {
+          const serieNumero = this.extraerSerieNumero(doc.idcarpeta);
+          return {
+            id: doc.id,
+            idsolicitudmantenimiento: doc.idsolicitudmantenimiento,
+            idcarpeta: doc.idcarpeta,
+            tipoDocumento: doc.tipoDocumento,
+            importebruto: doc.importebruto,
+            importeneto: doc.importeneto,
+            fechaemision: doc.fechaemision,
+            idcarpetapadre: doc.idcarpetapadre,
+            serie: serieNumero.serie,
+            numero: serieNumero.numero
+          };
+        });
+
+        this.cargandoDocumentosFinalizados = false;
+
+        console.log('Documentos finalizados mapeados:', this.documentosFinalizados);
+      },
+      error: (error) => {
+        this.cargandoDocumentosFinalizados = false;
+        console.error('Error al cargar documentos finalizados:', error);
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los documentos',
+          life: 3000
+        });
+      }
+    });
+  }
+
+  eliminarDocumentoFinalizado(documento: any) {
+    if (!confirm(`¿Está seguro de eliminar el documento ${documento.serie}-${documento.numero}?`)) {
+      return;
+    }
+
+    this.cargando = true;
+
+    this.apiService.eliminarSolicitudMantenimientoDocumento(documento.id).subscribe({
+      next: (response) => {
+        console.log('Documento eliminado:', response);
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Documento Eliminado',
+          detail: `El documento ${documento.serie}-${documento.numero} fue eliminado`,
+          life: 3000
+        });
+
+        // Recargar lista de documentos
+        if (this.solicitudVerFinalizado) {
+          this.cargarDocumentosFinalizados(this.solicitudVerFinalizado.id);
+        }
+
+        this.cargando = false;
+      },
+      error: (error) => {
+        this.cargando = false;
+        console.error('Error al eliminar documento:', error);
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo eliminar el documento',
+          life: 3000
+        });
+      }
+    });
+  }
+
   abrirFinalizacion(solicitud: SolicitudMantenimiento) {
     this.solicitudFinalizacion = solicitud;
-    this.tipoDocumento = '';
-    this.serie = '';
-    this.numero = '';
+    this.filtroDocumento = '';
+    this.documentosFiltrados = [];
+    this.documentoTemporal = null;
+    this.documentosSeleccionados = [];
     this.mostrarFinalizacion = true;
     this.cargarLogs(solicitud.id);
     this.cargarFotosDesdeS3(solicitud.id, 'finalizacion');
+
+    // Cargar documentos del proveedor automáticamente
+    this.cargarDocumentosProveedorConRUC(solicitud.id);
+  }
+
+  cargarDocumentosProveedorConRUC(idSolicitud: number) {
+    this.cargandoDocumentos = true;
+    this.documentosFiltrados = [];
+    this.proveedorInfo = null;
+
+    this.apiService.consultarSolicitudMantenimiento(idSolicitud).subscribe({
+      next: (response) => {
+        console.log('Solicitud consultada:', response);
+
+        if (response && response.proveedor) {
+          const proveedorRuc = response.proveedor;
+
+          this.proveedorInfo = {
+            ruc: proveedorRuc,
+            nombre: response.nombreProveedor || 'Proveedor sin nombre'
+          };
+
+          // BUSCAR DOCUMENTOS AUTOMÁTICAMENTE
+          this.masterService.buscarDocumentoCobrarPagar(proveedorRuc).subscribe({
+            next: (documentos) => {
+              console.log('Documentos del proveedor encontrados:', documentos);
+
+              this.documentosFiltrados = Array.isArray(documentos)
+                ? documentos.map((doc: any) => {
+                  const serieNumero = this.extraerSerieNumero(doc.idcarpeta);
+                  return {
+                    tipoDocumento: doc.tipoDocumento,
+                    idcarpeta: doc.idcarpeta,
+                    importebruto: doc.importebruto,
+                    importeneto: doc.importeneto,
+                    fechaemision: doc.fechaemision,
+                    idcarpetapadre: doc.idcarpetapadre,
+                    serieNumero: serieNumero,
+                    displayLabel: `${serieNumero.serie}-${serieNumero.numero}`
+                  };
+                })
+                : [];
+
+              this.cargandoDocumentos = false;
+
+              if (this.documentosFiltrados.length > 0) {
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Documentos cargados',
+                  detail: `Se encontraron ${this.documentosFiltrados.length} documento(s) del proveedor`,
+                  life: 3000
+                });
+              } else {
+                this.messageService.add({
+                  severity: 'info',
+                  summary: 'Sin documentos',
+                  detail: `No se encontraron documentos para el proveedor ${proveedorRuc}`,
+                  life: 3000
+                });
+              }
+            },
+            error: (error) => {
+              this.cargandoDocumentos = false;
+              console.error('Error al buscar documentos del proveedor:', error);
+
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudieron cargar los documentos del proveedor',
+                life: 3000
+              });
+            }
+          });
+        } else {
+          this.cargandoDocumentos = false;
+          this.proveedorInfo = null;
+          console.warn('No se encontró proveedor en la solicitud');
+
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Sin proveedor',
+            detail: 'Esta solicitud no tiene un proveedor asignado',
+            life: 3000
+          });
+        }
+      },
+      error: (error) => {
+        this.cargandoDocumentos = false;
+        console.error('Error al consultar solicitud:', error);
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo consultar la información de la solicitud',
+          life: 3000
+        });
+      }
+    });
+  }
+
+  buscarDocumentosDelProveedor() {
+    if (!this.filtroDocumento || this.filtroDocumento.length < 11) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'RUC inválido',
+        detail: 'El RUC debe tener 11 dígitos',
+        life: 3000
+      });
+      return;
+    }
+
+    this.cargandoDocumentos = true;
+    this.documentosFiltrados = [];
+
+    this.masterService.buscarDocumentoCobrarPagar(this.filtroDocumento).subscribe({
+      next: (documentos) => {
+        console.log('Documentos del proveedor encontrados:', documentos);
+
+        this.documentosFiltrados = Array.isArray(documentos)
+          ? documentos.map((doc: any) => ({
+            tipoDocumento: doc.tipoDocumento,
+            idcarpeta: doc.idcarpeta,
+            importebruto: doc.importebruto,
+            importeneto: doc.importeneto,
+            fechaemision: doc.fechaemision,
+            idcarpetapadre: doc.idcarpetapadre,
+            serieNumero: this.extraerSerieNumero(doc.idcarpeta)
+          }))
+          : [];
+
+        this.cargandoDocumentos = false;
+
+        if (this.documentosFiltrados.length > 0) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Documentos encontrados',
+            detail: `Se encontraron ${this.documentosFiltrados.length} documento(s)`,
+            life: 3000
+          });
+        } else {
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Sin documentos',
+            detail: 'No se encontraron documentos para este RUC',
+            life: 3000
+          });
+        }
+      },
+      error: (error) => {
+        this.cargandoDocumentos = false;
+        console.error('Error al buscar documentos del proveedor:', error);
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los documentos',
+          life: 3000
+        });
+      }
+    });
   }
 
   cerrarFinalizacion() {
     this.mostrarFinalizacion = false;
     this.solicitudFinalizacion = null;
-    this.tipoDocumento = '';
-    this.serie = '';
-    this.numero = '';
+    this.filtroDocumento = '';
+    this.documentosFiltrados = [];
+    this.documentoTemporal = null;
+    this.documentosSeleccionados = [];
+    this.proveedorInfo = null;
     this.logs = [];
+
+    if (this.busquedaDocumentoTimeout) {
+      clearTimeout(this.busquedaDocumentoTimeout);
+    }
+  }
+
+  seleccionarDocumentoDeLista(documento: any) {
+    this.documentoTemporal = documento;
+    console.log('Documento temporal seleccionado:', documento);
+  }
+
+  agregarDocumento() {
+    if (!this.documentoTemporal) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Selección requerida',
+        detail: 'Debe seleccionar un documento de la lista',
+        life: 3000
+      });
+      return;
+    }
+
+    // Verificar si ya está agregado
+    const yaExiste = this.documentosSeleccionados.some(d => d.idcarpeta === this.documentoTemporal.idcarpeta);
+    if (yaExiste) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Documento duplicado',
+        detail: 'Este documento ya fue agregado',
+        life: 3000
+      });
+      return;
+    }
+
+    this.documentosSeleccionados.push({
+      idcarpeta: this.documentoTemporal.idcarpeta,
+      tipoDocumento: this.documentoTemporal.tipoDocumento,
+      serie: this.documentoTemporal.serieNumero.serie,
+      numero: this.documentoTemporal.serieNumero.numero,
+      importebruto: this.documentoTemporal.importebruto,
+      importeneto: this.documentoTemporal.importeneto,
+      fechaemision: this.documentoTemporal.fechaemision,
+      editando: false
+    });
+
+    // Solo limpiar el select
+    this.documentoTemporal = null;
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Documento agregado',
+      detail: 'El documento se agregó correctamente',
+      life: 2000
+    });
+  }
+
+  eliminarDocumento(documento: DocumentoSeleccionado) {
+    this.documentosSeleccionados = this.documentosSeleccionados.filter(d => d.idcarpeta !== documento.idcarpeta);
   }
 
   finalizarMantenimiento() {
-    if (!this.tipoDocumento) {
+    if (this.documentosSeleccionados.length === 0) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Tipo documento requerido',
-        detail: 'Debe seleccionar un tipo de documento',
-        life: 3000
-      });
-      return;
-    }
-
-    if (!this.serie) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Serie requerida',
-        detail: 'Debe ingresar la serie del documento',
-        life: 3000
-      });
-      return;
-    }
-
-    if (!this.numero) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Número requerido',
-        detail: 'Debe ingresar el número del documento',
+        summary: 'Datos incompletos',
+        detail: 'Debe agregar al menos un documento',
         life: 3000
       });
       return;
@@ -1237,11 +1600,43 @@ export class MantenimientoEstados implements OnInit {
     }
 
     this.cargando = true;
+    const idSolicitud = this.solicitudFinalizacion.id;
 
-    // Fecha de cierre es la fecha actual
+    // Primero guardar todos los documentos
+    let documentosGuardados = 0;
+    const totalDocumentos = this.documentosSeleccionados.length;
+
+    console.log(`Iniciando guardado de ${totalDocumentos} documento(s)...`);
+
+    this.documentosSeleccionados.forEach((documento) => {
+      this.apiService.guardarSolicitudMantenimientoDocumento(idSolicitud, documento.idcarpeta).subscribe({
+        next: (response) => {
+          documentosGuardados++;
+          console.log(`Documento guardado ${documentosGuardados}/${totalDocumentos}:`, documento.idcarpeta);
+
+          // Cuando todos los documentos estén guardados, cambiar estado a FIN
+          if (documentosGuardados === totalDocumentos) {
+            this.cambiarEstadoAFinalizado(idSolicitud);
+          }
+        },
+        error: (error) => {
+          this.cargando = false;
+          console.error('Error al guardar documento:', error);
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: `Error al guardar documento ${documento.serie}-${documento.numero}`,
+            life: 3000
+          });
+        }
+      });
+    });
+  }
+
+  cambiarEstadoAFinalizado(idSolicitud: number) {
     const fechaCierreISO = new Date().toISOString();
 
-    // IMPORTANTE: Obtener datos actuales para mantener proveedor, fechaInicio y fechaFin
     const params = {
       solicitanteUsuario: '',
       estado: '',
@@ -1252,9 +1647,8 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.getSolicitudMantenimiento(params).subscribe({
       next: (response) => {
-        // Buscar la solicitud actual en la respuesta
         let datos = Array.isArray(response) ? response : (response.data || []);
-        const solicitudActual = datos.find((s: any) => s.id === this.solicitudFinalizacion!.id);
+        const solicitudActual = datos.find((s: any) => s.id === idSolicitud);
 
         if (!solicitudActual) {
           this.cargando = false;
@@ -1267,18 +1661,17 @@ export class MantenimientoEstados implements OnInit {
           return;
         }
 
-        // Ahora enviar con los datos completos
         const updateParams = {
-          id: this.solicitudFinalizacion!.id,
-          estado: 'FIN', // Estado Finalizado
+          id: idSolicitud,
+          estado: 'FIN',
           usuario: this.usuarioActual,
           fechaInicio: solicitudActual.fechaInicio || '',
           fechaFin: solicitudActual.fechaFin || '',
-          fechaCierre: fechaCierreISO, // Fecha de cierre
+          fechaCierre: fechaCierreISO,
           proveedor: solicitudActual.proveedor || '',
-          tipoDocumento: this.tipoDocumento, // Nuevo
-          serie: this.serie, // Nuevo
-          numero: this.numero // Nuevo
+          tipoDocumento: '',
+          serie: '',
+          numero: ''
         };
 
         this.apiService.editarSolicitudMantenimiento(updateParams).subscribe({
@@ -1288,11 +1681,10 @@ export class MantenimientoEstados implements OnInit {
             this.messageService.add({
               severity: 'success',
               summary: 'Mantenimiento Finalizado',
-              detail: 'El mantenimiento ha sido finalizado exitosamente',
+              detail: `El mantenimiento ha sido finalizado con ${this.documentosSeleccionados.length} documento(s) guardado(s)`,
               life: 3000
             });
 
-            // Cerrar modal y actualizar tabla
             this.cerrarFinalizacion();
             this.cargando = false;
 
@@ -1327,95 +1719,165 @@ export class MantenimientoEstados implements OnInit {
     });
   }
 
-  cargarFotosDesdeS3(idSolicitud: number, contexto: 'proveedores' | 'asignacion' | 'ejecucion' | 'contabilidad' | 'finalizacion') {
-  const ruta = `SM${idSolicitud}`;
-  
-  // Determinar qué solicitud actualizar según el contexto
-  let solicitudActual: SolicitudMantenimiento | null = null;
-  
-  switch(contexto) {
-    case 'proveedores':
-      solicitudActual = this.solicitudProveedores;
-      break;
-    case 'asignacion':
-      solicitudActual = this.solicitudAsignacion;
-      break;
-    case 'ejecucion':
-      solicitudActual = this.solicitudEjecucion;
-      break;
-    case 'contabilidad':
-      solicitudActual = this.solicitudContabilidad;
-      break;
-    case 'finalizacion':
-      solicitudActual = this.solicitudFinalizacion;
-      break;
-  }
+  cargarFotosDesdeS3(idSolicitud: number, contexto: 'proveedores' | 'asignacion' | 'ejecucion' | 'contabilidad' | 'finalizacion' | 'verFinalizado') {
+    const ruta = `SM${idSolicitud}`;
 
-  if (!solicitudActual) return;
+    let solicitudActual: SolicitudMantenimiento | null = null;
 
-  solicitudActual.cargandoFotos = true;
-  solicitudActual.fotos = [];
+    switch (contexto) {
+      case 'proveedores':
+        solicitudActual = this.solicitudProveedores;
+        break;
+      case 'asignacion':
+        solicitudActual = this.solicitudAsignacion;
+        break;
+      case 'ejecucion':
+        solicitudActual = this.solicitudEjecucion;
+        break;
+      case 'contabilidad':
+        solicitudActual = this.solicitudContabilidad;
+        break;
+      case 'finalizacion':
+        solicitudActual = this.solicitudFinalizacion;
+        break;
+      case 'verFinalizado':
+        solicitudActual = this.solicitudVerFinalizado;
+        break;
+    }
 
-  this.apiService.listarArchivos(ruta).subscribe({
-    next: (response) => {
-      console.log('📸 Fotos desde S3:', response);
+    if (!solicitudActual) return;
 
-      if (solicitudActual) {
-        solicitudActual.cargandoFotos = false;
+    solicitudActual.cargandoFotos = true;
+    solicitudActual.fotos = [];
 
-        if (Array.isArray(response)) {
-          solicitudActual.fotos = response.map((foto: any) => ({
-            id: foto.key,
-            url: foto.url,
-            nombre: foto.name,
-            size: foto.size,
-            lastModified: foto.lastModified
-          }));
+    this.apiService.listarArchivos(ruta).subscribe({
+      next: (response) => {
+        console.log('📸 Fotos desde S3:', response);
 
-          console.log(`✅ ${solicitudActual.fotos.length} foto(s) cargadas para ${contexto}`);
-        } else {
-          console.warn('⚠️ Respuesta no es un array');
+        if (solicitudActual) {
+          solicitudActual.cargandoFotos = false;
+
+          if (Array.isArray(response)) {
+            solicitudActual.fotos = response.map((foto: any) => ({
+              id: foto.key,
+              url: foto.url,
+              nombre: foto.name,
+              size: foto.size,
+              lastModified: foto.lastModified
+            }));
+
+            console.log(`✅ ${solicitudActual.fotos.length} foto(s) cargadas para ${contexto}`);
+          } else {
+            console.warn('⚠️ Respuesta no es un array');
+          }
+        }
+      },
+      error: (error) => {
+        if (solicitudActual) {
+          solicitudActual.cargandoFotos = false;
+        }
+
+        console.error('❌ Error al cargar fotos desde S3:', error);
+
+        if (error.status !== 404) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron cargar las fotos',
+            life: 3000
+          });
         }
       }
-    },
-    error: (error) => {
-      if (solicitudActual) {
-        solicitudActual.cargandoFotos = false;
-      }
+    });
+  }
 
-      console.error('❌ Error al cargar fotos desde S3:', error);
+  formatBytes(bytes?: number): string {
+    if (!bytes || bytes === 0) return '0 Bytes';
 
-      // Solo mostrar error si no es 404 (carpeta vacía)
-      if (error.status !== 404) {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No se pudieron cargar las fotos',
-          life: 3000
-        });
-      }
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  verImagen(foto: FotoMantenimiento, fotos: FotoMantenimiento[]) {
+    this.imagenSeleccionada = foto;
+    this.indiceImagenActual = fotos.findIndex(f => f.id === foto.id);
+    this.mostrarImagenModal = true;
+  }
+
+  cerrarImagenModal() {
+    this.mostrarImagenModal = false;
+    this.imagenSeleccionada = null;
+  }
+
+  buscarDocumentosMientrasEscribe(event: any) {
+    const query = (event.target as HTMLInputElement).value;
+    this.filtroDocumento = query;
+
+    if (this.busquedaDocumentoTimeout) {
+      clearTimeout(this.busquedaDocumentoTimeout);
     }
-  });
-}
 
-formatBytes(bytes?: number): string {
-  if (!bytes || bytes === 0) return '0 Bytes';
-  
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-}
+    if (query.length < 11) {
+      this.documentosFiltrados = [];
+      this.documentoTemporal = null;
+      return;
+    }
 
-verImagen(foto: FotoMantenimiento, fotos: FotoMantenimiento[]) {
-  this.imagenSeleccionada = foto;
-  this.indiceImagenActual = fotos.findIndex(f => f.id === foto.id);
-  this.mostrarImagenModal = true;
-}
+    this.busquedaDocumentoTimeout = setTimeout(() => {
+      this.cargandoDocumentos = true;
 
-cerrarImagenModal() {
-  this.mostrarImagenModal = false;
-  this.imagenSeleccionada = null;
-}
+      this.masterService.buscarDocumentoCobrarPagar(query).subscribe({
+        next: (response) => {
+          console.log('Documentos encontrados:', response);
+
+          this.documentosFiltrados = Array.isArray(response)
+            ? response.map((doc: any) => ({
+              tipoDocumento: doc.tipoDocumento,
+              idcarpeta: doc.idcarpeta,
+              importebruto: doc.importebruto,
+              importeneto: doc.importeneto,
+              fechaemision: doc.fechaemision,
+              idcarpetapadre: doc.idcarpetapadre,
+              serieNumero: this.extraerSerieNumero(doc.idcarpeta)
+            }))
+            : [];
+
+          this.cargandoDocumentos = false;
+        },
+        error: (error) => {
+          this.cargandoDocumentos = false;
+          console.error('Error al buscar documentos:', error);
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron buscar los documentos',
+            life: 3000
+          });
+        }
+      });
+    }, 300);
+  }
+
+  extraerSerieNumero(idcarpeta: string): { serie: string, numero: string } {
+    if (!idcarpeta) return { serie: '', numero: '' };
+
+    try {
+      const partes = idcarpeta.split('_');
+      if (partes.length >= 2) {
+        const serieNumero = partes[1].split('-');
+        return {
+          serie: serieNumero[0] || '',
+          numero: serieNumero[1] || ''
+        };
+      }
+    } catch (error) {
+      console.error('Error al extraer serie-número:', error);
+    }
+
+    return { serie: '', numero: '' };
+  }
 }

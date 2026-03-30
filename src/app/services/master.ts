@@ -120,4 +120,30 @@ export class Master {
       catchError(error => throwError(() => error))
     );
   }
+
+  buscarProveedores(filtro: string): Observable<any> {
+    const queryParams = new HttpParams()
+      .set('filtro', filtro);
+
+    return this.https.get<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/BuscarProveedores`,
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  buscarDocumentoCobrarPagar(documento: string): Observable<any> {
+    const queryParams = new HttpParams()
+      .set('documento', documento);
+
+    return this.https.get<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/BuscarDocumentoCobrarPagar`,
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
 }
