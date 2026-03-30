@@ -530,4 +530,53 @@ export class Api {
       catchError(error => throwError(() => error))
     );
   }
+
+  guardarSolicitudMantenimientoDocumento(
+    idSolicitudMantenimiento: number,
+    idCarpeta: string
+  ): Observable<any> {
+
+    const queryParams = new HttpParams()
+      .set('idSolicitudMantenimiento', idSolicitudMantenimiento.toString())
+      .set('idCarpeta', idCarpeta);
+
+    return this.https.post<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/GuardarSolicitudMantenimientoDocumento`,
+      {}, // body vacío
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  eliminarSolicitudMantenimientoDocumento(id: number): Observable<any> {
+    const queryParams = new HttpParams()
+      .set('id', id.toString());
+
+    return this.https.post<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/EliminarSolicitudMantenimientoDocumento`,
+      {},
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  listarSolicitudMantenimientoDocumento(
+    idSolicitudMantenimiento: number
+  ): Observable<any> {
+
+    const queryParams = new HttpParams()
+      .set('idSolicitudMantenimiento', idSolicitudMantenimiento.toString());
+
+    return this.https.get<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/ListarSolicitudMantenimientoDocumento`,
+      { headers: this.authService.getHeaders(), params: queryParams }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
 }
