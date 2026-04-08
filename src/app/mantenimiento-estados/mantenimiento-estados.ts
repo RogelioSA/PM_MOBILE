@@ -1,5 +1,5 @@
 // mantenimiento-estados.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -18,6 +18,8 @@ import { Menu } from '../menu/menu';
 import { Api } from '../services/api';
 import { Master } from '../services/master';
 import { CookieService } from 'ngx-cookie-service';
+import { FileUploadModule } from 'primeng/fileupload';
+
 
 interface SolicitudMantenimiento {
   id: number;
@@ -47,15 +49,22 @@ interface FotoMantenimiento {
   id: string;
   url: string;
   nombre: string;
+  archivo?: File;
   size?: number;
   lastModified?: string;
 }
+
 
 interface PresupuestoProveedor {
   idclieprov: string;
   razon_social: string;
   monto: number;
   editando?: boolean;
+  pdfPresupuesto?: File | null;
+  urlPdfPresupuesto?: string;
+  tienePdf?: boolean;
+  esNuevo?: boolean;
+  listaPdfs?: any[];
 }
 
 interface PresupuestoListado {
@@ -96,7 +105,8 @@ interface DocumentoSeleccionado {
     TooltipModule,
     CheckboxModule,
     DatePickerModule,
-    Menu
+    Menu,
+    FileUploadModule,
   ],
   templateUrl: './mantenimiento-estados.html',
   styleUrls: ['./mantenimiento-estados.css'],
@@ -208,6 +218,15 @@ export class MantenimientoEstados implements OnInit {
   imagenSeleccionada: FotoMantenimiento | null = null;
   indiceImagenActual = 0;
 
+  actaConformidad: File | null = null;
+  fotosFinalizacion: FotoMantenimiento[] = [];
+  subiendoActa = false;
+  subiendoFotos = false;
+
+  mostrarDialogoPDFs = signal<boolean>(false);
+  pdfsCargando = signal<boolean>(false);
+  proveedorSeleccionadoPDFs: PresupuestoProveedor | null = null;
+  listaPDFsProveedor = signal<any[]>([]);
   constructor(
     private messageService: MessageService,
     private apiService: Api,
@@ -216,11 +235,8 @@ export class MantenimientoEstados implements OnInit {
   ) { }
 
   ngOnInit() {
-    console.log('=== MANTENIMIENTO ESTADOS COMPONENT INIT ===');
     this.obtenerUsuarioCookie();
-    console.log('Usuario obtenido de cookie:', this.usuarioActual);
     this.inicializarFechasMes();
-    console.log('Fechas inicializadas - Desde:', this.fechaDesde, 'Hasta:', this.fechaHasta);
     this.cargarSucursales();
     this.cargarSolicitudes();
   }
@@ -290,7 +306,6 @@ export class MantenimientoEstados implements OnInit {
 
       this.masterService.buscarProveedores(query).subscribe({
         next: (response) => {
-          console.log('Proveedores encontrados:', response);
 
           this.proveedoresFiltrados = Array.isArray(response)
             ? response.map((p: any) => ({
@@ -325,9 +340,8 @@ export class MantenimientoEstados implements OnInit {
   seleccionarProveedorDeLista(proveedor: any) {
     this.proveedorSeleccionado = proveedor;
     this.filtroProveedor = proveedor.razon_social;
-    this.proveedoresFiltrados = []; // Ocultar dropdown
+    this.proveedoresFiltrados = [];
 
-    console.log('Proveedor seleccionado:', proveedor);
   }
 
   cargarSolicitudes() {
@@ -339,15 +353,11 @@ export class MantenimientoEstados implements OnInit {
       fechaHasta: this.fechaHasta
     };
 
-    console.log('Parámetros enviados al API:', params);
-
     this.cargando = true;
 
     this.apiService.getSolicitudMantenimiento(params).subscribe({
       next: (response) => {
         this.cargando = false;
-
-        console.log('Respuesta completa del API:', response);
 
         let datos = [];
 
@@ -361,7 +371,6 @@ export class MantenimientoEstados implements OnInit {
 
         if (datos.length > 0) {
           this.solicitudes = datos.map((item: any) => {
-            console.log('Item estado original:', item.estado, 'ID:', item.id);
 
             const estadoCodigo = item.estado ? item.estado.trim().toUpperCase() : 'PEN';
 
@@ -389,7 +398,6 @@ export class MantenimientoEstados implements OnInit {
             };
           });
 
-          console.log('Solicitudes mapeadas:', this.solicitudes);
         } else {
           console.warn('No hay datos en la respuesta');
           this.solicitudes = [];
@@ -517,7 +525,6 @@ export class MantenimientoEstados implements OnInit {
           return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
         });
 
-        console.log('Logs cargados:', this.logs);
       },
       error: (error) => {
         this.cargandoLogs = false;
@@ -535,6 +542,7 @@ export class MantenimientoEstados implements OnInit {
     this.mostrarProveedores = true;
     this.cargarLogs(solicitud.id);
     this.cargarFotosDesdeS3(solicitud.id, 'proveedores');
+    this.cargarPresupuestosExistentes(solicitud.id);
   }
 
   cerrarSeleccionProveedores() {
@@ -562,13 +570,12 @@ export class MantenimientoEstados implements OnInit {
       return;
     }
 
-    // Verificar si ya está agregado
     const yaExiste = this.presupuestos.some(p => p.idclieprov === this.proveedorSeleccionado.idclieprov);
     if (yaExiste) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Proveedor duplicado',
-        detail: 'Este proveedor ya fue agregado',
+        detail: 'Este proveedor ya está registrado en la lista',
         life: 3000
       });
       return;
@@ -578,10 +585,13 @@ export class MantenimientoEstados implements OnInit {
       idclieprov: this.proveedorSeleccionado.idclieprov,
       razon_social: this.proveedorSeleccionado.razon_social,
       monto: 0,
-      editando: true
+      editando: true,
+      pdfPresupuesto: null,
+      urlPdfPresupuesto: undefined,
+      tienePdf: false,
+      esNuevo: true // ← NUEVO proveedor
     });
 
-    // Limpiar después de agregar
     this.proveedorSeleccionado = null;
     this.filtroProveedor = '';
     this.proveedoresFiltrados = [];
@@ -593,7 +603,6 @@ export class MantenimientoEstados implements OnInit {
       life: 2000
     });
   }
-
   eliminarProveedor(proveedor: PresupuestoProveedor) {
     this.presupuestos = this.presupuestos.filter(p => p.idclieprov !== proveedor.idclieprov);
   }
@@ -625,23 +634,90 @@ export class MantenimientoEstados implements OnInit {
     presupuesto.editando = false;
   }
 
-  guardarProveedores() {
-    if (this.presupuestos.length === 0) {
+  cargarPresupuestosExistentes(idSolicitud: number) {
+    this.cargando = true;
+
+    this.apiService.listarSolicitudMantenimientoPresupuesto(idSolicitud).subscribe({
+      next: (response) => {
+        let datos = [];
+        if (Array.isArray(response)) {
+          datos = response;
+        } else if (response && response.data && Array.isArray(response.data)) {
+          datos = response.data;
+        }
+
+        // Mapear a la estructura de PresupuestoProveedor
+        this.presupuestos = datos.map((p: any) => ({
+          idclieprov: p.idClieProv,
+          razon_social: p.proveedor,
+          monto: p.monto,
+          editando: false,
+          pdfPresupuesto: null,
+          urlPdfPresupuesto: null,
+          tienePdf: false,
+          esNuevo: false, // ← Ya existe en BD
+          listaPdfs: []    // ← Inicializar array vacío
+        }));
+
+        this.cargando = false;
+
+        if (this.presupuestos.length > 0) {
+          // ✅ VERIFICAR SI TIENEN PDFs EN S3
+          this.verificarPDFsPresupuestos(idSolicitud);
+
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Presupuestos cargados',
+            detail: `Se encontraron ${this.presupuestos.length} presupuesto(s) registrado(s)`,
+            life: 3000
+          });
+        } else {
+          console.log('ℹ️ No hay presupuestos previos registrados');
+        }
+      },
+      error: (error) => {
+        this.cargando = false;
+        console.error('❌ Error al cargar presupuestos existentes:', error);
+
+        if (error.status === 404) {
+          console.log('ℹ️ No hay presupuestos previos (404)');
+        } else {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'No se pudieron cargar presupuestos previos',
+            life: 3000
+          });
+        }
+      }
+    });
+  }
+
+  async guardarProveedores() {
+    for (const presupuesto of this.presupuestos) {
+      if (presupuesto.pdfPresupuesto) {
+        await this.subirPDFPresupuesto(this.solicitudProveedores!.id, presupuesto);
+      }
+    }
+    // Filtrar solo los nuevos
+    const presupuestosNuevos = this.presupuestos.filter(p => p.esNuevo === true);
+
+    if (presupuestosNuevos.length === 0) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Datos incompletos',
-        detail: 'Debe agregar al menos un proveedor',
+        summary: 'Sin cambios',
+        detail: 'No hay nuevos proveedores para guardar',
         life: 3000
       });
       return;
     }
 
-    const sinMonto = this.presupuestos.filter(p => !p.monto || p.monto <= 0);
+    const sinMonto = presupuestosNuevos.filter(p => !p.monto || p.monto <= 0);
     if (sinMonto.length > 0) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Datos incompletos',
-        detail: 'Todos los proveedores deben tener un monto de presupuesto',
+        detail: 'Todos los proveedores nuevos deben tener un monto de presupuesto',
         life: 3000
       });
       return;
@@ -661,10 +737,15 @@ export class MantenimientoEstados implements OnInit {
     const idSolicitud = this.solicitudProveedores.id;
     const fechaActual = new Date().toISOString();
 
-    let presupuestosGuardados = 0;
-    const totalPresupuestos = this.presupuestos.length;
+    for (const presupuesto of presupuestosNuevos) {
+      await this.subirPDFPresupuesto(idSolicitud, presupuesto);
+    }
 
-    this.presupuestos.forEach((presupuesto) => {
+    // PASO 2: Guardar presupuestos en BD
+    let presupuestosGuardados = 0;
+    const totalPresupuestos = presupuestosNuevos.length;
+
+    presupuestosNuevos.forEach((presupuesto) => {
       const params = {
         id: 0,
         idSolicitudMantenimiento: idSolicitud,
@@ -676,7 +757,6 @@ export class MantenimientoEstados implements OnInit {
       this.apiService.guardarSolicitudMantenimientoPresupuesto(params).subscribe({
         next: (response) => {
           presupuestosGuardados++;
-          console.log(`Presupuesto guardado ${presupuestosGuardados}/${totalPresupuestos}:`, presupuesto.razon_social);
 
           if (presupuestosGuardados === totalPresupuestos) {
             this.cambiarEstadoAControl(idSolicitud);
@@ -713,7 +793,6 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.editarSolicitudMantenimiento(params).subscribe({
       next: (response) => {
-        console.log('Estado cambiado a Control:', response);
 
         this.messageService.add({
           severity: 'success',
@@ -770,7 +849,6 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.listarSolicitudMantenimientoPresupuesto(idSolicitudMantenimiento).subscribe({
       next: (response) => {
-        console.log('Presupuestos cargados:', response);
 
         let datos = [];
         if (Array.isArray(response)) {
@@ -792,7 +870,6 @@ export class MantenimientoEstados implements OnInit {
         }));
 
         this.cargando = false;
-        console.log('Presupuestos mapeados:', this.presupuestosListado);
       },
       error: (error) => {
         this.cargando = false;
@@ -814,7 +891,6 @@ export class MantenimientoEstados implements OnInit {
     presupuesto.seleccionado = true;
     this.proveedorAsignado = presupuesto.idClieProv;
 
-    console.log('Proveedor seleccionado:', presupuesto.proveedor, presupuesto.idClieProv);
   }
 
   asignarProveedor() {
@@ -855,7 +931,6 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.editarSolicitudMantenimiento(params).subscribe({
       next: (response) => {
-        console.log('Proveedor asignado:', response);
 
         this.messageService.add({
           severity: 'success',
@@ -913,7 +988,6 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.editarSolicitudMantenimiento(params).subscribe({
       next: (response) => {
-        console.log('Estado cambiado a Espera de Presupuesto:', response);
 
         this.messageService.add({
           severity: 'success',
@@ -1058,7 +1132,6 @@ export class MantenimientoEstados implements OnInit {
 
         this.apiService.editarSolicitudMantenimiento(updateParams).subscribe({
           next: (response) => {
-            console.log('Mantenimiento puesto en ejecución:', response);
 
             this.messageService.add({
               severity: 'success',
@@ -1184,7 +1257,6 @@ export class MantenimientoEstados implements OnInit {
 
         this.apiService.editarSolicitudMantenimiento(updateParams).subscribe({
           next: (response) => {
-            console.log('Mantenimiento enviado a contabilidad:', response);
 
             this.messageService.add({
               severity: 'success',
@@ -1256,7 +1328,6 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.listarSolicitudMantenimientoDocumento(idSolicitud).subscribe({
       next: (response) => {
-        console.log('Documentos finalizados cargados:', response);
 
         let datos = [];
         if (Array.isArray(response)) {
@@ -1283,7 +1354,6 @@ export class MantenimientoEstados implements OnInit {
 
         this.cargandoDocumentosFinalizados = false;
 
-        console.log('Documentos finalizados mapeados:', this.documentosFinalizados);
       },
       error: (error) => {
         this.cargandoDocumentosFinalizados = false;
@@ -1308,7 +1378,6 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.eliminarSolicitudMantenimientoDocumento(documento.id).subscribe({
       next: (response) => {
-        console.log('Documento eliminado:', response);
 
         this.messageService.add({
           severity: 'success',
@@ -1359,7 +1428,6 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.consultarSolicitudMantenimiento(idSolicitud).subscribe({
       next: (response) => {
-        console.log('Solicitud consultada:', response);
 
         if (response && response.proveedor) {
           const proveedorRuc = response.proveedor;
@@ -1372,7 +1440,6 @@ export class MantenimientoEstados implements OnInit {
           // BUSCAR DOCUMENTOS AUTOMÁTICAMENTE
           this.masterService.buscarDocumentoCobrarPagar(proveedorRuc).subscribe({
             next: (documentos) => {
-              console.log('Documentos del proveedor encontrados:', documentos);
 
               this.documentosFiltrados = Array.isArray(documentos)
                 ? documentos.map((doc: any) => {
@@ -1463,7 +1530,6 @@ export class MantenimientoEstados implements OnInit {
 
     this.masterService.buscarDocumentoCobrarPagar(this.filtroDocumento).subscribe({
       next: (documentos) => {
-        console.log('Documentos del proveedor encontrados:', documentos);
 
         this.documentosFiltrados = Array.isArray(documentos)
           ? documentos.map((doc: any) => ({
@@ -1519,6 +1585,11 @@ export class MantenimientoEstados implements OnInit {
     this.proveedorInfo = null;
     this.logs = [];
 
+    this.actaConformidad = null;
+    this.fotosFinalizacion = [];
+    this.subiendoActa = false;
+    this.subiendoFotos = false;
+
     if (this.busquedaDocumentoTimeout) {
       clearTimeout(this.busquedaDocumentoTimeout);
     }
@@ -1526,7 +1597,6 @@ export class MantenimientoEstados implements OnInit {
 
   seleccionarDocumentoDeLista(documento: any) {
     this.documentoTemporal = documento;
-    console.log('Documento temporal seleccionado:', documento);
   }
 
   agregarDocumento() {
@@ -1578,7 +1648,7 @@ export class MantenimientoEstados implements OnInit {
     this.documentosSeleccionados = this.documentosSeleccionados.filter(d => d.idcarpeta !== documento.idcarpeta);
   }
 
-  finalizarMantenimiento() {
+  async finalizarMantenimiento() {
     if (this.documentosSeleccionados.length === 0) {
       this.messageService.add({
         severity: 'warn',
@@ -1602,19 +1672,33 @@ export class MantenimientoEstados implements OnInit {
     this.cargando = true;
     const idSolicitud = this.solicitudFinalizacion.id;
 
-    // Primero guardar todos los documentos
+
+    // PASO 1: Subir Acta de Conformidad
+    const actaSubida = await this.subirActaConformidad(idSolicitud);
+
+    if (!actaSubida) {
+      this.cargando = false;
+      return;
+    }
+
+    // PASO 2: Subir Fotos de Finalización
+    const fotosSubidas = await this.subirFotosFinalizacion(idSolicitud);
+
+    if (!fotosSubidas) {
+      this.cargando = false;
+      return;
+    }
+
+
+    // PASO 3: Guardar documentos (lógica existente)
     let documentosGuardados = 0;
     const totalDocumentos = this.documentosSeleccionados.length;
-
-    console.log(`Iniciando guardado de ${totalDocumentos} documento(s)...`);
 
     this.documentosSeleccionados.forEach((documento) => {
       this.apiService.guardarSolicitudMantenimientoDocumento(idSolicitud, documento.idcarpeta).subscribe({
         next: (response) => {
           documentosGuardados++;
-          console.log(`Documento guardado ${documentosGuardados}/${totalDocumentos}:`, documento.idcarpeta);
 
-          // Cuando todos los documentos estén guardados, cambiar estado a FIN
           if (documentosGuardados === totalDocumentos) {
             this.cambiarEstadoAFinalizado(idSolicitud);
           }
@@ -1633,7 +1717,6 @@ export class MantenimientoEstados implements OnInit {
       });
     });
   }
-
   cambiarEstadoAFinalizado(idSolicitud: number) {
     const fechaCierreISO = new Date().toISOString();
 
@@ -1676,7 +1759,6 @@ export class MantenimientoEstados implements OnInit {
 
         this.apiService.editarSolicitudMantenimiento(updateParams).subscribe({
           next: (response) => {
-            console.log('Mantenimiento finalizado:', response);
 
             this.messageService.add({
               severity: 'success',
@@ -1752,7 +1834,6 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.listarArchivos(ruta).subscribe({
       next: (response) => {
-        console.log('📸 Fotos desde S3:', response);
 
         if (solicitudActual) {
           solicitudActual.cargandoFotos = false;
@@ -1766,7 +1847,6 @@ export class MantenimientoEstados implements OnInit {
               lastModified: foto.lastModified
             }));
 
-            console.log(`✅ ${solicitudActual.fotos.length} foto(s) cargadas para ${contexto}`);
           } else {
             console.warn('⚠️ Respuesta no es un array');
           }
@@ -1831,7 +1911,6 @@ export class MantenimientoEstados implements OnInit {
 
       this.masterService.buscarDocumentoCobrarPagar(query).subscribe({
         next: (response) => {
-          console.log('Documentos encontrados:', response);
 
           this.documentosFiltrados = Array.isArray(response)
             ? response.map((doc: any) => ({
@@ -1879,5 +1958,491 @@ export class MantenimientoEstados implements OnInit {
     }
 
     return { serie: '', numero: '' };
+  }
+
+  async guardarPresupuestosSinCambiarEstado() {
+
+    for (const presupuesto of this.presupuestos) {
+      if (presupuesto.pdfPresupuesto) {
+        await this.subirPDFPresupuesto(this.solicitudProveedores!.id, presupuesto);
+      }
+    }
+    // Filtrar solo los nuevos
+    const presupuestosNuevos = this.presupuestos.filter(p => p.esNuevo === true);
+
+    if (presupuestosNuevos.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sin cambios',
+        detail: 'No hay nuevos proveedores para guardar',
+        life: 3000
+      });
+      return;
+    }
+
+    const sinMonto = presupuestosNuevos.filter(p => !p.monto || p.monto <= 0);
+    if (sinMonto.length > 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Datos incompletos',
+        detail: 'Todos los proveedores nuevos deben tener un monto de presupuesto',
+        life: 3000
+      });
+      return;
+    }
+
+    if (!this.solicitudProveedores || !this.usuarioActual) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo obtener la información necesaria',
+        life: 3000
+      });
+      return;
+    }
+
+    this.cargando = true;
+    const idSolicitud = this.solicitudProveedores.id;
+    const fechaActual = new Date().toISOString();
+
+    for (const presupuesto of presupuestosNuevos) {
+      await this.subirPDFPresupuesto(idSolicitud, presupuesto);
+    }
+
+    // PASO 2: Guardar presupuestos en BD
+    let presupuestosGuardados = 0;
+    const totalPresupuestos = presupuestosNuevos.length;
+
+    presupuestosNuevos.forEach((presupuesto) => {
+      const params = {
+        id: 0,
+        idSolicitudMantenimiento: idSolicitud,
+        idClieProv: presupuesto.idclieprov,
+        monto: presupuesto.monto,
+        fecha: fechaActual
+      };
+
+      this.apiService.guardarSolicitudMantenimientoPresupuesto(params).subscribe({
+        next: (response) => {
+          presupuestosGuardados++;
+
+          if (presupuestosGuardados === totalPresupuestos) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Presupuestos guardados',
+              detail: `Se guardaron ${presupuestosNuevos.length} presupuesto(s) nuevo(s) correctamente`,
+              life: 3000
+            });
+
+            this.cerrarSeleccionProveedores();
+            this.cargando = false;
+
+            setTimeout(() => {
+              this.cargarSolicitudes();
+            }, 100);
+          }
+        },
+        error: (error) => {
+          this.cargando = false;
+          console.error('Error al guardar presupuesto:', error);
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: `Error al guardar presupuesto de ${presupuesto.razon_social}`,
+            life: 3000
+          });
+        }
+      });
+    });
+  }
+
+  onActaSelect(event: any) {
+    const file = event.files[0];
+
+    if (!file) {
+      console.warn('⚠️ No se seleccionó archivo');
+      return;
+    }
+
+    // Validar que sea PDF
+    if (!file.type.includes('pdf')) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Archivo inválido',
+        detail: 'Solo se permiten archivos PDF para el acta',
+        life: 3000
+      });
+      return;
+    }
+
+    this.actaConformidad = file;
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Acta seleccionada',
+      detail: `${file.name} listo para subir`,
+      life: 2000
+    });
+  }
+
+  onFotosFinalizacionSelect(event: any) {
+    const files = event.files;
+
+    if (!files || files.length === 0) {
+      console.warn('⚠️ No se seleccionaron fotos');
+      return;
+    }
+
+
+    for (const file of files) {
+      // Validar que sea imagen
+      if (!file.type.startsWith('image/')) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Archivo ignorado',
+          detail: `${file.name} no es una imagen`,
+          life: 2000
+        });
+        continue;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.fotosFinalizacion.push({
+          id: Date.now().toString() + Math.random(),
+          url: e.target.result,
+          nombre: file.name,
+          archivo: file
+        });
+      };
+      reader.onerror = (error) => {
+        console.error('❌ Error al leer foto:', error);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Fotos agregadas',
+      detail: `${files.length} foto(s) lista(s) para subir`,
+      life: 2000
+    });
+  }
+
+  eliminarFotoFinalizacion(foto: FotoMantenimiento) {
+    this.fotosFinalizacion = this.fotosFinalizacion.filter(f => f.id !== foto.id);
+
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Foto eliminada',
+      detail: 'La foto ha sido eliminada',
+      life: 2000
+    });
+  }
+
+  eliminarActa() {
+    this.actaConformidad = null;
+
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Acta eliminada',
+      detail: 'El acta ha sido eliminada',
+      life: 2000
+    });
+  }
+
+  subirActaConformidad(idSolicitud: number): Promise<boolean> {
+    if (!this.actaConformidad) {
+      return Promise.resolve(true);
+    }
+
+    this.subiendoActa = true;
+
+    return new Promise((resolve) => {
+      this.apiService.subirArchivo(idSolicitud, this.actaConformidad!, 'pdf').subscribe({
+        next: (response) => {
+          this.subiendoActa = false;
+          resolve(true);
+        },
+        error: (error) => {
+          console.error('❌ Error al subir acta:', error);
+          this.subiendoActa = false;
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al subir acta',
+            detail: 'No se pudo subir el acta de conformidad',
+            life: 3000
+          });
+
+          resolve(false);
+        }
+      });
+    });
+  }
+
+
+  subirFotosFinalizacion(idSolicitud: number): Promise<boolean> {
+    if (this.fotosFinalizacion.length === 0) {
+      return Promise.resolve(true);
+    }
+
+    this.subiendoFotos = true;
+
+    let fotosSubidas = 0;
+    let errores = 0;
+
+    return new Promise((resolve) => {
+      this.fotosFinalizacion.forEach((foto, index) => {
+        if (!foto.archivo) {
+          fotosSubidas++;
+          return;
+        }
+
+        this.apiService.subirArchivo(idSolicitud, foto.archivo, 'imagen').subscribe({
+          next: () => {
+            fotosSubidas++;
+
+            if (fotosSubidas + errores === this.fotosFinalizacion.length) {
+              this.subiendoFotos = false;
+
+              if (errores === 0) {
+                resolve(true);
+              } else {
+                console.warn(`⚠️ ${fotosSubidas} foto(s) subida(s), ${errores} fallaron`);
+
+                this.messageService.add({
+                  severity: 'warn',
+                  summary: 'Subida parcial',
+                  detail: `${fotosSubidas} foto(s) subida(s), ${errores} fallaron`,
+                  life: 3000
+                });
+
+                resolve(true); // Continuar aunque haya errores
+              }
+            }
+          },
+          error: (error) => {
+            errores++;
+            console.error(`❌ Error al subir foto ${index + 1}:`, error);
+
+            if (fotosSubidas + errores === this.fotosFinalizacion.length) {
+              this.subiendoFotos = false;
+
+              if (fotosSubidas === 0) {
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Error al subir fotos',
+                  detail: 'No se pudieron subir las fotos de finalización',
+                  life: 3000
+                });
+
+                resolve(false);
+              } else {
+                resolve(true);
+              }
+            }
+          }
+        });
+      });
+    });
+  }
+
+
+  esPDF(nombreArchivo: string): boolean {
+    return nombreArchivo.toLowerCase().endsWith('.pdf');
+  }
+
+  abrirPDF(url: string) {
+    window.open(url, '_blank');
+  }
+
+  verificarPDFsPresupuestos(idSolicitud: number) {
+    this.presupuestos.forEach(presupuesto => {
+      // Ruta: SM/idSolicitud/idProveedor
+      const rutaPDF = `SM/${idSolicitud}/${presupuesto.idclieprov}`;
+
+      console.log(`🔍 Buscando PDFs en ruta: ${rutaPDF}`);
+
+      this.apiService.listarArchivos(rutaPDF).subscribe({
+        next: (response) => {
+          if (Array.isArray(response) && response.length > 0) {
+            // Filtrar solo PDFs
+            const pdfsEncontrados = response.filter((archivo: any) =>
+              archivo.name.toLowerCase().endsWith('.pdf')
+            );
+
+            if (pdfsEncontrados.length > 0) {
+              presupuesto.tienePdf = true;
+              presupuesto.listaPdfs = pdfsEncontrados;
+              console.log(`✅ ${pdfsEncontrados.length} PDF(s) encontrado(s) para ${presupuesto.razon_social}`);
+            }
+          }
+        },
+        error: (error) => {
+          if (error.status !== 404) {
+            console.warn(`⚠️ Error al verificar PDFs para ${presupuesto.razon_social}:`, error);
+          }
+        }
+      });
+    });
+  }
+
+  abrirListaPDFsProveedor(presupuesto: PresupuestoProveedor) {
+    if (!this.solicitudProveedores) {
+      console.warn('⚠️ No hay solicitud activa');
+      return;
+    }
+
+    this.proveedorSeleccionadoPDFs = presupuesto;
+    this.pdfsCargando.set(true);
+    this.mostrarDialogoPDFs.set(true);
+
+    const idSolicitud = this.solicitudProveedores.id;
+    const rutaPDF = `SM/${idSolicitud}/${presupuesto.idclieprov}`;
+
+    this.apiService.listarArchivos(rutaPDF).subscribe({
+      next: (response) => {
+        if (Array.isArray(response)) {
+          const pdfs = response.filter((archivo: any) =>
+            archivo.name.toLowerCase().endsWith('.pdf')
+          );
+          this.listaPDFsProveedor.set(pdfs);
+        }
+        this.pdfsCargando.set(false);
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar PDFs:', error);
+        this.listaPDFsProveedor.set([]);
+        this.pdfsCargando.set(false);
+
+        if (error.status === 404) {
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Sin PDFs',
+            detail: 'Este proveedor no tiene PDFs subidos aún',
+            life: 3000
+          });
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron cargar los PDFs del proveedor',
+            life: 3000
+          });
+        }
+      }
+    });
+  }
+
+  cerrarDialogoPDFs() {
+    this.mostrarDialogoPDFs.set(false);
+    this.proveedorSeleccionadoPDFs = null;
+    this.listaPDFsProveedor.set([]);
+  }
+  verPDFProveedor(url: string) {
+    window.open(url, '_blank');
+  }
+  eliminarPDFPresupuesto(presupuesto: PresupuestoProveedor) {
+    presupuesto.pdfPresupuesto = null;
+
+    this.messageService.add({
+      severity: 'info',
+      summary: 'PDF eliminado',
+      detail: 'El PDF ha sido eliminado',
+      life: 2000
+    });
+  }
+
+  verPDFPresupuesto(url: string) {
+    window.open(url, '_blank');
+  }
+
+  async subirPDFPresupuesto(idSolicitud: number, presupuesto: PresupuestoProveedor): Promise<boolean> {
+    if (!presupuesto.pdfPresupuesto) {
+      return Promise.resolve(true);
+    }
+
+    return new Promise((resolve) => {
+      this.apiService.subirArchivoProveedor(
+        idSolicitud,
+        presupuesto.idclieprov,
+        presupuesto.pdfPresupuesto!,
+        'pdf'
+      ).subscribe({
+        next: (response) => {
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'PDF subido',
+            detail: `PDF de ${presupuesto.razon_social} subido correctamente`,
+            life: 2000
+          });
+
+          // Limpiar el PDF temporal después de subir
+          presupuesto.pdfPresupuesto = null;
+
+          // Recargar lista de PDFs
+          this.verificarPDFsPresupuestos(idSolicitud);
+
+          resolve(true);
+        },
+        error: (error) => {
+          console.error(`❌ Error al subir PDF de ${presupuesto.razon_social}:`, error);
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al subir PDF',
+            detail: `No se pudo subir el PDF de ${presupuesto.razon_social}`,
+            life: 3000
+          });
+
+          resolve(false);
+        }
+      });
+    });
+  }
+
+  triggerPDFUpload(idProveedor: string) {
+    const inputElement = document.getElementById(`pdfUpload_${idProveedor}`) as HTMLInputElement;
+    if (inputElement) {
+      inputElement.click();
+    }
+  }
+
+  // Manejar selección manual de PDF
+  onPDFPresupuestoSelectManual(event: any, presupuesto: PresupuestoProveedor) {
+    const file = event.target.files[0];
+
+    if (!file) {
+      console.warn('⚠️ No se seleccionó archivo');
+      return;
+    }
+
+    // Validar que sea PDF
+    if (!file.type.includes('pdf')) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Archivo inválido',
+        detail: 'Solo se permiten archivos PDF',
+        life: 3000
+      });
+
+      // Limpiar input
+      event.target.value = '';
+      return;
+    }
+
+    presupuesto.pdfPresupuesto = file;
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'PDF seleccionado',
+      detail: `${file.name} listo para subir`,
+      life: 2000
+    });
+
+    event.target.value = '';
   }
 }

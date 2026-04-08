@@ -573,6 +573,13 @@
                                             }}</p>
                                         <p class="text-xs text-gray-500 dark:text-gray-400">RUC: {{
                                             presupuesto.idclieprov }}</p>
+
+                                        <!-- Indicador de nuevo -->
+                                        <span *ngIf="presupuesto.esNuevo"
+                                            class="inline-block mt-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-xs font-medium">
+                                            <i class="pi pi-plus-circle mr-1" style="font-size: 0.7rem;"></i>
+                                            Nuevo
+                                        </span>
                                     </div>
                                 </td>
                                 <td class="p-2">
@@ -594,25 +601,61 @@
                                 </td>
                                 <td class="p-2">
                                     <div class="flex items-center justify-center gap-1">
+
+                                        <!-- Botón: Ver carpeta de PDFs del proveedor -->
+                                        <button pButton type="button" icon="pi pi-folder-open"
+                                            (click)="abrirListaPDFsProveedor(presupuesto)"
+                                            class="p-button-sm p-button-text p-button-rounded" severity="warn"
+                                            [pTooltip]="'Ver PDFs (' + (presupuesto.listaPdfs?.length || 0) + ')'"
+                                            tooltipPosition="top">
+                                        </button>
+
+                                        <!-- Botón: Subir nuevo PDF (SIEMPRE VISIBLE) -->
+                                        <div class="relative">
+                                            <input type="file" accept="application/pdf"
+                                                [id]="'pdfUpload_' + presupuesto.idclieprov"
+                                                (change)="onPDFPresupuestoSelectManual($event, presupuesto)"
+                                                class="hidden">
+
+                                            <button pButton type="button"
+                                                [icon]="presupuesto.pdfPresupuesto ? 'pi pi-check-circle' : 'pi pi-upload'"
+                                                (click)="triggerPDFUpload(presupuesto.idclieprov)"
+                                                class="p-button-sm p-button-text p-button-rounded"
+                                                [severity]="presupuesto.pdfPresupuesto ? 'success' : 'secondary'"
+                                                [pTooltip]="presupuesto.pdfPresupuesto ? 'PDF seleccionado: ' + presupuesto.pdfPresupuesto.name : 'Subir nuevo PDF'">
+                                            </button>
+                                        </div>
+
+                                        <!-- Eliminar PDF temporal (antes de subir) -->
+                                        <button *ngIf="presupuesto.pdfPresupuesto" pButton type="button"
+                                            icon="pi pi-times" (click)="eliminarPDFPresupuesto(presupuesto)"
+                                            class="p-button-sm p-button-text p-button-rounded p-button-danger"
+                                            pTooltip="Cancelar PDF seleccionado">
+                                        </button>
+
+                                        <!-- Editar/Guardar/Cancelar -->
                                         <button *ngIf="!editing" pButton type="button" icon="pi pi-pencil"
                                             pInitEditableRow (click)="onRowEditInit(presupuesto)"
-                                            class="p-button-sm p-button-text p-button-rounded"
-                                            pTooltip="Editar"></button>
+                                            class="p-button-sm p-button-text p-button-rounded" pTooltip="Editar">
+                                        </button>
 
                                         <button *ngIf="editing" pButton type="button" icon="pi pi-check"
                                             pSaveEditableRow (click)="onRowEditSave(presupuesto)"
                                             class="p-button-sm p-button-text p-button-rounded p-button-success"
-                                            pTooltip="Guardar"></button>
+                                            pTooltip="Guardar">
+                                        </button>
 
                                         <button *ngIf="editing" pButton type="button" icon="pi pi-times"
                                             pCancelEditableRow (click)="onRowEditCancel(presupuesto)"
                                             class="p-button-sm p-button-text p-button-rounded p-button-danger"
-                                            pTooltip="Cancelar"></button>
+                                            pTooltip="Cancelar">
+                                        </button>
 
                                         <button *ngIf="!editing" pButton type="button" icon="pi pi-trash"
                                             (click)="eliminarProveedor(presupuesto)"
                                             class="p-button-sm p-button-text p-button-rounded p-button-danger"
-                                            pTooltip="Eliminar"></button>
+                                            pTooltip="Eliminar">
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -635,6 +678,7 @@
 
         </div>
 
+
     </div>
 
     <!-- Footer botones - SIEMPRE VISIBLE -->
@@ -646,6 +690,9 @@
             <div class="flex gap-3">
                 <button pButton type="button" label="Cancelar" icon="pi pi-times" (click)="cerrarSeleccionProveedores()"
                     severity="secondary" class="h-11"></button>
+                <button pButton type="button" label="Guardar" icon="pi pi-save"
+                    (click)="guardarPresupuestosSinCambiarEstado()" [disabled]="presupuestos.length === 0"
+                    [loading]="cargando" severity="secondary" class="h-11"></button>
                 <button pButton type="button" label="Guardar y Enviar a Control" icon="pi pi-check"
                     (click)="guardarProveedores()" [disabled]="presupuestos.length === 0" [loading]="cargando"
                     class="h-11"></button>
@@ -653,6 +700,65 @@
         </div>
     </ng-template>
 
+</p-dialog>
+<p-dialog [visible]="mostrarDialogoPDFs()" (visibleChange)="mostrarDialogoPDFs.set($event)"
+    (onHide)="cerrarDialogoPDFs()">
+
+    <!-- Loading -->
+    <div *ngIf="pdfsCargando()" class="flex justify-center items-center p-6">
+        <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
+    </div>
+
+    <!-- Sin PDFs -->
+    <div *ngIf="!pdfsCargando() && listaPDFsProveedor().length === 0"
+        class="text-center p-6 text-gray-500 dark:text-gray-400">
+        <i class="pi pi-folder-open text-6xl mb-3 opacity-50"></i>
+        <p class="text-sm font-medium">No hay PDFs subidos para este proveedor</p>
+        <p class="text-xs mt-1">Los PDFs aparecerán aquí una vez que se suban</p>
+    </div>
+
+    <!-- Tabla de PDFs -->
+    <div *ngIf="!pdfsCargando() && listaPDFsProveedor().length > 0" class="p-2">
+        <p-table [value]="listaPDFsProveedor()" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th
+                        class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold text-sm">
+                        Archivo
+                    </th>
+                    <th class="text-center p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold text-sm"
+                        style="width: 200px">
+                        Fecha Subida
+                    </th>
+                    <th class="text-center p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold text-sm"
+                        style="width: 100px">
+                        Acciones
+                    </th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-pdf>
+                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                    <td class="p-3">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-file-pdf text-red-500 text-xl"></i>
+                            <span class="text-sm font-medium text-gray-800 dark:text-white">{{ pdf.name }}</span>
+                        </div>
+                    </td>
+                    <td class="text-center p-3">
+                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                            {{ pdf.lastModified | date:'dd/MM/yyyy HH:mm' }}
+                        </span>
+                    </td>
+                    <td class="text-center p-3">
+                        <button pButton type="button" icon="pi pi-eye" (click)="verPDFProveedor(pdf.url)"
+                            class="p-button-sm p-button-text p-button-rounded" severity="info"
+                            pTooltip="Ver PDF en nueva pestaña">
+                        </button>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
 </p-dialog>
 <!-- MODAL ASIGNACIÓN DE PROVEEDOR -->
 <p-dialog [(visible)]="mostrarAsignacion" [modal]="true" [closable]="true" [closeOnEscape]="true"
@@ -1153,9 +1259,9 @@
                             <i class="pi pi-calendar mr-2"></i>
                             Fecha de Inicio *
                         </label>
-                        <p-datepicker [(ngModel)]="fechaInicio" [showIcon]="true" dateFormat="dd/mm/yy"
-                            [showButtonBar]="true" placeholder="Seleccione fecha y hora" [showTime]="true"
-                            hourFormat="24" styleClass="w-full text-sm">
+                        <p-datepicker [(ngModel)]="fechaInicio" size="small" [showIcon]="true" iconDisplay="input"
+                            dateFormat="dd/mm/yy" [showButtonBar]="true" placeholder="Seleccione fecha y hora"
+                            [showTime]="true" hourFormat="24" styleClass="w-full" appendTo="body">
                         </p-datepicker>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             <i class="pi pi-info-circle mr-1"></i>
@@ -1407,9 +1513,9 @@
                             <i class="pi pi-calendar mr-2"></i>
                             Fecha de Finalización *
                         </label>
-                        <p-datepicker [(ngModel)]="fechaFin" [showIcon]="true" dateFormat="dd/mm/yy"
-                            [showButtonBar]="true" placeholder="Seleccione fecha y hora" [showTime]="true"
-                            hourFormat="24" styleClass="w-full text-sm">
+                        <p-datepicker [(ngModel)]="fechaFin" size="small" [showIcon]="true" iconDisplay="input"
+                            dateFormat="dd/mm/yy" [showButtonBar]="true" placeholder="Seleccione fecha y hora"
+                            [showTime]="true" hourFormat="24" styleClass="w-full" appendTo="body">
                         </p-datepicker>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             <i class="pi pi-info-circle mr-1"></i>
@@ -1456,7 +1562,6 @@
 </p-dialog>
 
 <!-- MODAL FINALIZACIÓN -->
-<!-- MODAL FINALIZACIÓN CON BÚSQUEDA Y TABLA DE DOCUMENTOS -->
 <p-dialog [(visible)]="mostrarFinalizacion" [modal]="true" [closable]="true" [closeOnEscape]="true"
     [dismissableMask]="true" [style]="{width: '95vw', maxWidth: '1400px', height: '90vh'}"
     [contentStyle]="{padding: '0', height: '100%', display: 'flex', 'flex-direction': 'column'}"
@@ -1769,6 +1874,65 @@
                 </div>
             </div>
 
+            <div class="flex gap-3 flex-shrink-0">
+                <div class="flex-1">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                        <i class="pi pi-file-pdf mr-1"></i>
+                        Acta de Conformidad (PDF)
+                    </label>
+
+                    <p-fileUpload mode="basic" chooseLabel="Seleccionar Acta" accept="application/pdf"
+                        [maxFileSize]="10000000" (onSelect)="onActaSelect($event)" [auto]="false"
+                        [showUploadButton]="false" [showCancelButton]="false" styleClass="w-full">
+                    </p-fileUpload>
+
+                    <!-- Mostrar acta seleccionada -->
+                    <div *ngIf="actaConformidad"
+                        class="mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-file-pdf text-red-500"></i>
+                            <span class="text-xs font-medium text-green-800 dark:text-green-300">{{ actaConformidad.name
+                                }}</span>
+                            <span class="text-xs text-green-600 dark:text-green-400">({{
+                                formatBytes(actaConformidad.size) }})</span>
+                        </div>
+                        <button pButton type="button" icon="pi pi-times" (click)="eliminarActa()"
+                            class="p-button-sm p-button-rounded p-button-text p-button-danger"
+                            pTooltip="Eliminar acta"></button>
+                    </div>
+                </div>
+
+                <div class="flex-1">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                        <i class="pi pi-images mr-1"></i>
+                        Fotos de Finalización
+                    </label>
+
+                    <p-fileUpload mode="basic" chooseLabel="Seleccionar Fotos" accept="image/*" [maxFileSize]="10000000"
+                        [multiple]="true" (onSelect)="onFotosFinalizacionSelect($event)" [auto]="false"
+                        [showUploadButton]="false" [showCancelButton]="false" styleClass="w-full">
+                    </p-fileUpload>
+
+                    <!-- Mostrar fotos seleccionadas -->
+                    <div *ngIf="fotosFinalizacion.length > 0" class="mt-2 space-y-1">
+                        <div *ngFor="let foto of fotosFinalizacion"
+                            class="p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <img [src]="foto.url" [alt]="foto.nombre" class="w-8 h-8 object-cover rounded">
+                                <span
+                                    class="text-xs font-medium text-blue-800 dark:text-blue-300 truncate max-w-[150px]">{{
+                                    foto.nombre }}</span>
+                            </div>
+                            <button pButton type="button" icon="pi pi-times" (click)="eliminarFotoFinalizacion(foto)"
+                                class="p-button-sm p-button-rounded p-button-text p-button-danger"
+                                pTooltip="Eliminar foto"></button>
+                        </div>
+                        <p class="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                            {{ fotosFinalizacion.length }} foto(s) seleccionada(s)
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -2003,16 +2167,23 @@
                 <div *ngIf="!solicitudVerFinalizado?.cargandoFotos && solicitudVerFinalizado?.fotos && solicitudVerFinalizado?.fotos!.length > 0"
                     class="space-y-2">
                     <div *ngFor="let foto of solicitudVerFinalizado?.fotos" class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 
-                    hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+    hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
 
                         <div class="flex items-center gap-3 flex-1 min-w-0">
                             <!-- Thumbnail preview -->
-                            <div
-                                class="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
-                                <img [src]="foto.url" [alt]="foto.nombre"
+                            <div class="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 flex items-center justify-center"
+                                [class.bg-gray-100]="esPDF(foto.nombre)" [class.dark:bg-slate-700]="esPDF(foto.nombre)">
+
+                                <!-- Si es imagen -->
+                                <img *ngIf="!esPDF(foto.nombre)" [src]="foto.url" [alt]="foto.nombre"
                                     class="w-full h-full object-cover cursor-pointer"
                                     (click)="verImagen(foto, solicitudVerFinalizado?.fotos || [])"
                                     (error)="$event.target.src='assets/image-placeholder.png'" />
+
+                                <!-- Si es PDF -->
+                                <i *ngIf="esPDF(foto.nombre)"
+                                    class="pi pi-file-pdf text-2xl text-red-500 cursor-pointer"
+                                    (click)="abrirPDF(foto.url)" pTooltip="Abrir PDF"></i>
                             </div>
 
                             <div class="flex-1 min-w-0">
@@ -2028,10 +2199,11 @@
                             </div>
                         </div>
 
-                        <button pButton type="button" icon="pi pi-eye"
-                            (click)="verImagen(foto, solicitudVerFinalizado?.fotos || [])"
-                            class="p-button-sm p-button-rounded p-button-text" pTooltip="Ver imagen"
-                            tooltipPosition="left" severity="secondary"></button>
+                        <button pButton type="button" [icon]="esPDF(foto.nombre) ? 'pi pi-external-link' : 'pi pi-eye'"
+                            (click)="esPDF(foto.nombre) ? abrirPDF(foto.url) : verImagen(foto, solicitudVerFinalizado?.fotos || [])"
+                            class="p-button-sm p-button-rounded p-button-text"
+                            [pTooltip]="esPDF(foto.nombre) ? 'Abrir PDF' : 'Ver imagen'" tooltipPosition="left"
+                            severity="secondary"></button>
                     </div>
                 </div>
 

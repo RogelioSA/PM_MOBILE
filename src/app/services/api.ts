@@ -401,16 +401,16 @@ export class Api {
       .set('serie', params.serie)
       .set('numero', params.numero);
 
-      return this.https.get<any>(
-        `${this.baseUrl}/SolicitudMantenimiento/EditarSolicitudMantenimiento`,
-        { 
-          headers: this.authService.getHeaders(), 
-          params: queryParams 
-        }
-      ).pipe(
-        map(response => response),
-        catchError(error => throwError(() => error))
-      );
+    return this.https.get<any>(
+      `${this.baseUrl}/SolicitudMantenimiento/EditarSolicitudMantenimiento`,
+      {
+        headers: this.authService.getHeaders(),
+        params: queryParams
+      }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
   }
 
   consultarSolicitudMantenimiento(id: number): Observable<any> {
@@ -478,45 +478,45 @@ export class Api {
   }
 
   subirArchivo(
-  idSolicitudMantenimiento: number,
-  archivo: File,
-  tipoArchivo: string
-): Observable<any> {
+    idSolicitudMantenimiento: number,
+    archivo: File,
+    tipoArchivo: string
+  ): Observable<any> {
 
-  const carpeta = `SM${idSolicitudMantenimiento}`;
+    const carpeta = `SM${idSolicitudMantenimiento}`;
 
-  let mimeType = 'application/octet-stream';
+    let mimeType = 'application/octet-stream';
 
-  if (tipoArchivo === 'imagen') {
-    mimeType = archivo.type || 'image/jpeg';
-  } else if (tipoArchivo === 'pdf') {
-    mimeType = 'application/pdf';
-  }
-
-  const params = new HttpParams()
-    .set('carpeta', carpeta)
-    .set('archivo', archivo.name)
-    .set('tipoArchivo', mimeType);
-  return this.https.get<{ url: string }>(
-    `${this.baseUrl}/SolicitudMantenimiento/subirArchivoChecklist`,
-    {
-      headers: this.authService.getHeaders(),
-      params
+    if (tipoArchivo === 'imagen') {
+      mimeType = archivo.type || 'image/jpeg';
+    } else if (tipoArchivo === 'pdf') {
+      mimeType = 'application/pdf';
     }
-  ).pipe(
-    switchMap(response => {
-      
-      return this.https.put(response.url, archivo, {
-        headers: { 'Content-Type': mimeType },
-        reportProgress: true
-      });
-    }),
-    catchError(error => {
-      console.error('Error al subir el archivo:', error);
-      return throwError(() => error);
-    })
-  );
-}
+
+    const params = new HttpParams()
+      .set('carpeta', carpeta)
+      .set('archivo', archivo.name)
+      .set('tipoArchivo', mimeType);
+    return this.https.get<{ url: string }>(
+      `${this.baseUrl}/SolicitudMantenimiento/subirArchivoChecklist`,
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      switchMap(response => {
+
+        return this.https.put(response.url, archivo, {
+          headers: { 'Content-Type': mimeType },
+          reportProgress: true
+        });
+      }),
+      catchError(error => {
+        console.error('Error al subir el archivo:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 
   listarArchivos(ruta: string): Observable<any> {
     const queryParams = new HttpParams()
@@ -577,6 +577,48 @@ export class Api {
     ).pipe(
       map(response => response),
       catchError(error => throwError(() => error))
+    );
+  }
+
+  subirArchivoProveedor(
+    idSolicitudMantenimiento: number,
+    idProveedor: string,
+    archivo: File,
+    tipoArchivo: string
+  ): Observable<any> {
+    // Carpeta: SM/idMantenimiento/idProveedor
+    const carpeta = `SM/${idSolicitudMantenimiento}/${idProveedor}`;
+
+    let mimeType = 'application/octet-stream';
+
+    if (tipoArchivo === 'imagen') {
+      mimeType = archivo.type || 'image/jpeg';
+    } else if (tipoArchivo === 'pdf') {
+      mimeType = 'application/pdf';
+    }
+
+    const params = new HttpParams()
+      .set('carpeta', carpeta)
+      .set('archivo', archivo.name)
+      .set('tipoArchivo', mimeType);
+
+    return this.https.get<{ url: string }>(
+      `${this.baseUrl}/SolicitudMantenimiento/subirArchivoChecklist`,
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      switchMap(response => {
+        return this.https.put(response.url, archivo, {
+          headers: { 'Content-Type': mimeType },
+          reportProgress: true
+        });
+      }),
+      catchError(error => {
+        console.error('Error al subir el archivo del proveedor:', error);
+        return throwError(() => error);
+      })
     );
   }
 }
