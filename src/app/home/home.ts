@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
+import { Menu } from '../menu/menu';
 
 @Component({
   selector: 'app-home',
   standalone: true,
+  imports: [Menu],
   templateUrl: './home.html',
   styleUrl: './home.css'
 })
