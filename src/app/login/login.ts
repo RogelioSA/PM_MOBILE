@@ -37,7 +37,7 @@ export class Login implements OnInit {
     // Si ya tiene token, redirigir directamente
     const token = this.getCookie('token');
     if (token) {
-      this.router.navigate(['/salidaTrabajo']);
+      this.router.navigate(['/home']);
     }
   }
 
@@ -68,7 +68,7 @@ export class Login implements OnInit {
           document.cookie = `token=${response.data.token}; path=/; max-age=${60 * 60 * 24}`;
           document.cookie = `usuario=${response.data.usuario}; path=/; max-age=${60 * 60 * 24}`;
 
-          this.router.navigate(['/salidaTrabajo']);
+          this.router.navigate(['/home']);
 
         } else {
           console.warn('❌ Credenciales incorrectas');
