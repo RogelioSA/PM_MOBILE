@@ -10,6 +10,7 @@ import { Recepcionvehiculos } from './recepcionvehiculos/recepcionvehiculos';
 import { Ingresosalidataller } from './ingresosalidataller/ingresosalidataller';
 import { Mantenimiento } from './mantenimiento/mantenimiento';
 import { MantenimientoEstados } from './mantenimiento-estados/mantenimiento-estados';
+import { Home } from './home/home';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -19,6 +20,12 @@ export const routes: Routes = [
   },
 
   // Ruta protegida
+  {
+    path: 'home',
+    component: Home,
+    canActivate: [authGuard]
+  },
+
   {
     path: 'salidaTrabajo',
     component: SalidaTrabajo,
