@@ -528,7 +528,7 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const fecha = this.fechaSeleccionada.toISOString().split('T')[0];
+    const fecha = this.formatearFechaLocal(this.fechaSeleccionada);
 
     const detalle = this.productos.map(p => ({
       idproducto: p.idProducto,
@@ -559,5 +559,12 @@ export class SalidaTrabajo implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy() {
     this.scannerActivo = false;
+  }
+
+  private formatearFechaLocal(fecha: Date): string {
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const day = String(fecha.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }
