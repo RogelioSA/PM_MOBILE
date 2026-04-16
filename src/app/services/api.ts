@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { map, catchError,switchMap  } from 'rxjs/operators';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Auth } from './auth';
 
@@ -77,7 +77,7 @@ export class Api {
   constructor(
     private https: HttpClient,
     private authService: Auth
-  ) {}
+  ) { }
 
   // Registro de salida OT
   registroSalidaOT(
@@ -621,4 +621,70 @@ export class Api {
       })
     );
   }
+
+  listarGastoSimple(
+    usuarioCreacion: string,
+    fechaDesde: string,
+    fechaHasta: string,
+    idSucursal: string,
+    serie: string,
+    numero: string
+  ): Observable<any> {
+
+    const params = new HttpParams()
+      .set('usuarioCreacion', usuarioCreacion)
+      .set('fechaDesde', fechaDesde)
+      .set('fechaHasta', fechaHasta)
+      .set('idSucursal', idSucursal)
+      .set('serie', serie)
+      .set('numero', numero);
+
+    return this.https.get(
+      `${this.baseUrl}/GastoSimple/ListarGastoSimple`,
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  insertarGastoSimple(
+    fecha: string,
+    idSucursal: string,
+    monto: number,
+    usuarioCreacion: string,
+    idOrdenTrabajo: string,
+    idProveedor: string,
+    serie: string,
+    numero: string,
+    referenciaCarpeta: string
+  ): Observable<any> {
+
+    const params = new HttpParams()
+      .set('fecha', fecha)
+      .set('idSucursal', idSucursal)
+      .set('monto', monto.toString())
+      .set('usuarioCreacion', usuarioCreacion)
+      .set('idOrdenTrabajo', idOrdenTrabajo)
+      .set('idProveedor', idProveedor)
+      .set('serie', serie)
+      .set('numero', numero)
+      .set('referenciaCarpeta', referenciaCarpeta);
+
+    return this.https.post(
+      `${this.baseUrl}/GastoSimple/InsertarGastoSimple`,
+      {},
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
 }
+

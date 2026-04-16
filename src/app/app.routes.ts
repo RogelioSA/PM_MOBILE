@@ -10,6 +10,8 @@ import { Recepcionvehiculos } from './recepcionvehiculos/recepcionvehiculos';
 import { Ingresosalidataller } from './ingresosalidataller/ingresosalidataller';
 import { Mantenimiento } from './mantenimiento/mantenimiento';
 import { MantenimientoEstados } from './mantenimiento-estados/mantenimiento-estados';
+import { Viaticos } from './viaticos/viaticos';
+import { RendicionGastos } from './rendicion-gastos/rendicion-gastos';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -67,6 +69,16 @@ export const routes: Routes = [
   {
     path: 'mantenimientoestados',
     component: MantenimientoEstados,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'solicitud-viaticos',
+    component: Viaticos,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'rendicion-gastos',
+    component: RendicionGastos,
     canActivate: [authGuard]
   },
   // Cualquier ruta no válida vuelve al login

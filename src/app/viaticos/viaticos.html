@@ -1,0 +1,546 @@
+<!-- viaticos.html -->
+<app-menu></app-menu>
+
+<div class="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-6 pt-20 sm:pt-24">
+    <div class="max-w-[1800px] mx-auto">
+
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
+                Viáticos
+            </h1>
+            <button pButton type="button" label="Crear solicitud" icon="pi pi-plus" 
+                (click)="nuevaSolicitud()" class="h-11 bg-teal-600 hover:bg-teal-700 border-teal-600"></button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 mb-4">
+            <div class="flex gap-3">
+                <span class="p-input-icon-left flex-1">
+                    <i class="pi pi-search"></i>
+                    <input type="text" pInputText [(ngModel)]="busqueda" 
+                        placeholder="Buscar solicitud" class="w-full h-11" />
+                </span>
+                <button pButton type="button" icon="pi pi-filter" label="Agregar filtros" 
+                    severity="secondary" class="h-11"></button>
+            </div>
+        </div>
+
+        <!-- Lista de solicitudes - 4 COLUMNAS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            
+            <div *ngFor="let solicitud of solicitudesFiltradas"
+                class="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden border-l-4 transition-all hover:shadow-xl"
+                [class.border-yellow-500]="solicitud.estado === 'Borrador'"
+                [class.border-green-500]="solicitud.estado === 'Aprobado'">
+
+                <div class="p-4">
+                    <!-- Header con estado y menú -->
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium"
+                                [class.bg-yellow-100]="solicitud.estado === 'Borrador'"
+                                [class.text-yellow-800]="solicitud.estado === 'Borrador'"
+                                [class.dark:bg-yellow-900]="solicitud.estado === 'Borrador'"
+                                [class.dark:text-yellow-300]="solicitud.estado === 'Borrador'"
+                                [class.bg-green-100]="solicitud.estado === 'Aprobado'"
+                                [class.text-green-800]="solicitud.estado === 'Aprobado'"
+                                [class.dark:bg-green-900]="solicitud.estado === 'Aprobado'"
+                                [class.dark:text-green-300]="solicitud.estado === 'Aprobado'">
+                                {{ solicitud.estado }}
+                            </span>
+                        </div>
+                        <button pButton type="button" icon="pi pi-ellipsis-v" 
+                            class="p-button-sm p-button-text p-button-rounded" severity="secondary"></button>
+                    </div>
+
+                    <!-- Nombre y monto -->
+                    <h3 class="text-base font-bold text-gray-800 dark:text-white mb-1 truncate" 
+                        [pTooltip]="solicitud.nombre" tooltipPosition="top">
+                        {{ solicitud.nombre }}
+                    </h3>
+                    <p class="text-xl font-bold text-teal-600 dark:text-teal-400 mb-3">
+                        {{ solicitud.total | number:'1.2-2' }} USD
+                    </p>
+
+                    <!-- Detalles compactos -->
+                    <div class="space-y-1.5 text-xs mb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-calendar text-gray-400 text-[10px]"></i>
+                            <span class="text-gray-600 dark:text-gray-400">Inicio:</span>
+                            <span class="text-gray-800 dark:text-white font-medium ml-auto">
+                                {{ solicitud.fechaInicio | date:'dd/MM/yyyy' }}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-calendar-times text-gray-400 text-[10px]"></i>
+                            <span class="text-gray-600 dark:text-gray-400">Fin:</span>
+                            <span class="text-gray-800 dark:text-white font-medium ml-auto">
+                                {{ solicitud.fechaFin | date:'dd/MM/yyyy' }}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-clock text-gray-400 text-[10px]"></i>
+                            <span class="text-gray-600 dark:text-gray-400">Duración:</span>
+                            <span class="text-gray-800 dark:text-white font-medium ml-auto">
+                                {{ solicitud.duracion }} días
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-sitemap text-gray-400 text-[10px]"></i>
+                            <span class="text-gray-600 dark:text-gray-400 truncate">
+                                {{ solicitud.nivelJerarquico }}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-map-marker text-gray-400 text-[10px]"></i>
+                            <span class="text-gray-600 dark:text-gray-400 truncate">
+                                {{ solicitud.motivoViatico }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Nota compacta -->
+                    <div class="mb-3" *ngIf="solicitud.nota">
+                        <p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                            {{ solicitud.nota }}
+                        </p>
+                    </div>
+
+                    <!-- Archivos -->
+                    <div class="flex items-center gap-1.5 mb-3" *ngIf="solicitud.archivos && solicitud.archivos > 0">
+                        <i class="pi pi-paperclip text-gray-500 text-xs"></i>
+                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                            {{ solicitud.archivos }} archivo(s)
+                        </span>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="space-y-2">
+                        <button pButton type="button" 
+                            [label]="solicitud.estado === 'Borrador' ? 'Enviar solicitud' : 'Ver viático'"
+                            [icon]="solicitud.estado === 'Borrador' ? 'pi pi-send' : 'pi pi-eye'"
+                            (click)="solicitud.estado === 'Borrador' ? abrirModalEnvio(solicitud) : verSolicitud(solicitud)"
+                            class="w-full h-10 text-sm"
+                            [class.bg-teal-600]="solicitud.estado === 'Borrador'"
+                            [class.hover:bg-teal-700]="solicitud.estado === 'Borrador'"
+                            [class.border-teal-600]="solicitud.estado === 'Borrador'"></button>
+                        
+                        <button pButton type="button" label="Editar solicitud" icon="pi pi-pencil"
+                            (click)="editarSolicitud(solicitud)" severity="secondary"
+                            class="w-full h-10 text-sm" *ngIf="solicitud.estado === 'Borrador'"></button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Empty state -->
+        <div *ngIf="solicitudesFiltradas.length === 0" 
+            class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-12 text-center">
+            <i class="pi pi-inbox text-6xl text-gray-300 dark:text-gray-600 mb-4 block"></i>
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+                No hay solicitudes de viáticos
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                {{ busqueda ? 'No se encontraron resultados para tu búsqueda' : 'Crea tu primera solicitud para comenzar' }}
+            </p>
+            <button pButton type="button" label="Crear solicitud" icon="pi pi-plus" 
+                (click)="nuevaSolicitud()" 
+                class="h-11 bg-teal-600 hover:bg-teal-700 border-teal-600" 
+                *ngIf="!busqueda"></button>
+        </div>
+
+    </div>
+</div>
+
+<!-- MODAL CREAR SOLICITUD CON STEPPER -->
+<p-dialog [(visible)]="mostrarFormulario" [modal]="true" [closable]="true" [closeOnEscape]="false"
+    [dismissableMask]="false" [style]="{width: '95vw', maxWidth: '700px'}"
+    [contentStyle]="{padding: '0', 'max-height': '85vh', 'overflow-y': 'auto'}"
+    [header]="'Solicitud de viático'">
+
+    <div class="p-6">
+        <!-- Stepper -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 flex-1">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm"
+                        [class.bg-blue-600]="pasoActual === 0"
+                        [class.text-white]="pasoActual === 0"
+                        [class.bg-gray-200]="pasoActual !== 0"
+                        [class.text-gray-600]="pasoActual !== 0"
+                        [class.dark:bg-gray-700]="pasoActual !== 0"
+                        [class.dark:text-gray-300]="pasoActual !== 0">
+                        1
+                    </div>
+                    <span class="text-sm font-medium"
+                        [class.text-blue-600]="pasoActual === 0"
+                        [class.text-gray-600]="pasoActual !== 0"
+                        [class.dark:text-gray-300]="pasoActual !== 0">
+                        Datos principales
+                    </span>
+                </div>
+
+                <div class="h-[2px] flex-1 mx-2"
+                    [class.bg-blue-600]="pasoActual >= 1"
+                    [class.bg-gray-300]="pasoActual < 1"
+                    [class.dark:bg-gray-600]="pasoActual < 1"></div>
+
+                <div class="flex items-center gap-2 flex-1">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm"
+                        [class.bg-blue-600]="pasoActual === 1"
+                        [class.text-white]="pasoActual === 1"
+                        [class.bg-gray-200]="pasoActual !== 1"
+                        [class.text-gray-600]="pasoActual !== 1"
+                        [class.dark:bg-gray-700]="pasoActual !== 1"
+                        [class.dark:text-gray-300]="pasoActual !== 1">
+                        2
+                    </div>
+                    <span class="text-sm font-medium"
+                        [class.text-blue-600]="pasoActual === 1"
+                        [class.text-gray-600]="pasoActual !== 1"
+                        [class.dark:text-gray-300]="pasoActual !== 1">
+                        Motivo de viático
+                    </span>
+                </div>
+
+                <div class="h-[2px] flex-1 mx-2"
+                    [class.bg-blue-600]="pasoActual >= 2"
+                    [class.bg-gray-300]="pasoActual < 2"
+                    [class.dark:bg-gray-600]="pasoActual < 2"></div>
+
+                <div class="flex items-center gap-2 flex-1">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm"
+                        [class.bg-blue-600]="pasoActual === 2"
+                        [class.text-white]="pasoActual === 2"
+                        [class.bg-gray-200]="pasoActual !== 2"
+                        [class.text-gray-600]="pasoActual !== 2"
+                        [class.dark:bg-gray-700]="pasoActual !== 2"
+                        [class.dark:text-gray-300]="pasoActual !== 2">
+                        3
+                    </div>
+                    <span class="text-sm font-medium"
+                        [class.text-blue-600]="pasoActual === 2"
+                        [class.text-gray-600]="pasoActual !== 2"
+                        [class.dark:text-gray-300]="pasoActual !== 2">
+                        Resumen
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PASO 1: Datos principales -->
+        <div *ngIf="pasoActual === 0">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">
+                Solicitud de viático
+            </h2>
+
+            <div class="space-y-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Nombre viático
+                    </label>
+                    <input type="text" pInputText [(ngModel)]="nombreViatico" 
+                        placeholder="ej: viaje a ica" class="w-full h-11" />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Nivel jerárquico
+                    </label>
+                    <p-select [(ngModel)]="nivelSeleccionado" [options]="nivelesJerarquicos" 
+                        optionLabel="label" optionValue="value" 
+                        placeholder="Seleccione un nivel" styleClass="w-full">
+                        <ng-template let-option pTemplate="selectedItem">
+                            <div class="flex items-center gap-2" *ngIf="option">
+                                <i class="pi pi-chevron-up text-gray-400 text-xs"></i>
+                                <span>{{ option.label }}</span>
+                            </div>
+                        </ng-template>
+                        <ng-template let-option pTemplate="item">
+                            <div class="flex items-center gap-2">
+                                <span>{{ option.label }}</span>
+                            </div>
+                        </ng-template>
+                    </p-select>
+                </div>
+
+                <!-- CAMPO DE FOTOS -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Fotos (Opcional)
+                    </label>
+                    
+                    <p-fileupload 
+                        name="fotos[]"
+                        [multiple]="true" 
+                        accept="image/*" 
+                        [maxFileSize]="5000000"
+                        (onSelect)="onFileSelect($event)"
+                        [showUploadButton]="false"
+                        [showCancelButton]="false"
+                        chooseLabel="Seleccionar fotos"
+                        chooseIcon="pi pi-images"
+                        styleClass="w-full">
+                        <ng-template pTemplate="content">
+                            <div class="text-center py-4">
+                                <i class="pi pi-cloud-upload text-4xl text-gray-400"></i>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                    Arrastra fotos aquí o haz clic para seleccionar
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                    Máximo 5MB por archivo
+                                </p>
+                            </div>
+                        </ng-template>
+                    </p-fileupload>
+
+                    <!-- Preview de fotos -->
+                    <div *ngIf="fotosAdjuntas.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                        <div *ngFor="let foto of fotosAdjuntas" 
+                            class="relative group rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-600">
+                            
+                            <img [src]="foto.url" [alt]="foto.nombre" 
+                                class="w-full h-32 object-cover" />
+                            
+                            <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 
+                                transition-opacity flex items-center justify-center">
+                                <button type="button" (click)="eliminarFoto(foto)"
+                                    class="bg-red-500 hover:bg-red-600 text-white rounded-full p-2">
+                                    <i class="pi pi-trash text-sm"></i>
+                                </button>
+                            </div>
+
+                            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-1">
+                                <p class="text-white text-xs truncate">{{ foto.nombre }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-gray-500 dark:text-gray-400" *ngIf="fotosAdjuntas.length > 0">
+                        {{ fotosAdjuntas.length }} foto(s) adjuntada(s)
+                    </p>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Nota (opcional)
+                    </label>
+                    <textarea pTextarea [(ngModel)]="notaOpcional" rows="4" 
+                        placeholder="Escribe una nota" 
+                        class="w-full"
+                        maxlength="250"></textarea>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 text-right">
+                        {{ notaOpcional.length }}/250 caracteres disponibles
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PASO 2: Motivo de viático -->
+        <div *ngIf="pasoActual === 1">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">
+                Solicitud de viático
+            </h2>
+
+            <div class="space-y-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Motivo de viático
+                    </label>
+                    <p-select [(ngModel)]="motivoSeleccionado" [options]="motivosViatico" 
+                        optionLabel="label" optionValue="value" 
+                        placeholder="Destino Internacional" styleClass="w-full">
+                        <ng-template let-option pTemplate="selectedItem">
+                            <div class="flex items-center gap-2" *ngIf="option">
+                                <i class="pi pi-times text-gray-400 text-xs"></i>
+                                <i class="pi pi-chevron-down text-gray-400 text-xs"></i>
+                                <span>{{ option.label }}</span>
+                            </div>
+                        </ng-template>
+                    </p-select>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Inicio del viaje
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="date" pInputText [(ngModel)]="fechaInicio" 
+                            class="w-full h-11" placeholder="DD-MM-AA" />
+                        <input type="time" pInputText [(ngModel)]="horaInicio" 
+                            class="w-full h-11" />
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Fin del viaje
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="date" pInputText [(ngModel)]="fechaFin" 
+                            class="w-full h-11" placeholder="DD-MM-AA" />
+                        <input type="time" pInputText [(ngModel)]="horaFin" 
+                            class="w-full h-11" />
+                    </div>
+                </div>
+
+                <button pButton type="button" label="Calcular" icon="pi pi-calculator"
+                    (click)="calcularDuracionYCategorias()"
+                    class="w-full h-11 bg-blue-600 hover:bg-blue-700 border-blue-600"></button>
+            </div>
+        </div>
+
+        <!-- PASO 3: Resumen -->
+        <div *ngIf="pasoActual === 2">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">
+                Solicitud de viático
+            </h2>
+
+            <!-- Detalle -->
+            <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-4">
+                <h3 class="text-sm font-bold text-gray-800 dark:text-white mb-3">Detalle</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Nombre viático</span>
+                        <span class="text-gray-800 dark:text-white font-medium">: {{ nombreViatico }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Duración</span>
+                        <span class="text-gray-800 dark:text-white font-medium">: {{ duracionDias }} días</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Nivel jerárquico</span>
+                        <span class="text-gray-800 dark:text-white font-medium">: {{ nivelSeleccionado }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Motivo de viático</span>
+                        <span class="text-gray-800 dark:text-white font-medium">: {{ motivoSeleccionado }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Inicio del viaje</span>
+                        <span class="text-gray-800 dark:text-white font-medium">: {{ fechaInicio }}, {{ horaInicio }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Fin del viaje</span>
+                        <span class="text-gray-800 dark:text-white font-medium">: {{ fechaFin }}, {{ horaFin }}</span>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                    <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <i class="pi pi-paperclip"></i>
+                        <span>Archivos ({{ fotosAdjuntas.length }})</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categorías -->
+            <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-4">
+                <h3 class="text-sm font-bold text-gray-800 dark:text-white mb-3">Categorías</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Hospedaje</span>
+                        <span class="text-gray-800 dark:text-white font-medium">: {{ categoriasCalculadas.hospedaje | number:'1.2-2' }} USD</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Alimentación</span>
+                        <span class="text-gray-800 dark:text-white font-medium">: {{ categoriasCalculadas.alimentacion | number:'1.2-2' }} USD</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Movilidad Interna</span>
+                        <span class="text-gray-800 dark:text-white font-medium">: {{ categoriasCalculadas.movilidadInterna | number:'1.2-2' }} USD</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-base font-bold text-gray-800 dark:text-white">Total</span>
+                    <span class="text-xl font-bold text-blue-600 dark:text-blue-400">
+                        {{ totalCalculado | number:'1.2-2' }} USD
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer botones -->
+    <div class="flex justify-between gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800">
+        <button pButton type="button" label="Cancelar" icon="pi pi-times" 
+            (click)="mostrarFormulario = false" severity="secondary" class="h-11"></button>
+        
+        <div class="flex gap-2">
+            <button pButton type="button" label="Volver" icon="pi pi-arrow-left" 
+                (click)="volver()" severity="secondary" class="h-11" *ngIf="pasoActual > 0"></button>
+            
+            <button pButton type="button" 
+                [label]="pasoActual === 2 ? 'Crear solicitud' : 'Continuar'" 
+                [icon]="pasoActual === 2 ? '' : 'pi pi-arrow-right'" 
+                (click)="pasoActual === 2 ? crearSolicitud() : siguiente()" 
+                class="h-11 bg-teal-600 hover:bg-teal-700 border-teal-600"></button>
+        </div>
+    </div>
+
+</p-dialog>
+
+<!-- MODAL ENVIAR SOLICITUD -->
+<p-dialog [(visible)]="mostrarModalEnvio" [modal]="true" [closable]="true" [closeOnEscape]="true"
+    [dismissableMask]="true" [style]="{width: '95vw', maxWidth: '600px'}"
+    [contentStyle]="{padding: '0'}"
+    [header]="'Enviar solicitud de viático'">
+
+    <div class="p-6">
+        <p class="text-sm text-gray-700 dark:text-gray-300 mb-4">
+            ¿Quieres enviar la solicitud de viático <strong>{{ solicitudParaEnviar?.nombre }}</strong> 
+            con un monto a aprobar de <strong>{{ solicitudParaEnviar?.total | number:'1.2-2' }} USD</strong>?
+        </p>
+
+        <div class="flex flex-col gap-2 mb-4">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Flujo de revisión para enviar esta solicitud
+            </label>
+            <p-select [(ngModel)]="flujoSeleccionado" [options]="flujosRevision" 
+                optionLabel="nombre" optionValue="id" 
+                placeholder="Cesar - Política - Gastos / Fondos / ..." 
+                styleClass="w-full">
+                <ng-template let-option pTemplate="selectedItem">
+                    <div class="flex items-center gap-2" *ngIf="option">
+                        <i class="pi pi-times text-gray-400 text-xs"></i>
+                        <i class="pi pi-chevron-down text-gray-400 text-xs"></i>
+                        <span>{{ option.nombre }}</span>
+                    </div>
+                </ng-template>
+            </p-select>
+        </div>
+
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4" 
+            *ngIf="flujoSeleccionado">
+            <div class="flex items-start gap-3">
+                <i class="pi pi-info-circle text-blue-600 dark:text-blue-400 mt-1"></i>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-blue-900 dark:text-blue-200">
+                        Flujo de revisión {{ flujoActual?.nombre }}
+                    </p>
+                    <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                        {{ flujoActual?.nivel }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer botones -->
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800">
+        <button pButton type="button" label="Cancelar" icon="pi pi-times" 
+            (click)="cerrarModalEnvio()" severity="secondary" class="h-11"></button>
+        <button pButton type="button" label="Enviar solicitud" icon="pi pi-send" 
+            (click)="enviarSolicitud()" 
+            class="h-11 bg-teal-600 hover:bg-teal-700 border-teal-600"></button>
+    </div>
+
+</p-dialog>
+
+<p-toast position="top-right"></p-toast>

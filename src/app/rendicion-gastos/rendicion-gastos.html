@@ -1,0 +1,762 @@
+<!-- rendicion-gastos.html -->
+<app-menu></app-menu>
+
+<div class="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-6 pt-20 sm:pt-24">
+    <div class="max-w-[1600px] mx-auto">
+
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
+                Rendición de Gastos
+            </h1>
+            <button pButton type="button" label="Nueva Rendición" icon="pi pi-plus"
+                (click)="nuevaRendicion()" class="h-11"></button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+                <!-- Tipo -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</label>
+                    <p-select [(ngModel)]="tipoFiltro" [options]="tiposRendicion"
+                        optionLabel="label" optionValue="value" placeholder="Todos"
+                        styleClass="w-full" />
+                </div>
+
+                <!-- Sucursal -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Sucursal</label>
+                    <p-select [(ngModel)]="sucursalFiltro" [options]="sucursales"
+                        optionLabel="label" optionValue="value" placeholder="Todas"
+                        styleClass="w-full" />
+                </div>
+
+                <!-- Fecha Desde -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Desde</label>
+                    <input type="date" pInputText [(ngModel)]="fechaDesde" class="w-full h-11" />
+                </div>
+
+                <!-- Fecha Hasta -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Hasta</label>
+                    <input type="date" pInputText [(ngModel)]="fechaHasta" class="w-full h-11" />
+                </div>
+
+                <!-- Botones -->
+                <div class="flex flex-col gap-2 justify-end">
+                    <div class="flex gap-2">
+                        <button pButton type="button" label="Filtrar" icon="pi pi-search"
+                            (click)="aplicarFiltros()" class="h-11 flex-1"></button>
+                        <button pButton type="button" icon="pi pi-times"
+                            (click)="limpiarFiltros()" severity="secondary"
+                            class="h-11" pTooltip="Limpiar filtros"></button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
+
+            <!-- Vista Desktop -->
+            <div class="hidden md:block overflow-x-auto">
+                <p-table [value]="rendiciones" [loading]="cargando" styleClass="p-datatable-sm"
+                    responsiveLayout="scroll" [paginator]="true" [rows]="10"
+                    [showCurrentPageReport]="true"
+                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
+
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">ID</th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Tipo</th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Sucursal</th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">OT</th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Proveedor</th>
+                            <th class="text-right p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Monto</th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Fecha</th>
+                            <th class="text-center p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Acciones</th>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="body" let-item>
+                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                            <td class="p-3 text-sm text-gray-800 dark:text-gray-200 font-medium">#{{ item.id }}</td>
+                            <td class="p-3">
+                                <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getTipoColor(item.tipo)">
+                                    {{ item.tipoNombre }}
+                                </span>
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">{{ item.sucursalNombre }}</td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+                                <span *ngIf="item.ordenTrabajo">{{ item.ordenTrabajo }}</span>
+                                <span *ngIf="!item.ordenTrabajo" class="text-gray-400 dark:text-gray-500 italic text-xs">—</span>
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+                                <span *ngIf="item.proveedor">{{ item.proveedor }}</span>
+                                <span *ngIf="!item.proveedor" class="text-gray-400 dark:text-gray-500 italic text-xs">—</span>
+                            </td>
+                            <td class="p-3 text-sm text-gray-800 dark:text-gray-200 text-right font-medium">
+                                S/ {{ item.monto | number:'1.2-2' }}
+                            </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+                                {{ item.fecha | date:'dd/MM/yyyy' }}
+                            </td>
+                            <td class="p-3 text-center">
+                                <button pButton type="button" icon="pi pi-eye" (click)="verDetalle(item)"
+                                    class="p-button-sm p-button-text" pTooltip="Ver detalle" tooltipPosition="left"></button>
+                            </td>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="8" class="text-center py-8">
+                                <div class="text-gray-500 dark:text-gray-400">
+                                    <i class="pi pi-inbox text-4xl mb-3 block opacity-50"></i>
+                                    <p class="text-sm font-medium">No hay rendiciones registradas</p>
+                                    <p class="text-xs mt-1">Crea una nueva rendición para comenzar</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+
+            <!-- Vista Mobile (cards) -->
+            <div class="md:hidden p-4 space-y-4">
+                <div *ngIf="cargando" class="text-center py-8">
+                    <i class="pi pi-spin pi-spinner text-3xl text-blue-500"></i>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Cargando...</p>
+                </div>
+
+                <div *ngIf="!cargando && rendiciones.length === 0" class="text-center py-8">
+                    <div class="text-gray-500 dark:text-gray-400">
+                        <i class="pi pi-inbox text-4xl mb-3 block opacity-50"></i>
+                        <p class="text-sm font-medium">No hay rendiciones registradas</p>
+                        <p class="text-xs mt-1">Crea una nueva rendición para comenzar</p>
+                    </div>
+                </div>
+
+                <div *ngFor="let item of rendiciones"
+                    class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <p class="text-sm font-bold text-gray-800 dark:text-white">#{{ item.id }}</p>
+                            <span [class]="'inline-block mt-1 px-2 py-1 rounded-full text-xs font-medium ' + getTipoColor(item.tipo)">
+                                {{ item.tipoNombre }}
+                            </span>
+                        </div>
+                        <button pButton type="button" icon="pi pi-eye" (click)="verDetalle(item)"
+                            class="p-button-sm p-button-rounded" severity="secondary"></button>
+                    </div>
+
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Sucursal:</span>
+                            <span class="text-gray-800 dark:text-white">{{ item.sucursalNombre }}</span>
+                        </div>
+                        <div class="flex justify-between" *ngIf="item.ordenTrabajo">
+                            <span class="text-gray-600 dark:text-gray-400">OT:</span>
+                            <span class="text-gray-800 dark:text-white">{{ item.ordenTrabajo }}</span>
+                        </div>
+                        <div class="flex justify-between" *ngIf="item.proveedor">
+                            <span class="text-gray-600 dark:text-gray-400">Proveedor:</span>
+                            <span class="text-gray-800 dark:text-white">{{ item.proveedor }}</span>
+                        </div>
+                        <div class="flex justify-between font-medium">
+                            <span class="text-gray-600 dark:text-gray-400">Monto:</span>
+                            <span class="text-gray-800 dark:text-white">S/ {{ item.monto | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Fecha:</span>
+                            <span class="text-gray-800 dark:text-white">{{ item.fecha | date:'dd/MM/yyyy' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL SELECCIONAR TIPO ==================== -->
+<p-dialog [(visible)]="mostrarSelectorTipo" [modal]="true" [closable]="true"
+    [closeOnEscape]="true" [dismissableMask]="true"
+    [style]="{width: '95vw', maxWidth: '480px'}"
+    header="Nueva Rendición de Gastos">
+
+    <div class="p-4 sm:p-6">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Selecciona el tipo de rendición que deseas registrar:
+        </p>
+
+        <div class="grid grid-cols-1 gap-4">
+
+            <!-- Opción: Nuevo Gasto -->
+            <button type="button"
+                (click)="seleccionarTipo('OT')"
+                class="flex items-center gap-4 p-5 rounded-xl border-2 border-gray-200 dark:border-slate-600
+                    hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-700
+                    transition-all duration-200 text-left group">
+                <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900
+                    flex items-center justify-center group-hover:bg-emerald-500 transition-colors">
+                    <i class="pi pi-file-export text-xl text-emerald-600 dark:text-emerald-300 group-hover:text-white"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-gray-800 dark:text-white">Nuevo Gasto</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Proveedor, monto, fecha, serie y número
+                    </p>
+                </div>
+                <i class="pi pi-chevron-right ml-auto text-gray-400 group-hover:text-emerald-500"></i>
+            </button>
+
+            <!-- Opción: Escanear Factura -->
+            <button type="button"
+                (click)="seleccionarTipo('FACTURA')"
+                class="flex items-center gap-4 p-5 rounded-xl border-2 border-gray-200 dark:border-slate-600
+                    hover:border-violet-500 dark:hover:border-violet-400 hover:bg-violet-50 dark:hover:bg-slate-700
+                    transition-all duration-200 text-left group">
+                <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900
+                    flex items-center justify-center group-hover:bg-violet-500 transition-colors">
+                    <i class="pi pi-camera text-xl text-violet-600 dark:text-violet-300 group-hover:text-white"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-gray-800 dark:text-white">Escanear Factura</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Sube una foto o PDF y autocompletamos los datos
+                    </p>
+                </div>
+                <i class="pi pi-chevron-right ml-auto text-gray-400 group-hover:text-violet-500"></i>
+            </button>
+
+        </div>
+    </div>
+
+</p-dialog>
+
+<!-- ==================== MODAL NUEVO GASTO ==================== -->
+<p-dialog [(visible)]="mostrarFormGasto" [modal]="true" [closable]="true"
+    [closeOnEscape]="true" [dismissableMask]="true"
+    [style]="{width: '95vw', maxWidth: '700px'}"
+    [contentStyle]="{padding: '0', 'max-height': '85vh', 'overflow-y': 'auto'}"
+    header="Nuevo Gasto">
+
+    <div class="p-4 sm:p-6 space-y-4">
+
+        <!-- Ruta generada -->
+        <div *ngIf="rutaGeneradaOT" class="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-900/30
+            rounded-lg border border-emerald-200 dark:border-emerald-700">
+            <i class="pi pi-folder text-emerald-500 text-sm flex-shrink-0"></i>
+            <span class="text-xs text-emerald-700 dark:text-emerald-300 font-mono break-all">
+                {{ rutaGeneradaOT }}
+            </span>
+        </div>
+
+        <!-- Fecha y Sucursal -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Fecha <span class="text-red-500">*</span>
+                </label>
+                <input type="date" pInputText [(ngModel)]="otForm.fecha"
+                    (ngModelChange)="actualizarRutaOT()" class="w-full h-11" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Sucursal <span class="text-red-500">*</span>
+                </label>
+                <p-select
+                    [(ngModel)]="otForm.sucursal"
+                    [options]="sucursales"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Seleccione sucursal"
+                    styleClass="w-full"
+                    [filter]="true"
+                    filterPlaceholder="Buscar sucursal..."
+                    [virtualScroll]="true"
+                    [virtualScrollItemSize]="38"
+                    (ngModelChange)="onSucursalChangeOT($event)" />
+            </div>
+        </div>
+
+        <!-- Orden de Trabajo -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Orden de Trabajo <span class="text-red-500">*</span>
+            </label>
+            <p-select
+                [(ngModel)]="otForm.ordenTrabajo"
+                [options]="ordenesProduccionOT"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Seleccione una orden"
+                styleClass="w-full"
+                [loading]="cargandoOrdenes"
+                [disabled]="!otForm.sucursal"
+                (ngModelChange)="actualizarRutaOT()" />
+            <small *ngIf="!otForm.sucursal" class="text-gray-400 dark:text-gray-500">
+                Seleccione una sucursal primero
+            </small>
+        </div>
+
+        <!-- Proveedor con búsqueda lazy -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Proveedor <span class="text-red-500">*</span>
+            </label>
+            <p-select
+                [(ngModel)]="otForm.proveedorId"
+                [options]="proveedoresOT"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Escriba mínimo 3 letras para buscar..."
+                styleClass="w-full"
+                [filter]="true"
+                filterPlaceholder="Buscar proveedor..."
+                [loading]="buscandoProveedoresOT"
+                [emptyFilterMessage]="buscandoProveedoresOT ? 'Buscando...' : (proveedoresOT.length === 0 ? 'Escriba al menos 3 letras' : 'Sin resultados')"
+                (onFilter)="onFiltroProveedorOT($event)"
+                (ngModelChange)="onProveedorSeleccionadoOT($event)" />
+        </div>
+
+        <!-- Monto -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Monto (S/) <span class="text-red-500">*</span>
+            </label>
+            <p-inputnumber [(ngModel)]="otForm.monto" mode="decimal" [minFractionDigits]="2"
+                [maxFractionDigits]="2" placeholder="0.00" styleClass="w-full" inputStyleClass="h-11 w-full" />
+        </div>
+
+        <!-- Serie y Número -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Serie <span class="text-red-500">*</span>
+                </label>
+                <input pInputText [(ngModel)]="otForm.serie"
+                    placeholder="Ej: F001" class="w-full h-11"
+                    style="text-transform: uppercase" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Número <span class="text-red-500">*</span>
+                </label>
+                <input pInputText [(ngModel)]="otForm.numero"
+                    placeholder="Ej: 00012345" class="w-full h-11" />
+            </div>
+        </div>
+
+        <!-- Documentos adjuntos -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Documentos (Opcional)
+            </label>
+
+            <p-fileupload
+                name="docsOT[]"
+                [multiple]="true"
+                accept="image/*,application/pdf"
+                [maxFileSize]="10000000"
+                (onSelect)="onFileSelectOT($event)"
+                [showUploadButton]="false"
+                [showCancelButton]="false"
+                chooseLabel="Seleccionar archivos"
+                chooseIcon="pi pi-paperclip"
+                styleClass="w-full">
+                <ng-template pTemplate="content">
+                    <div class="text-center py-4">
+                        <i class="pi pi-cloud-upload text-4xl text-gray-400"></i>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                            Arrastra documentos o fotos aquí
+                        </p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                            Se guardarán en: {{ rutaGeneradaOT || 'año/sucursal/mes/día/' }}
+                        </p>
+                    </div>
+                </ng-template>
+            </p-fileupload>
+
+            <!-- Preview archivos OT -->
+            <div *ngIf="otForm.archivos.length > 0" class="space-y-2 mt-2">
+                <div *ngFor="let archivo of otForm.archivos"
+                    class="flex items-center justify-between p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-slate-700">
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <i [class]="getIconoArchivo(archivo.nombre) + ' text-gray-500 dark:text-gray-400 flex-shrink-0'"></i>
+                        <span class="text-xs text-gray-700 dark:text-gray-300 truncate">{{ archivo.nombre }}</span>
+                    </div>
+                    <button type="button" (click)="eliminarArchivoOT(archivo)"
+                        class="ml-2 flex-shrink-0 text-red-400 hover:text-red-600 transition-colors p-1">
+                        <i class="pi pi-times text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800">
+        <button pButton type="button" label="Cancelar" icon="pi pi-times"
+            (click)="cerrarFormGasto()" severity="secondary" class="h-11"></button>
+        <button pButton type="button" label="Guardar" icon="pi pi-check"
+            (click)="guardarGasto()" [loading]="cargando" class="h-11"></button>
+    </div>
+
+</p-dialog>
+
+<!-- ==================== MODAL ESCANEAR FACTURA ==================== -->
+<p-dialog [(visible)]="mostrarFormFactura" [modal]="true" [closable]="true"
+    [closeOnEscape]="true" [dismissableMask]="true"
+    [style]="{width: '95vw', maxWidth: '700px'}"
+    [contentStyle]="{padding: '0', 'max-height': '85vh', 'overflow-y': 'auto'}"
+    header="Escanear Factura">
+
+    <div class="p-4 sm:p-6 space-y-4">
+
+        <!-- Ruta generada -->
+        <div *ngIf="rutaGeneradaFactura" class="flex items-center gap-2 px-3 py-2 bg-violet-50 dark:bg-violet-900/30
+            rounded-lg border border-violet-200 dark:border-violet-700">
+            <i class="pi pi-folder text-violet-500 text-sm flex-shrink-0"></i>
+            <span class="text-xs text-violet-700 dark:text-violet-300 font-mono break-all">
+                {{ rutaGeneradaFactura }}
+            </span>
+        </div>
+
+        <!-- Upload factura para escanear -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Subir Factura / Boleta
+                <span class="text-xs text-gray-400 ml-1">(se autocompletan los campos)</span>
+            </label>
+
+            <p-fileupload
+                name="factura[]"
+                [multiple]="true"
+                accept="image/*,application/pdf"
+                [maxFileSize]="10000000"
+                (onSelect)="onFileSelectFactura($event)"
+                [showUploadButton]="false"
+                [showCancelButton]="false"
+                chooseLabel="Subir factura"
+                chooseIcon="pi pi-camera"
+                styleClass="w-full">
+                <ng-template pTemplate="content">
+                    <div class="text-center py-6">
+                        <ng-container *ngIf="!escaneandoFactura">
+                            <i class="pi pi-file-pdf text-4xl text-violet-400"></i>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 font-medium">
+                                Arrastra tu factura o boleta aquí
+                            </p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                Imagen (JPG, PNG) o PDF — máx. 10 MB
+                            </p>
+                            <p class="text-xs text-violet-500 dark:text-violet-400 mt-2">
+                                <i class="pi pi-sparkles mr-1"></i>
+                                Se extraerán automáticamente: proveedor, monto, serie y número
+                            </p>
+                        </ng-container>
+                        <ng-container *ngIf="escaneandoFactura">
+                            <i class="pi pi-spin pi-spinner text-4xl text-violet-500"></i>
+                            <p class="text-sm text-violet-600 dark:text-violet-400 mt-2 font-medium">
+                                Analizando factura con IA...
+                            </p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                Extrayendo datos del documento
+                            </p>
+                        </ng-container>
+                    </div>
+                </ng-template>
+            </p-fileupload>
+
+            <!-- Preview archivos Factura -->
+            <div *ngIf="facturaForm.archivos.length > 0" class="space-y-2 mt-2">
+                <div *ngFor="let archivo of facturaForm.archivos"
+                    class="flex items-center justify-between p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-slate-700">
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <i [class]="getIconoArchivo(archivo.nombre) + ' text-gray-500 dark:text-gray-400 flex-shrink-0'"></i>
+                        <span class="text-xs text-gray-700 dark:text-gray-300 truncate">{{ archivo.nombre }}</span>
+                    </div>
+                    <button type="button" (click)="eliminarArchivoFactura(archivo)"
+                        class="ml-2 flex-shrink-0 text-red-400 hover:text-red-600 transition-colors p-1">
+                        <i class="pi pi-times text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Separador -->
+        <div class="flex items-center gap-3">
+            <div class="flex-1 h-px bg-gray-200 dark:bg-gray-600"></div>
+            <span class="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide">Datos del comprobante</span>
+            <div class="flex-1 h-px bg-gray-200 dark:bg-gray-600"></div>
+        </div>
+
+        <!-- Fecha y Sucursal -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Fecha <span class="text-red-500">*</span>
+                </label>
+                <input type="date" pInputText [(ngModel)]="facturaForm.fecha"
+                    (ngModelChange)="actualizarRutaFactura()" class="w-full h-11" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Sucursal <span class="text-red-500">*</span>
+                </label>
+                <p-select
+                    [(ngModel)]="facturaForm.sucursal"
+                    [options]="sucursales"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Seleccione sucursal"
+                    styleClass="w-full"
+                    [filter]="true"
+                    filterPlaceholder="Buscar sucursal..."
+                    [virtualScroll]="true"
+                    [virtualScrollItemSize]="38"
+                    (ngModelChange)="onSucursalChangeFactura($event)" />
+            </div>
+        </div>
+
+        <!-- Orden de Trabajo -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Orden de Trabajo <span class="text-red-500">*</span>
+            </label>
+            <p-select
+                [(ngModel)]="facturaForm.ordenTrabajo"
+                [options]="ordenesProduccionFactura"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Seleccione una orden"
+                styleClass="w-full"
+                [loading]="cargandoOrdenes"
+                [disabled]="!facturaForm.sucursal"
+                (ngModelChange)="actualizarRutaFactura()" />
+            <small *ngIf="!facturaForm.sucursal" class="text-gray-400 dark:text-gray-500">
+                Seleccione una sucursal primero
+            </small>
+        </div>
+
+        <!-- Proveedor con búsqueda lazy -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Proveedor <span class="text-red-500">*</span>
+            </label>
+            <p-select
+                [(ngModel)]="facturaForm.proveedorId"
+                [options]="proveedoresFactura"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Escriba mínimo 3 letras para buscar..."
+                styleClass="w-full"
+                [filter]="true"
+                filterPlaceholder="Buscar proveedor..."
+                [loading]="buscandoProveedoresFactura"
+                [emptyFilterMessage]="buscandoProveedoresFactura ? 'Buscando...' : (proveedoresFactura.length === 0 ? 'Escriba al menos 3 letras' : 'Sin resultados')"
+                (onFilter)="onFiltroProveedorFactura($event)"
+                (ngModelChange)="onProveedorSeleccionadoFactura($event)" />
+        </div>
+
+        <!-- Monto -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Monto (S/) <span class="text-red-500">*</span>
+            </label>
+            <p-inputnumber [(ngModel)]="facturaForm.monto" mode="decimal" [minFractionDigits]="2"
+                [maxFractionDigits]="2" placeholder="0.00" styleClass="w-full" inputStyleClass="h-11 w-full" />
+        </div>
+
+        <!-- Serie y Número -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Serie <span class="text-red-500">*</span>
+                </label>
+                <input pInputText [(ngModel)]="facturaForm.serie"
+                    placeholder="Ej: F001" class="w-full h-11"
+                    style="text-transform: uppercase" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Número <span class="text-red-500">*</span>
+                </label>
+                <input pInputText [(ngModel)]="facturaForm.numero"
+                    placeholder="Ej: 00012345" class="w-full h-11" />
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800">
+        <button pButton type="button" label="Cancelar" icon="pi pi-times"
+            (click)="cerrarFormFactura()" severity="secondary" class="h-11"></button>
+        <button pButton type="button" label="Guardar" icon="pi pi-check"
+            (click)="guardarFactura()" [loading]="cargando || escaneandoFactura" class="h-11"></button>
+    </div>
+
+</p-dialog>
+
+<!-- ==================== MODAL DETALLE ==================== -->
+<p-dialog [(visible)]="mostrarDetalle" [modal]="true" [closable]="true"
+    [closeOnEscape]="true" [dismissableMask]="true"
+    [style]="{width: '95vw', maxWidth: '800px'}"
+    [contentStyle]="{padding: '0', 'max-height': '85vh', 'overflow-y': 'auto'}"
+    [header]="'Detalle Rendición #' + (rendicionSeleccionada?.id || '')">
+
+    <div *ngIf="rendicionSeleccionada" class="p-4 sm:p-6 space-y-4">
+
+        <!-- Info general -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
+            <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">INFORMACIÓN GENERAL</h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">ID</label>
+                    <input pInputText class="w-full h-11" [value]="'#' + rendicionSeleccionada.id" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</label>
+                    <div class="flex items-center h-11">
+                        <span [class]="'px-4 py-2 rounded-lg text-sm font-medium ' + getTipoColor(rendicionSeleccionada.tipo)">
+                            {{ rendicionSeleccionada.tipoNombre }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Sucursal</label>
+                    <input pInputText class="w-full h-11" [value]="rendicionSeleccionada.sucursalNombre" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha</label>
+                    <input pInputText class="w-full h-11"
+                        [value]="rendicionSeleccionada.fecha | date:'dd/MM/yyyy'" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Orden de Trabajo</label>
+                    <input pInputText class="w-full h-11"
+                        [value]="rendicionSeleccionada.ordenTrabajo || '—'" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Monto</label>
+                    <input pInputText class="w-full h-11"
+                        [value]="rendicionSeleccionada.monto ? 'S/ ' + (rendicionSeleccionada.monto | number:'1.2-2') : '—'"
+                        disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Proveedor</label>
+                    <input pInputText class="w-full h-11"
+                        [value]="rendicionSeleccionada.proveedor || '—'" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Serie</label>
+                    <input pInputText class="w-full h-11"
+                        [value]="rendicionSeleccionada.serie || '—'" disabled />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Número</label>
+                    <input pInputText class="w-full h-11"
+                        [value]="rendicionSeleccionada.numero || '—'" disabled />
+                </div>
+
+                <!-- Ruta S3 -->
+                <div class="flex flex-col gap-2 sm:col-span-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Ruta en Repositorio</label>
+                    <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-slate-700
+                        rounded-lg border border-gray-200 dark:border-gray-600 h-11">
+                        <i class="pi pi-folder text-gray-400 flex-shrink-0"></i>
+                        <span class="text-xs text-gray-600 dark:text-gray-300 font-mono truncate">
+                            {{ rendicionSeleccionada.ruta || '—' }}
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Documentos adjuntos -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
+            <h2 class="text-base font-bold mb-4 text-gray-800 dark:text-white">
+                DOCUMENTOS ADJUNTOS
+                <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+                    <ng-container *ngIf="!rendicionSeleccionada.cargandoArchivos">
+                        ({{ rendicionSeleccionada.archivos?.length || 0 }})
+                    </ng-container>
+                </span>
+            </h2>
+
+            <!-- Loading -->
+            <div *ngIf="rendicionSeleccionada.cargandoArchivos" class="text-center py-8">
+                <i class="pi pi-spin pi-spinner text-3xl text-blue-500"></i>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Cargando documentos...</p>
+            </div>
+
+            <!-- Lista -->
+            <div *ngIf="!rendicionSeleccionada.cargandoArchivos && rendicionSeleccionada.archivos && rendicionSeleccionada.archivos.length > 0"
+                class="space-y-2">
+                <div *ngFor="let archivo of rendicionSeleccionada.archivos"
+                    class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600
+                        hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-600
+                            flex items-center justify-center">
+                            <i [class]="getIconoArchivo(archivo.nombre) + ' text-lg text-gray-500 dark:text-gray-400'"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
+                                {{ archivo.nombre }}
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ formatBytes(archivo.size) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <a [href]="archivo.url" target="_blank"
+                        class="ml-2 flex-shrink-0">
+                        <button pButton type="button" icon="pi pi-external-link"
+                            class="p-button-sm p-button-rounded p-button-text"
+                            pTooltip="Abrir documento" tooltipPosition="left" severity="secondary">
+                        </button>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Sin documentos -->
+            <div *ngIf="!rendicionSeleccionada.cargandoArchivos && (!rendicionSeleccionada.archivos || rendicionSeleccionada.archivos.length === 0)"
+                class="text-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                <i class="pi pi-file text-4xl mb-3 block opacity-50"></i>
+                <p class="text-sm font-medium">Sin documentos adjuntos</p>
+                <p class="text-xs mt-1">No se adjuntaron archivos en esta rendición</p>
+            </div>
+        </div>
+
+    </div>
+
+</p-dialog>
+
+<p-toast position="top-right"></p-toast>
