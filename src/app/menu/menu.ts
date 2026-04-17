@@ -54,8 +54,8 @@ export class Menu implements OnInit {
       {
         label: 'Salida por Orden de Trabajo',
         icon: 'pi pi-sign-out',
-        route: 'salida-trabajo',
-        command: () => this.navigateTo('salida-trabajo')
+        route: 'salidaTrabajo',
+        command: () => this.navigateTo('salidaTrabajo')
       },
       {
         label: 'Checklist PDI',

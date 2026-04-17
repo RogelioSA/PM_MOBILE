@@ -12,6 +12,7 @@ import { Mantenimiento } from './mantenimiento/mantenimiento';
 import { MantenimientoEstados } from './mantenimiento-estados/mantenimiento-estados';
 import { Viaticos } from './viaticos/viaticos';
 import { RendicionGastos } from './rendicion-gastos/rendicion-gastos';
+import { Home } from './home/home';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -21,6 +22,12 @@ export const routes: Routes = [
   },
 
   // Ruta protegida
+  {
+    path: 'home',
+    component: Home,
+    canActivate: [authGuard]
+  },
+
   {
     path: 'salidaTrabajo',
     component: SalidaTrabajo,

@@ -418,6 +418,94 @@ export class Mantenimiento implements OnInit {
     this.cargarSolicitudes();
   }
 
+  exportarExcel() {
+    if (!this.solicitudes.length) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sin datos',
+        detail: 'No hay registros para exportar',
+        life: 3000
+      });
+      return;
+    }
+
+    const filas = this.solicitudes.map((item) => ({
+      ID: item.id,
+      Prioridad: item.prioridadNombre,
+      Tipo: item.tipoNombre,
+      Descripcion: item.descripcion,
+      Solicitante: item.solicitante,
+      Sitio: item.sitioNombre,
+      Estado: item.estadoNombre,
+      FechaCreacion: this.formatearFechaExcel(item.fechaCreacion),
+      FechaInicio: this.formatearFechaExcel(item.fechaInicio),
+      FechaFin: this.formatearFechaExcel(item.fechaFin),
+      FechaCierre: this.formatearFechaExcel(item.fechaCierre),
+      Proveedor: item.nombreProveedor || item.proveedor || ''
+    }));
+
+    const contenidoHtml = this.generarTablaHtmlExcel(filas);
+    const blob = new Blob([contenidoHtml], {
+      type: 'application/vnd.ms-excel;charset=utf-8;'
+    });
+    const url = window.URL.createObjectURL(blob);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = `mantenimiento_${this.formatearFecha(new Date())}.xls`;
+    enlace.click();
+    window.URL.revokeObjectURL(url);
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Exportación completa',
+      detail: 'Se descargó el archivo Excel',
+      life: 3000
+    });
+  }
+
+  private formatearFechaExcel(fecha?: string | null): string {
+    if (!fecha) return '';
+    const fechaObj = new Date(fecha);
+    if (Number.isNaN(fechaObj.getTime())) return fecha;
+    return fechaObj.toLocaleString('es-PE');
+  }
+
+  private generarTablaHtmlExcel(filas: Record<string, string | number>[]): string {
+    const encabezados = Object.keys(filas[0] || {});
+    const th = encabezados.map((header) => `<th>${header}</th>`).join('');
+    const tr = filas
+      .map((fila) => {
+        const celdas = encabezados
+          .map((header) => `<td>${this.escaparHtml(String(fila[header] ?? ''))}</td>`)
+          .join('');
+        return `<tr>${celdas}</tr>`;
+      })
+      .join('');
+
+    return `
+      <html>
+      <head>
+        <meta charset="UTF-8">
+      </head>
+      <body>
+        <table border="1">
+          <thead><tr>${th}</tr></thead>
+          <tbody>${tr}</tbody>
+        </table>
+      </body>
+      </html>
+    `;
+  }
+
+  private escaparHtml(valor: string): string {
+    return valor
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
   nuevaSolicitud() {
     this.modoEdicion = false;
     this.limpiarFormulario();
