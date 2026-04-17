@@ -87,11 +87,17 @@ export class Menu implements OnInit {
         route: 'mantenimientoestados',
         command: () => this.navigateTo('mantenimientoestados')
       },
+      {
+        label: 'Rendición de gastos',
+        icon: 'pi pi-dollar',
+        route: 'rendicion-gastos',
+        command: () => this.navigateTo('rendicion-gastos')
+      },
     ];
 
     // Cargar tema desde localStorage
     this.loadTheme();
-    
+
     // Actualizar item activo inicial
     this.currentRoute = this.router.url.replace('/', '');
     this.updateActiveItem();
@@ -100,7 +106,7 @@ export class Menu implements OnInit {
   loadTheme() {
     const savedTheme = localStorage.getItem('theme');
     this.isDarkMode = savedTheme === 'dark';
-    
+
     if (this.isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -110,7 +116,7 @@ export class Menu implements OnInit {
 
   toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
-    
+
     if (this.isDarkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
@@ -147,11 +153,11 @@ export class Menu implements OnInit {
 
   getButtonClass(item: MenuItemExtended): string {
     const baseClasses = 'p-button-text justify-start w-full h-12';
-    
+
     if (this.isActive(item.route || '')) {
       return `${baseClasses} active-menu-item`;
     }
-    
+
     return baseClasses;
   }
 }
