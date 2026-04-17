@@ -216,7 +216,7 @@
                 <i class="pi pi-chevron-right ml-auto text-gray-400 group-hover:text-emerald-500"></i>
             </button>
 
-            <!-- Opción: Escanear Factura -->
+            <!-- Opción: Escanear Factura 
             <button type="button"
                 (click)="seleccionarTipo('FACTURA')"
                 class="flex items-center gap-4 p-5 rounded-xl border-2 border-gray-200 dark:border-slate-600
@@ -233,7 +233,7 @@
                     </p>
                 </div>
                 <i class="pi pi-chevron-right ml-auto text-gray-400 group-hover:text-violet-500"></i>
-            </button>
+            </button>-->
 
         </div>
     </div>
@@ -249,23 +249,21 @@
 
     <div class="p-4 sm:p-6 space-y-4">
 
-        <!-- Ruta generada -->
-        <div *ngIf="rutaGeneradaOT" class="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-900/30
-            rounded-lg border border-emerald-200 dark:border-emerald-700">
-            <i class="pi pi-folder text-emerald-500 text-sm flex-shrink-0"></i>
-            <span class="text-xs text-emerald-700 dark:text-emerald-300 font-mono break-all">
-                {{ rutaGeneradaOT }}
-            </span>
-        </div>
-
         <!-- Fecha y Sucursal -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Fecha <span class="text-red-500">*</span>
                 </label>
-                <input type="date" pInputText [(ngModel)]="otForm.fecha"
-                    (ngModelChange)="actualizarRutaOT()" class="w-full h-11" />
+                <!-- CAMBIO 1: p-datepicker en lugar de input[type=date] -->
+                <p-datepicker
+                    [(ngModel)]="otForm.fecha"
+                    dateFormat="dd/mm/yy"
+                    [showIcon]="true"
+                    [showButtonBar]="true"
+                    placeholder="dd/mm/aaaa"
+                    styleClass="w-full"
+                    inputStyleClass="h-11 w-full" />
             </div>
 
             <div class="flex flex-col gap-2">
@@ -301,7 +299,8 @@
                 styleClass="w-full"
                 [loading]="cargandoOrdenes"
                 [disabled]="!otForm.sucursal"
-                (ngModelChange)="actualizarRutaOT()" />
+                [filter]="true"
+                filterPlaceholder="Buscar OT..." />
             <small *ngIf="!otForm.sucursal" class="text-gray-400 dark:text-gray-500">
                 Seleccione una sucursal primero
             </small>
@@ -342,8 +341,10 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Serie <span class="text-red-500">*</span>
                 </label>
+                <!-- CAMBIO 3: maxlength="20" -->
                 <input pInputText [(ngModel)]="otForm.serie"
                     placeholder="Ej: F001" class="w-full h-11"
+                    maxlength="20"
                     style="text-transform: uppercase" />
             </div>
 
@@ -351,8 +352,10 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Número <span class="text-red-500">*</span>
                 </label>
+                <!-- CAMBIO 3: maxlength="20" -->
                 <input pInputText [(ngModel)]="otForm.numero"
-                    placeholder="Ej: 00012345" class="w-full h-11" />
+                    placeholder="Ej: 00012345" class="w-full h-11"
+                    maxlength="20" />
             </div>
         </div>
 
@@ -374,13 +377,11 @@
                 chooseIcon="pi pi-paperclip"
                 styleClass="w-full">
                 <ng-template pTemplate="content">
+                    <!-- CAMBIO 4: eliminada la visualización de ruta en documentos -->
                     <div class="text-center py-4">
                         <i class="pi pi-cloud-upload text-4xl text-gray-400"></i>
                         <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
                             Arrastra documentos o fotos aquí
-                        </p>
-                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                            Se guardarán en: {{ rutaGeneradaOT || 'año/sucursal/mes/día/' }}
                         </p>
                     </div>
                 </ng-template>
@@ -422,15 +423,6 @@
     header="Escanear Factura">
 
     <div class="p-4 sm:p-6 space-y-4">
-
-        <!-- Ruta generada -->
-        <div *ngIf="rutaGeneradaFactura" class="flex items-center gap-2 px-3 py-2 bg-violet-50 dark:bg-violet-900/30
-            rounded-lg border border-violet-200 dark:border-violet-700">
-            <i class="pi pi-folder text-violet-500 text-sm flex-shrink-0"></i>
-            <span class="text-xs text-violet-700 dark:text-violet-300 font-mono break-all">
-                {{ rutaGeneradaFactura }}
-            </span>
-        </div>
 
         <!-- Upload factura para escanear -->
         <div class="flex flex-col gap-2">
@@ -507,8 +499,15 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Fecha <span class="text-red-500">*</span>
                 </label>
-                <input type="date" pInputText [(ngModel)]="facturaForm.fecha"
-                    (ngModelChange)="actualizarRutaFactura()" class="w-full h-11" />
+                <!-- CAMBIO 1: p-datepicker en lugar de input[type=date] -->
+                <p-datepicker
+                    [(ngModel)]="facturaForm.fecha"
+                    dateFormat="dd/mm/yy"
+                    [showIcon]="true"
+                    [showButtonBar]="true"
+                    placeholder="dd/mm/aaaa"
+                    styleClass="w-full"
+                    inputStyleClass="h-11 w-full" />
             </div>
 
             <div class="flex flex-col gap-2">
@@ -544,7 +543,8 @@
                 styleClass="w-full"
                 [loading]="cargandoOrdenes"
                 [disabled]="!facturaForm.sucursal"
-                (ngModelChange)="actualizarRutaFactura()" />
+                [filter]="true"
+                filterPlaceholder="Buscar OT..." />
             <small *ngIf="!facturaForm.sucursal" class="text-gray-400 dark:text-gray-500">
                 Seleccione una sucursal primero
             </small>
@@ -585,8 +585,10 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Serie <span class="text-red-500">*</span>
                 </label>
+                <!-- CAMBIO 3: maxlength="20" -->
                 <input pInputText [(ngModel)]="facturaForm.serie"
                     placeholder="Ej: F001" class="w-full h-11"
+                    maxlength="20"
                     style="text-transform: uppercase" />
             </div>
 
@@ -594,8 +596,10 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Número <span class="text-red-500">*</span>
                 </label>
+                <!-- CAMBIO 3: maxlength="20" -->
                 <input pInputText [(ngModel)]="facturaForm.numero"
-                    placeholder="Ej: 00012345" class="w-full h-11" />
+                    placeholder="Ej: 00012345" class="w-full h-11"
+                    maxlength="20" />
             </div>
         </div>
 
@@ -682,13 +686,13 @@
                         [value]="rendicionSeleccionada.numero || '—'" disabled />
                 </div>
 
-                <!-- Ruta S3 -->
+                <!-- CAMBIO 4: Ruta S3 solo visible en el detalle -->
                 <div class="flex flex-col gap-2 sm:col-span-2">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Ruta en Repositorio</label>
                     <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-slate-700
-                        rounded-lg border border-gray-200 dark:border-gray-600 h-11">
+                        rounded-lg border border-gray-200 dark:border-gray-600 min-h-[44px]">
                         <i class="pi pi-folder text-gray-400 flex-shrink-0"></i>
-                        <span class="text-xs text-gray-600 dark:text-gray-300 font-mono truncate">
+                        <span class="text-xs text-gray-600 dark:text-gray-300 font-mono break-all">
                             {{ rendicionSeleccionada.ruta || '—' }}
                         </span>
                     </div>
@@ -736,8 +740,7 @@
                         </div>
                     </div>
 
-                    <a [href]="archivo.url" target="_blank"
-                        class="ml-2 flex-shrink-0">
+                    <a [href]="archivo.url" target="_blank" class="ml-2 flex-shrink-0">
                         <button pButton type="button" icon="pi pi-external-link"
                             class="p-button-sm p-button-rounded p-button-text"
                             pTooltip="Abrir documento" tooltipPosition="left" severity="secondary">

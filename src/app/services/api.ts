@@ -686,5 +686,58 @@ export class Api {
       catchError(error => throwError(() => error))
     );
   }
+
+  listarCarpeta(idCarpeta: string, modulo: string, usuario: string): Observable<any> {
+    const params = new HttpParams()
+      .set('idCarpeta', idCarpeta)
+      .set('Modulo', modulo)
+      .set('usuario', usuario); // respeta el nombre exacto que espera tu API
+
+    return this.https.get(`${this.baseUrl}/BillingPayment/listarCarpetas`, { params });
+  }
+
+  subirArchivoCarpeta(Carpeta: string, nombreArchivo: string, tipoArchivo: string, archivo: File | null): Observable<any> {
+    if (!archivo) {
+      return throwError(() => new Error('El archivo es nulo'));
+    }
+
+    const MAX_SIZE = 25 * 1024 * 1024;
+    if (archivo.size > MAX_SIZE) {
+      return throwError(() => new Error('El archivo excede el tamaño máximo permitido de 25 MB.'));
+    }
+
+    const extension = archivo.name.split('.').pop();
+    const archivoNombreCompleto = `${nombreArchivo}.${extension}`;
+
+    const contentType = tipoArchivo || archivo.type || 'application/octet-stream';
+
+    const params = new HttpParams()
+      .set('Carpeta', Carpeta)
+      .set('nombreArchivo', archivoNombreCompleto)
+      .set('tipoArchivo', contentType);
+
+    return this.https.get<{ url: string }>(`${this.baseUrl}/BillingPayment/subirArchivoDocumento`, { params }).pipe(
+      switchMap(response => {
+        const uploadUrl = response.url;
+        return this.https.put(uploadUrl, archivo, {
+          headers: { 'Content-Type': contentType }
+        });
+      }),
+      catchError(error => {
+        console.error('Error al subir el archivo:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  crearCarpeta(body: {
+    nombreCarpeta: string;
+    idCarpetaPadre: number;
+    carpetaRaiz: boolean;
+    usuarioCreador: string;
+    final: boolean;
+  }): Observable<any> {
+    return this.https.post(`${this.baseUrl}/BillingPayment/crearCarpeta`, body);
+  }
 }
 
