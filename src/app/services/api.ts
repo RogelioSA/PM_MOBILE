@@ -739,5 +739,73 @@ export class Api {
   }): Observable<any> {
     return this.https.post(`${this.baseUrl}/BillingPayment/crearCarpeta`, body);
   }
+
+  existeDocumento(idEmpresa: string, idCarpeta: string): Observable<any> {
+    const params = new HttpParams()
+      .set('idEmpresa', idEmpresa)
+      .set('idCarpeta', idCarpeta);
+    return this.https.post(`${this.baseUrl}/BillingPayment/existeDocumento?idEmpresa=${idEmpresa}&idCarpeta=${idCarpeta}`, null);
+  }
+
+
+  crearDocumento(
+    idEmpresa: string,
+    idCarpeta: string,
+    periodo: string,
+    idCarpetaPadre:number,
+    usuarioCreacion:string,
+    metadata?: {
+      idArea?: string;
+      srIgv?: number;
+      regimen?: string;
+      moneda?: string;
+      idDocumento?: string;
+      vin?: string | null;
+      comentario?: string;
+    }
+  ): Observable<any> {
+    const body = {
+      idEmpresa,
+      idCarpeta,
+      periodo,
+      idCarpetaPadre,
+      usuarioCreacion,
+      ...(metadata ?? {})
+    };
+
+    return this.https.post(`${this.baseUrl}/BillingPayment/crearDocumento`, body);
+  }
+
+  crearOActualizarClieProv(params: {
+    idCliente: string;
+    tipoDocumento: string;
+    nroDocumento: string;
+    telefono: string;
+    email: string;
+    direccion: string;
+    nombres: string;
+    apellidoPaterno: string;
+    apellidoMaterno: string;
+    razonSocial: string;
+  }): Observable<any> {
+
+    const queryParams = new HttpParams()
+      .set('idCliente', params.idCliente)
+      .set('tipoDocumento', params.tipoDocumento)
+      .set('nroDocumento', params.nroDocumento)
+      .set('telefono', params.telefono)
+      .set('email', params.email)
+      .set('direccion', params.direccion)
+      .set('nombres', params.nombres)
+      .set('apellidoPaterno', params.apellidoPaterno)
+      .set('apellidoMaterno', params.apellidoMaterno)
+      .set('razonSocial', params.razonSocial);
+
+    return this.https.post(
+      `${this.baseUrl}/GastoSimple/ClieProv_CrearOActualizar`,
+      {},
+      { params: queryParams }
+    );
+  }
 }
 
