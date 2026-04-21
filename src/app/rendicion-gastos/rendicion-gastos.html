@@ -17,7 +17,6 @@
         <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 mb-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 
-                <!-- Tipo -->
                 <div class="flex flex-col gap-2">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</label>
                     <p-select [(ngModel)]="tipoFiltro" [options]="tiposRendicion"
@@ -25,7 +24,6 @@
                         styleClass="w-full" />
                 </div>
 
-                <!-- Sucursal -->
                 <div class="flex flex-col gap-2">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Sucursal</label>
                     <p-select [(ngModel)]="sucursalFiltro" [options]="sucursales"
@@ -33,19 +31,16 @@
                         styleClass="w-full" />
                 </div>
 
-                <!-- Fecha Desde -->
                 <div class="flex flex-col gap-2">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Desde</label>
                     <input type="date" pInputText [(ngModel)]="fechaDesde" class="w-full h-11" />
                 </div>
 
-                <!-- Fecha Hasta -->
                 <div class="flex flex-col gap-2">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Hasta</label>
                     <input type="date" pInputText [(ngModel)]="fechaHasta" class="w-full h-11" />
                 </div>
 
-                <!-- Botones -->
                 <div class="flex flex-col gap-2 justify-end">
                     <div class="flex gap-2">
                         <button pButton type="button" label="Filtrar" icon="pi pi-search"
@@ -197,7 +192,6 @@
 
         <div class="grid grid-cols-1 gap-4">
 
-            <!-- Opción: Nuevo Gasto -->
             <button type="button"
                 (click)="seleccionarTipo('OT')"
                 class="flex items-center gap-4 p-5 rounded-xl border-2 border-gray-200 dark:border-slate-600
@@ -215,25 +209,6 @@
                 </div>
                 <i class="pi pi-chevron-right ml-auto text-gray-400 group-hover:text-emerald-500"></i>
             </button>
-
-            <!-- Opción: Escanear Factura 
-            <button type="button"
-                (click)="seleccionarTipo('FACTURA')"
-                class="flex items-center gap-4 p-5 rounded-xl border-2 border-gray-200 dark:border-slate-600
-                    hover:border-violet-500 dark:hover:border-violet-400 hover:bg-violet-50 dark:hover:bg-slate-700
-                    transition-all duration-200 text-left group">
-                <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900
-                    flex items-center justify-center group-hover:bg-violet-500 transition-colors">
-                    <i class="pi pi-camera text-xl text-violet-600 dark:text-violet-300 group-hover:text-white"></i>
-                </div>
-                <div>
-                    <p class="text-sm font-bold text-gray-800 dark:text-white">Escanear Factura</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Sube una foto o PDF y autocompletamos los datos
-                    </p>
-                </div>
-                <i class="pi pi-chevron-right ml-auto text-gray-400 group-hover:text-violet-500"></i>
-            </button>-->
 
         </div>
     </div>
@@ -255,7 +230,6 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Fecha <span class="text-red-500">*</span>
                 </label>
-                <!-- CAMBIO 1: p-datepicker en lugar de input[type=date] -->
                 <p-datepicker
                     [(ngModel)]="otForm.fecha"
                     dateFormat="dd/mm/yy"
@@ -323,7 +297,22 @@
                 [loading]="buscandoProveedoresOT"
                 [emptyFilterMessage]="buscandoProveedoresOT ? 'Buscando...' : (proveedoresOT.length === 0 ? 'Escriba al menos 3 letras' : 'Sin resultados')"
                 (onFilter)="onFiltroProveedorOT($event)"
-                (ngModelChange)="onProveedorSeleccionadoOT($event)" />
+                (ngModelChange)="onProveedorSeleccionadoOT($event)">
+                <!-- Footer del dropdown: botón Nuevo Proveedor -->
+                <ng-template pTemplate="footer">
+                    <div *ngIf="mostrarBtnNuevoProveedorOT"
+                        class="p-2 border-t border-gray-200 dark:border-gray-600">
+                        <button type="button"
+                            (click)="abrirNuevoProveedor('OT')"
+                            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg
+                                text-sm font-medium text-blue-600 dark:text-blue-400
+                                hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors">
+                            <i class="pi pi-user-plus"></i>
+                            Nuevo Proveedor
+                        </button>
+                    </div>
+                </ng-template>
+            </p-select>
         </div>
 
         <!-- Monto -->
@@ -341,7 +330,6 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Serie <span class="text-red-500">*</span>
                 </label>
-                <!-- CAMBIO 3: maxlength="20" -->
                 <input pInputText [(ngModel)]="otForm.serie"
                     placeholder="Ej: F001" class="w-full h-11"
                     maxlength="20"
@@ -352,7 +340,6 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Número <span class="text-red-500">*</span>
                 </label>
-                <!-- CAMBIO 3: maxlength="20" -->
                 <input pInputText [(ngModel)]="otForm.numero"
                     placeholder="Ej: 00012345" class="w-full h-11"
                     maxlength="20" />
@@ -377,7 +364,6 @@
                 chooseIcon="pi pi-paperclip"
                 styleClass="w-full">
                 <ng-template pTemplate="content">
-                    <!-- CAMBIO 4: eliminada la visualización de ruta en documentos -->
                     <div class="text-center py-4">
                         <i class="pi pi-cloud-upload text-4xl text-gray-400"></i>
                         <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
@@ -387,7 +373,6 @@
                 </ng-template>
             </p-fileupload>
 
-            <!-- Preview archivos OT -->
             <div *ngIf="otForm.archivos.length > 0" class="space-y-2 mt-2">
                 <div *ngFor="let archivo of otForm.archivos"
                     class="flex items-center justify-between p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-slate-700">
@@ -470,7 +455,6 @@
                 </ng-template>
             </p-fileupload>
 
-            <!-- Preview archivos Factura -->
             <div *ngIf="facturaForm.archivos.length > 0" class="space-y-2 mt-2">
                 <div *ngFor="let archivo of facturaForm.archivos"
                     class="flex items-center justify-between p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-slate-700">
@@ -499,7 +483,6 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Fecha <span class="text-red-500">*</span>
                 </label>
-                <!-- CAMBIO 1: p-datepicker en lugar de input[type=date] -->
                 <p-datepicker
                     [(ngModel)]="facturaForm.fecha"
                     dateFormat="dd/mm/yy"
@@ -567,7 +550,22 @@
                 [loading]="buscandoProveedoresFactura"
                 [emptyFilterMessage]="buscandoProveedoresFactura ? 'Buscando...' : (proveedoresFactura.length === 0 ? 'Escriba al menos 3 letras' : 'Sin resultados')"
                 (onFilter)="onFiltroProveedorFactura($event)"
-                (ngModelChange)="onProveedorSeleccionadoFactura($event)" />
+                (ngModelChange)="onProveedorSeleccionadoFactura($event)">
+                <!-- Footer del dropdown: botón Nuevo Proveedor -->
+                <ng-template pTemplate="footer">
+                    <div *ngIf="mostrarBtnNuevoProveedorFactura"
+                        class="p-2 border-t border-gray-200 dark:border-gray-600">
+                        <button type="button"
+                            (click)="abrirNuevoProveedor('FACTURA')"
+                            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg
+                                text-sm font-medium text-blue-600 dark:text-blue-400
+                                hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors">
+                            <i class="pi pi-user-plus"></i>
+                            Nuevo Proveedor
+                        </button>
+                    </div>
+                </ng-template>
+            </p-select>
         </div>
 
         <!-- Monto -->
@@ -585,7 +583,6 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Serie <span class="text-red-500">*</span>
                 </label>
-                <!-- CAMBIO 3: maxlength="20" -->
                 <input pInputText [(ngModel)]="facturaForm.serie"
                     placeholder="Ej: F001" class="w-full h-11"
                     maxlength="20"
@@ -596,7 +593,6 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Número <span class="text-red-500">*</span>
                 </label>
-                <!-- CAMBIO 3: maxlength="20" -->
                 <input pInputText [(ngModel)]="facturaForm.numero"
                     placeholder="Ej: 00012345" class="w-full h-11"
                     maxlength="20" />
@@ -611,6 +607,151 @@
             (click)="cerrarFormFactura()" severity="secondary" class="h-11"></button>
         <button pButton type="button" label="Guardar" icon="pi pi-check"
             (click)="guardarFactura()" [loading]="cargando || escaneandoFactura" class="h-11"></button>
+    </div>
+
+</p-dialog>
+
+<!-- ==================== MODAL NUEVO PROVEEDOR ==================== -->
+<p-dialog [(visible)]="mostrarNuevoProveedor" [modal]="true" [closable]="true"
+    [closeOnEscape]="true" [dismissableMask]="false"
+    [style]="{width: '95vw', maxWidth: '560px'}"
+    [contentStyle]="{padding: '0', 'max-height': '85vh', 'overflow-y': 'auto'}"
+    header="Nuevo Proveedor">
+
+    <div class="p-4 sm:p-6 space-y-4">
+
+        <!-- Tipo Documento -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Tipo de Documento <span class="text-red-500">*</span>
+            </label>
+            <div class="flex gap-2">
+                <button *ngFor="let tipo of tiposDocumento" type="button"
+                    (click)="nuevoProveedorForm.tipoDocumento = tipo.value; onTipoDocumentoChange()"
+                    [class]="'flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-semibold transition-all ' +
+                        (nuevoProveedorForm.tipoDocumento === tipo.value
+                            ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-400'
+                            : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-500')">
+                    {{ tipo.label }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Número de Documento -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Número de Documento <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+                <input pInputText
+                    [(ngModel)]="nuevoProveedorForm.nroDocumento"
+                    [placeholder]="nuevoProveedorForm.tipoDocumento === 'DNI' ? '8 dígitos' : '11 dígitos'"
+                    [maxlength]="nuevoProveedorForm.tipoDocumento === 'DNI' ? 8 : 11"
+                    class="w-full h-11 pr-10"
+                    (input)="onNroDocumentoInput()"
+                    (keypress)="$event.charCode >= 48 && $event.charCode <= 57" />
+                <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                    <i *ngIf="consultandoDocumento" class="pi pi-spin pi-spinner text-blue-500"></i>
+                    <i *ngIf="!consultandoDocumento && datosFactilizaCargados" class="pi pi-check-circle text-green-500"></i>
+                </div>
+            </div>
+            <small class="text-gray-400 dark:text-gray-500">
+                Los datos se cargarán automáticamente al completar el número
+            </small>
+        </div>
+
+        <!-- Campos DNI -->
+        <ng-container *ngIf="nuevoProveedorForm.tipoDocumento === 'DNI'">
+            <div class="grid grid-cols-1 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nombres</label>
+                    <input pInputText [(ngModel)]="nuevoProveedorForm.nombres"
+                        class="w-full h-11 uppercase" [readonly]="datosFactilizaCargados"
+                        [class.bg-gray-50]="datosFactilizaCargados"
+                        [class.dark:bg-slate-700]="datosFactilizaCargados" />
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Apellido Paterno</label>
+                    <input pInputText [(ngModel)]="nuevoProveedorForm.apellidoPaterno"
+                        class="w-full h-11 uppercase" [readonly]="datosFactilizaCargados"
+                        [class.bg-gray-50]="datosFactilizaCargados"
+                        [class.dark:bg-slate-700]="datosFactilizaCargados" />
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Apellido Materno</label>
+                    <input pInputText [(ngModel)]="nuevoProveedorForm.apellidoMaterno"
+                        class="w-full h-11 uppercase" [readonly]="datosFactilizaCargados"
+                        [class.bg-gray-50]="datosFactilizaCargados"
+                        [class.dark:bg-slate-700]="datosFactilizaCargados" />
+                </div>
+            </div>
+        </ng-container>
+
+        <!-- Campo RUC -->
+        <ng-container *ngIf="nuevoProveedorForm.tipoDocumento === 'RUC'">
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Razón Social</label>
+                <input pInputText [(ngModel)]="nuevoProveedorForm.razonSocial"
+                    class="w-full h-11 uppercase" [readonly]="datosFactilizaCargados"
+                    [class.bg-gray-50]="datosFactilizaCargados"
+                    [class.dark:bg-slate-700]="datosFactilizaCargados" />
+            </div>
+        </ng-container>
+
+        <!-- Dirección (ambos tipos) -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Dirección</label>
+            <input pInputText [(ngModel)]="nuevoProveedorForm.direccion"
+                class="w-full h-11 uppercase" placeholder="Se autocompleta desde SUNAT/RENIEC"
+                [readonly]="datosFactilizaCargados"
+                [class.bg-gray-50]="datosFactilizaCargados"
+                [class.dark:bg-slate-700]="datosFactilizaCargados" />
+        </div>
+
+        <!-- Separador -->
+        <div class="flex items-center gap-3 pt-1">
+            <div class="flex-1 h-px bg-gray-200 dark:bg-gray-600"></div>
+            <span class="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide">Contacto</span>
+            <div class="flex-1 h-px bg-gray-200 dark:bg-gray-600"></div>
+        </div>
+
+        <!-- Teléfonos -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono 1</label>
+                <input pInputText [(ngModel)]="nuevoProveedorForm.telefono1"
+                    placeholder="987654321" class="w-full h-11" maxlength="15"
+                    (keypress)="$event.charCode >= 48 && $event.charCode <= 57" />
+            </div>
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono 2</label>
+                <input pInputText [(ngModel)]="nuevoProveedorForm.telefono2"
+                    placeholder="987654321" class="w-full h-11" maxlength="15"
+                    (keypress)="$event.charCode >= 48 && $event.charCode <= 57" />
+            </div>
+        </div>
+
+        <!-- Correo -->
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Correo Electrónico</label>
+            <input pInputText [(ngModel)]="nuevoProveedorForm.correo"
+                type="email" placeholder="correo@ejemplo.com" class="w-full h-11" />
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800">
+        <button pButton type="button" label="Cancelar" icon="pi pi-times"
+            (click)="cerrarNuevoProveedor()" severity="secondary" class="h-11"
+            [disabled]="guardandoProveedor"></button>
+        <button pButton type="button" label="Guardar Proveedor" icon="pi pi-user-plus"
+            (click)="guardarNuevoProveedor()"
+            [loading]="guardandoProveedor"
+            [disabled]="!datosFactilizaCargados"
+            class="h-11"></button>
     </div>
 
 </p-dialog>
@@ -686,7 +827,6 @@
                         [value]="rendicionSeleccionada.numero || '—'" disabled />
                 </div>
 
-                <!-- CAMBIO 4: Ruta S3 solo visible en el detalle -->
                 <div class="flex flex-col gap-2 sm:col-span-2">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Ruta en Repositorio</label>
                     <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-slate-700
@@ -712,13 +852,11 @@
                 </span>
             </h2>
 
-            <!-- Loading -->
             <div *ngIf="rendicionSeleccionada.cargandoArchivos" class="text-center py-8">
                 <i class="pi pi-spin pi-spinner text-3xl text-blue-500"></i>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Cargando documentos...</p>
             </div>
 
-            <!-- Lista -->
             <div *ngIf="!rendicionSeleccionada.cargandoArchivos && rendicionSeleccionada.archivos && rendicionSeleccionada.archivos.length > 0"
                 class="space-y-2">
                 <div *ngFor="let archivo of rendicionSeleccionada.archivos"
@@ -749,7 +887,6 @@
                 </div>
             </div>
 
-            <!-- Sin documentos -->
             <div *ngIf="!rendicionSeleccionada.cargandoArchivos && (!rendicionSeleccionada.archivos || rendicionSeleccionada.archivos.length === 0)"
                 class="text-center py-8 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700 rounded-lg">
                 <i class="pi pi-file text-4xl mb-3 block opacity-50"></i>

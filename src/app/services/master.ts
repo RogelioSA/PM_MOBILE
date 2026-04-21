@@ -4,13 +4,17 @@ import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Auth } from './auth';
+import { HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
 })
 export class Master {
   private baseUrl = environment.apiUrl;
-
+  private secondaryApiUrlDNI = 'https://api.factiliza.com/v1/dni/info';
+  private secondaryApiUrlRUC = 'https://api.factiliza.com/v1/ruc/info';
+  private tokenAPI = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzODg5NyIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6ImNvbnN1bHRvciJ9.1nvg8UKFQFIc2JNZkD5lmzCZsR4-_PH7aIHiRvPhkU0';
+  
   constructor(
     private https: HttpClient,
     private authService: Auth
@@ -144,6 +148,35 @@ export class Master {
     ).pipe(
       map(response => response),
       catchError(error => throwError(() => error))
+    );
+  }
+
+  factiliza(nroDocumento: string): Observable<any> {
+    let apiUrl = '';
+
+    // Validación más clara
+    if (!nroDocumento || !/^\d+$/.test(nroDocumento)) {
+      return throwError(() => new Error('Documento inválido'));
+    }
+
+    if (nroDocumento.length === 8) {
+      apiUrl = this.secondaryApiUrlDNI;
+    } else if (nroDocumento.length === 11) {
+      apiUrl = this.secondaryApiUrlRUC;
+    } else {
+      return throwError(() => new Error('Debe tener 8 (DNI) o 11 (RUC) dígitos'));
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${this.tokenAPI}`
+    });
+
+    return this.https.get<any>(`${apiUrl}/${nroDocumento}`, { headers }).pipe(
+      map(response => response),
+      catchError(error => {
+        console.error('Error en Factiliza:', error);
+        return throwError(() => error);
+      })
     );
   }
 }
