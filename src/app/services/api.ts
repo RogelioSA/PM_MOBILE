@@ -739,5 +739,39 @@ export class Api {
   }): Observable<any> {
     return this.https.post(`${this.baseUrl}/BillingPayment/crearCarpeta`, body);
   }
+
+  listarPersonal(
+    nroDocumento: string,
+    nombres: string,
+    apellidos: string,
+    pagina: number,
+    tamanio: number
+  ): Observable<any> {
+    const params = new HttpParams()
+      .set('nroDocumento', nroDocumento)
+      .set('nombres', nombres)
+      .set('apellidos', apellidos)
+      .set('pagina', pagina.toString())
+      .set('tamanio', tamanio.toString());
+
+    return this.https.get<any>(
+      `${this.baseUrl}/Personal`,
+      { headers: this.authService.getHeaders(), params }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  editarPersonal(codigo: string, request: any): Observable<any> {
+    return this.https.post<any>(
+      `${this.baseUrl}/Personal/${codigo}`,
+      request,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
 }
 

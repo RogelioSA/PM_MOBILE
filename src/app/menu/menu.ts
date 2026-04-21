@@ -93,6 +93,12 @@ export class Menu implements OnInit {
         route: 'rendicion-gastos',
         command: () => this.navigateTo('rendicion-gastos')
       },
+      {
+        label: 'Personal',
+        icon: 'pi pi-id-card',
+        route: 'personal',
+        command: () => this.navigateTo('personal')
+      },
     ];
 
     // Cargar tema desde localStorage

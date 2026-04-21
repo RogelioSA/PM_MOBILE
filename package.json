@@ -34,6 +34,7 @@
     "@zxing/ngx-scanner": "^20.0.0",
     "html5-qrcode": "^2.3.8",
     "ngx-cookie-service": "^20.1.1",
+    "pdf-lib": "^1.17.1",
     "primeicons": "^7.0.0",
     "primeng": "^20.2.0",
     "rxjs": "~7.8.0",
