@@ -13,6 +13,7 @@ import { MantenimientoEstados } from './mantenimiento-estados/mantenimiento-esta
 import { Viaticos } from './viaticos/viaticos';
 import { RendicionGastos } from './rendicion-gastos/rendicion-gastos';
 import { Home } from './home/home';
+import { Personal } from './personal/personal';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -86,6 +87,11 @@ export const routes: Routes = [
   {
     path: 'rendicion-gastos',
     component: RendicionGastos,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'personal',
+    component: Personal,
     canActivate: [authGuard]
   },
   // Cualquier ruta no válida vuelve al login

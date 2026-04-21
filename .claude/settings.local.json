@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(where python *)",
+      "Bash(where python3 *)",
+      "Bash(where py *)",
+      "Bash(C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe -c ' *)",
+      "Bash(C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe -m pip install pdfplumber -q)",
+      "Bash(npm list *)",
+      "Bash(npm install *)"
+    ]
+  }
+}
