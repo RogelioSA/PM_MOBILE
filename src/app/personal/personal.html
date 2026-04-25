@@ -2,395 +2,594 @@
 <app-menu></app-menu>
 
 <div class="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-6 pt-20 sm:pt-24">
-    <div class="max-w-[1600px] mx-auto">
+  <div class="max-w-[1600px] mx-auto">
 
-        <!-- Header -->
-        <div class="mb-6">
-            <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
-                Personal
-            </h1>
+    <!-- Header -->
+    <div class="mb-6">
+      <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">Personal</h1>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 mb-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nro Documento</label>
+          <input type="text" pInputText [(ngModel)]="filtroDni"
+            placeholder="Buscar por DNI..." class="w-full h-11"
+            (keyup.enter)="aplicarFiltros()" />
         </div>
 
-        <!-- Filtros -->
-        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 mb-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-                <!-- Nro Documento -->
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nro Documento</label>
-                    <input type="text" pInputText [(ngModel)]="filtroDni"
-                        placeholder="Buscar por DNI..." class="w-full h-11"
-                        (keyup.enter)="aplicarFiltros()" />
-                </div>
-
-                <!-- Nombres -->
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nombres</label>
-                    <input type="text" pInputText [(ngModel)]="filtroNombres"
-                        placeholder="Buscar por nombres..." class="w-full h-11"
-                        (keyup.enter)="aplicarFiltros()" />
-                </div>
-
-                <!-- Apellidos -->
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Apellidos</label>
-                    <input type="text" pInputText [(ngModel)]="filtroApellidos"
-                        placeholder="Buscar por apellidos..." class="w-full h-11"
-                        (keyup.enter)="aplicarFiltros()" />
-                </div>
-
-                <!-- Botones -->
-                <div class="flex flex-col gap-2 justify-end">
-                    <div class="flex gap-2">
-                        <button pButton type="button" label="Filtrar" icon="pi pi-search"
-                            (click)="aplicarFiltros()" class="h-11 flex-1"></button>
-                        <button pButton type="button" icon="pi pi-times"
-                            (click)="limpiarFiltros()" severity="secondary"
-                            class="h-11" pTooltip="Limpiar filtros"></button>
-                    </div>
-                </div>
-
-            </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nombres</label>
+          <input type="text" pInputText [(ngModel)]="filtroNombres"
+            placeholder="Buscar por nombres..." class="w-full h-11"
+            (keyup.enter)="aplicarFiltros()" />
         </div>
 
-        <!-- Tabla -->
-        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
-
-            <!-- Vista Desktop/Tablet -->
-            <div class="hidden md:block overflow-x-auto">
-                <p-table [value]="personal" [loading]="cargando" styleClass="p-datatable-sm"
-                    responsiveLayout="scroll" [lazy]="true" [totalRecords]="totalRegistros"
-                    [paginator]="true" [rows]="tamanio" [showCurrentPageReport]="true"
-                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
-                    (onPage)="onPage($event)">
-
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
-                                Código
-                            </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
-                                Nombres y Apellidos
-                            </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
-                                DNI
-                            </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
-                                Celular
-                            </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
-                                Email
-                            </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
-                                Estado Civil
-                            </th>
-                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
-                                Sexo
-                            </th>
-                            <th class="text-center p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
-                                Acciones
-                            </th>
-                        </tr>
-                    </ng-template>
-
-                    <ng-template pTemplate="body" let-item>
-                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
-                            <td class="p-3 text-sm text-gray-800 dark:text-gray-200 font-medium">
-                                {{ item.codigo }}
-                            </td>
-                            <td class="p-3 text-sm text-gray-800 dark:text-gray-200 font-medium">
-                                {{ getNombreCompleto(item) }}
-                            </td>
-                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
-                                {{ item.dni }}
-                            </td>
-                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
-                                {{ item.celular }}
-                            </td>
-                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate">
-                                {{ item.email }}
-                            </td>
-                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
-                                {{ item.estado_Civil?.trim() }}
-                            </td>
-                            <td class="p-3">
-                                <span [class]="item.sexo === 'M'
-                                    ? 'px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                                    : 'px-3 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300'">
-                                    {{ item.sexo === 'M' ? 'Masculino' : item.sexo === 'F' ? 'Femenino' : item.sexo }}
-                                </span>
-                            </td>
-                            <td class="p-3 text-center flex gap-1 justify-center">
-                                <button pButton type="button" icon="pi pi-pencil" (click)="abrirEditar(item)"
-                                    class="p-button-sm p-button-text" pTooltip="Editar" tooltipPosition="left"></button>
-                                <button pButton type="button" icon="pi pi-file-pdf" (click)="generarFicha(item)"
-                                    severity="danger" class="p-button-sm p-button-text"
-                                    pTooltip="Generar ficha" tooltipPosition="left"></button>
-                            </td>
-                        </tr>
-                    </ng-template>
-
-                    <ng-template pTemplate="emptymessage">
-                        <tr>
-                            <td colspan="8" class="text-center py-8">
-                                <div class="text-gray-500 dark:text-gray-400">
-                                    <i class="pi pi-users text-4xl mb-3 block opacity-50"></i>
-                                    <p class="text-sm font-medium">No se encontró personal</p>
-                                    <p class="text-xs mt-1">Intente con otros filtros de búsqueda</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
-            </div>
-
-            <!-- Vista Mobile (cards) -->
-            <div class="md:hidden p-4 space-y-4">
-                <div *ngIf="cargando" class="text-center py-8">
-                    <i class="pi pi-spin pi-spinner text-3xl text-blue-500"></i>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Cargando...</p>
-                </div>
-
-                <div *ngIf="!cargando && personal.length === 0" class="text-center py-8">
-                    <div class="text-gray-500 dark:text-gray-400">
-                        <i class="pi pi-users text-4xl mb-3 block opacity-50"></i>
-                        <p class="text-sm font-medium">No se encontró personal</p>
-                        <p class="text-xs mt-1">Intente con otros filtros de búsqueda</p>
-                    </div>
-                </div>
-
-                <div *ngFor="let item of personal"
-                    class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <p class="text-sm font-bold text-gray-800 dark:text-white">
-                                {{ getNombreCompleto(item) }}
-                            </p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                {{ item.codigo }}
-                            </p>
-                        </div>
-                        <div class="flex gap-1">
-                            <button pButton type="button" icon="pi pi-pencil" (click)="abrirEditar(item)"
-                                class="p-button-sm p-button-rounded" severity="secondary"></button>
-                            <button pButton type="button" icon="pi pi-file-pdf" (click)="generarFicha(item)"
-                                class="p-button-sm p-button-rounded" severity="danger"></button>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">DNI:</span>
-                            <span class="text-gray-800 dark:text-white">{{ item.dni }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Celular:</span>
-                            <span class="text-gray-800 dark:text-white">{{ item.celular }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Email:</span>
-                            <span class="text-gray-800 dark:text-white truncate ml-2">{{ item.email }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600 dark:text-gray-400">Sexo:</span>
-                            <span [class]="item.sexo === 'M'
-                                ? 'px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                                : 'px-2 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300'">
-                                {{ item.sexo === 'M' ? 'Masculino' : item.sexo === 'F' ? 'Femenino' : item.sexo }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Paginación mobile -->
-                <div *ngIf="!cargando && personal.length > 0" class="flex justify-between items-center pt-2">
-                    <button pButton type="button" icon="pi pi-chevron-left" label="Anterior"
-                        [disabled]="pagina <= 1" (click)="pagina = pagina - 1; cargarPersonal()"
-                        severity="secondary" class="h-10 text-sm"></button>
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Pág. {{ pagina }}</span>
-                    <button pButton type="button" icon="pi pi-chevron-right" iconPos="right" label="Siguiente"
-                        [disabled]="personal.length < tamanio" (click)="pagina = pagina + 1; cargarPersonal()"
-                        severity="secondary" class="h-10 text-sm"></button>
-                </div>
-            </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Apellidos</label>
+          <input type="text" pInputText [(ngModel)]="filtroApellidos"
+            placeholder="Buscar por apellidos..." class="w-full h-11"
+            (keyup.enter)="aplicarFiltros()" />
         </div>
+
+        <div class="flex flex-col gap-2 justify-end">
+          <div class="flex gap-2">
+            <button pButton type="button" label="Filtrar" icon="pi pi-search"
+              (click)="aplicarFiltros()" class="h-11 flex-1"></button>
+            <button pButton type="button" icon="pi pi-times"
+              (click)="limpiarFiltros()" severity="secondary"
+              class="h-11" pTooltip="Limpiar filtros"></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
+
+      <!-- Vista Desktop/Tablet -->
+      <div class="hidden md:block overflow-x-auto">
+        <p-table [value]="personal" [loading]="cargando" styleClass="p-datatable-sm"
+          responsiveLayout="scroll" [lazy]="true" [totalRecords]="totalRegistros"
+          [paginator]="true" [rows]="tamanio" [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+          (onPage)="onPage($event)">
+
+          <ng-template pTemplate="header">
+            <tr>
+              <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Código</th>
+              <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Nombres y Apellidos</th>
+              <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">DNI</th>
+              <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Celular</th>
+              <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Email</th>
+              <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Estado Civil</th>
+              <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Sexo</th>
+              <th class="text-center p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">Acciones</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-item>
+            <tr class="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+              <td class="p-3 text-sm text-gray-800 dark:text-gray-200 font-medium">{{ item.codigo }}</td>
+              <td class="p-3 text-sm text-gray-800 dark:text-gray-200 font-medium">{{ getNombreCompleto(item) }}</td>
+              <td class="p-3 text-sm text-gray-600 dark:text-gray-300">{{ item.dni }}</td>
+              <td class="p-3 text-sm text-gray-600 dark:text-gray-300">{{ item.celular }}</td>
+              <td class="p-3 text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate">{{ item.email }}</td>
+              <td class="p-3 text-sm text-gray-600 dark:text-gray-300">{{ item.estado_Civil?.trim() }}</td>
+              <td class="p-3">
+                <span [class]="item.sexo === 'M'
+                  ? 'px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                  : 'px-3 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300'">
+                  {{ item.sexo === 'M' ? 'Masculino' : item.sexo === 'F' ? 'Femenino' : item.sexo }}
+                </span>
+              </td>
+              <td class="p-3 text-center">
+                <div class="flex gap-1 justify-center">
+                  <button pButton type="button" icon="pi pi-pencil" (click)="abrirEditar(item)"
+                    class="p-button-sm p-button-text" pTooltip="Editar" tooltipPosition="left"></button>
+                  <button pButton type="button" icon="pi pi-file-pdf" (click)="generarFicha(item)"
+                    severity="danger" class="p-button-sm p-button-text"
+                    pTooltip="Generar ficha PDF" tooltipPosition="left"></button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="text-center py-8">
+                <div class="text-gray-500 dark:text-gray-400">
+                  <i class="pi pi-users text-4xl mb-3 block opacity-50"></i>
+                  <p class="text-sm font-medium">No se encontró personal</p>
+                  <p class="text-xs mt-1">Intente con otros filtros de búsqueda</p>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <!-- Vista Mobile (cards) -->
+      <div class="md:hidden p-4 space-y-4">
+        <div *ngIf="cargando" class="text-center py-8">
+          <i class="pi pi-spin pi-spinner text-3xl text-blue-500"></i>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Cargando...</p>
+        </div>
+
+        <div *ngIf="!cargando && personal.length === 0" class="text-center py-8">
+          <div class="text-gray-500 dark:text-gray-400">
+            <i class="pi pi-users text-4xl mb-3 block opacity-50"></i>
+            <p class="text-sm font-medium">No se encontró personal</p>
+            <p class="text-xs mt-1">Intente con otros filtros de búsqueda</p>
+          </div>
+        </div>
+
+        <div *ngFor="let item of personal"
+          class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <p class="text-sm font-bold text-gray-800 dark:text-white">{{ getNombreCompleto(item) }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ item.codigo }}</p>
+            </div>
+            <div class="flex gap-1">
+              <button pButton type="button" icon="pi pi-pencil" (click)="abrirEditar(item)"
+                class="p-button-sm p-button-rounded" severity="secondary"></button>
+              <button pButton type="button" icon="pi pi-file-pdf" (click)="generarFicha(item)"
+                class="p-button-sm p-button-rounded" severity="danger"></button>
+            </div>
+          </div>
+
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">DNI:</span>
+              <span class="text-gray-800 dark:text-white">{{ item.dni }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">Celular:</span>
+              <span class="text-gray-800 dark:text-white">{{ item.celular }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">Email:</span>
+              <span class="text-gray-800 dark:text-white truncate ml-2">{{ item.email }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600 dark:text-gray-400">Sexo:</span>
+              <span [class]="item.sexo === 'M'
+                ? 'px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                : 'px-2 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300'">
+                {{ item.sexo === 'M' ? 'Masculino' : item.sexo === 'F' ? 'Femenino' : item.sexo }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paginación mobile -->
+        <div *ngIf="!cargando && personal.length > 0" class="flex justify-between items-center pt-2">
+          <button pButton type="button" icon="pi pi-chevron-left" label="Anterior"
+            [disabled]="pagina <= 1" (click)="pagina = pagina - 1; cargarPersonal()"
+            severity="secondary" class="h-10 text-sm"></button>
+          <span class="text-sm text-gray-600 dark:text-gray-400">Pág. {{ pagina }}</span>
+          <button pButton type="button" icon="pi pi-chevron-right" iconPos="right" label="Siguiente"
+            [disabled]="personal.length < tamanio" (click)="pagina = pagina + 1; cargarPersonal()"
+            severity="secondary" class="h-10 text-sm"></button>
+        </div>
+      </div>
 
     </div>
+  </div>
 </div>
 
-<!-- MODAL EDITAR PERSONAL -->
-<p-dialog [(visible)]="mostrarFormulario" [modal]="true" [closable]="true" [closeOnEscape]="true"
-    [dismissableMask]="true" [style]="{width: '95vw', maxWidth: '900px'}"
-    [contentStyle]="{padding: '0', 'max-height': '85vh', 'overflow-y': 'auto'}"
-    [header]="'Editar Personal - ' + (personalSeleccionado?.codigo || '')">
 
-    <div *ngIf="personalSeleccionado" class="p-4 sm:p-6 space-y-6">
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL EDITAR PERSONAL
+═══════════════════════════════════════════════════════════════ -->
+<p-dialog [(visible)]="mostrarFormulario" [modal]="true" [closable]="true"
+  [closeOnEscape]="true" [dismissableMask]="true"
+  [style]="{width: '95vw', maxWidth: '900px'}"
+  [contentStyle]="{padding: '0', 'max-height': '85vh', 'overflow-y': 'auto'}"
+  [header]="'Editar Personal - ' + (personalSeleccionado?.codigo || '')">
 
-        <!-- Datos Personales -->
-        <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
-            <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-4">
-                Datos Personales
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <div *ngIf="personalSeleccionado" class="p-4 sm:p-6 space-y-5">
 
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Nombres <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" pInputText [(ngModel)]="form.Nombres" class="w-full h-11"
-                        placeholder="Nombres" />
-                </div>
+    <!-- ── 1. DATOS PERSONALES ──────────────────────────────────────── -->
+    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+      <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+        Datos Personales
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Ap. Paterno <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" pInputText [(ngModel)]="form.A_Paterno" class="w-full h-11"
-                        placeholder="Apellido paterno" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Ap. Materno</label>
-                    <input type="text" pInputText [(ngModel)]="form.A_Materno" class="w-full h-11"
-                        placeholder="Apellido materno" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nro Documento</label>
-                    <input type="text" pInputText [(ngModel)]="form.NroDocumento" class="w-full h-11"
-                        placeholder="DNI / CE" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Nacimiento</label>
-                    <input type="date" pInputText [(ngModel)]="form.Fecha_Nacimiento" class="w-full h-11" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Sexo</label>
-                    <p-select [(ngModel)]="form.Sexo" [options]="sexos"
-                        optionLabel="label" optionValue="value" placeholder="Seleccione"
-                        styleClass="w-full" />
-                </div>
-
-            </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Nombres <span class="text-red-500">*</span>
+          </label>
+          <input type="text" pInputText [(ngModel)]="form.Nombres" class="w-full h-11" placeholder="Nombres" />
         </div>
 
-        <!-- Contacto -->
-        <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
-            <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-4">
-                Contacto
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono 1</label>
-                    <input type="text" pInputText [(ngModel)]="form.Telefono" class="w-full h-11"
-                        placeholder="Teléfono 1" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono 2</label>
-                    <input type="text" pInputText [(ngModel)]="form.Telefono2" class="w-full h-11"
-                        placeholder="Teléfono 2" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Celular</label>
-                    <input type="text" pInputText [(ngModel)]="form.Celular" class="w-full h-11"
-                        placeholder="Celular" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                    <input type="email" pInputText [(ngModel)]="form.Email" class="w-full h-11"
-                        placeholder="correo@ejemplo.com" />
-                </div>
-
-            </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Ap. Paterno <span class="text-red-500">*</span>
+          </label>
+          <input type="text" pInputText [(ngModel)]="form.A_Paterno" class="w-full h-11" placeholder="Apellido paterno" />
         </div>
 
-        <!-- Dirección -->
-        <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
-            <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide mb-4">
-                Dirección
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                <div class="flex flex-col gap-2 sm:col-span-2 lg:col-span-3">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Descripción de Vía</label>
-                    <input type="text" pInputText [(ngModel)]="form.Descripcion_Via" class="w-full h-11"
-                        placeholder="Jr., Av., Calle..." />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Número</label>
-                    <input type="number" pInputText [(ngModel)]="form.Direccion_Numero" class="w-full h-11"
-                        placeholder="N°" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Interior</label>
-                    <input type="text" pInputText [(ngModel)]="form.Direccion_Interior" class="w-full h-11"
-                        placeholder="Interior" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Manzana</label>
-                    <input type="text" pInputText [(ngModel)]="form.Direccion_Manzana" class="w-full h-11"
-                        placeholder="Manzana" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Lote</label>
-                    <input type="text" pInputText [(ngModel)]="form.Direccion_Lote" class="w-full h-11"
-                        placeholder="Lote" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Block</label>
-                    <input type="text" pInputText [(ngModel)]="form.Direccion_Block" class="w-full h-11"
-                        placeholder="Block" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Etapa</label>
-                    <input type="text" pInputText [(ngModel)]="form.Direccion_Etapa" class="w-full h-11"
-                        placeholder="Etapa" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Kilómetro</label>
-                    <input type="text" pInputText [(ngModel)]="form.Direccion_Kilometro" class="w-full h-11"
-                        placeholder="Km" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Zona</label>
-                    <input type="text" pInputText [(ngModel)]="form.Descripcion_Zona" class="w-full h-11"
-                        placeholder="Zona / Urbanización" />
-                </div>
-
-                <div class="flex flex-col gap-2 sm:col-span-2 lg:col-span-3">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Referencia</label>
-                    <input type="text" pInputText [(ngModel)]="form.Direccion_Referencia" class="w-full h-11"
-                        placeholder="Referencia de la dirección" />
-                </div>
-
-            </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Ap. Materno</label>
+          <input type="text" pInputText [(ngModel)]="form.A_Materno" class="w-full h-11" placeholder="Apellido materno" />
         </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nro Documento</label>
+          <input type="text" pInputText [(ngModel)]="form.NroDocumento" class="w-full h-11" placeholder="DNI / CE" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Nacimiento</label>
+          <input type="date" pInputText [(ngModel)]="form.Fecha_Nacimiento" class="w-full h-11" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Sexo</label>
+          <p-select [(ngModel)]="form.Sexo" [options]="sexos"
+            optionLabel="label" optionValue="value"
+            placeholder="Seleccione" styleClass="w-full" />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── 2. CONTACTO ─────────────────────────────────────────────── -->
+    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+      <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+        Contacto
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono 1</label>
+          <input type="text" pInputText [(ngModel)]="form.Telefono" class="w-full h-11" placeholder="Teléfono fijo" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono 2</label>
+          <input type="text" pInputText [(ngModel)]="form.Telefono2" class="w-full h-11" placeholder="Teléfono alternativo" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Celular</label>
+          <input type="text" pInputText [(ngModel)]="form.Celular" class="w-full h-11" placeholder="Celular" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+          <input type="email" pInputText [(ngModel)]="form.Email" class="w-full h-11" placeholder="correo@ejemplo.com" />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── 3. DIRECCIÓN ────────────────────────────────────────────── -->
+    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+      <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+        Dirección
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div class="flex flex-col gap-2 sm:col-span-2 lg:col-span-3">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Descripción de Vía</label>
+          <input type="text" pInputText [(ngModel)]="form.Descripcion_Via" class="w-full h-11" placeholder="Jr., Av., Calle..." />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Número</label>
+          <input type="number" pInputText [(ngModel)]="form.Direccion_Numero" class="w-full h-11" placeholder="N°" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Interior</label>
+          <input type="text" pInputText [(ngModel)]="form.Direccion_Interior" class="w-full h-11" placeholder="Interior" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Manzana</label>
+          <input type="text" pInputText [(ngModel)]="form.Direccion_Manzana" class="w-full h-11" placeholder="Manzana" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Lote</label>
+          <input type="text" pInputText [(ngModel)]="form.Direccion_Lote" class="w-full h-11" placeholder="Lote" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Block</label>
+          <input type="text" pInputText [(ngModel)]="form.Direccion_Block" class="w-full h-11" placeholder="Block" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Etapa</label>
+          <input type="text" pInputText [(ngModel)]="form.Direccion_Etapa" class="w-full h-11" placeholder="Etapa" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Kilómetro</label>
+          <input type="text" pInputText [(ngModel)]="form.Direccion_Kilometro" class="w-full h-11" placeholder="Km" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Zona</label>
+          <input type="text" pInputText [(ngModel)]="form.Descripcion_Zona" class="w-full h-11" placeholder="Zona / Urbanización" />
+        </div>
+
+        <div class="flex flex-col gap-2 sm:col-span-2 lg:col-span-3">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Referencia</label>
+          <input type="text" pInputText [(ngModel)]="form.Direccion_Referencia" class="w-full h-11" placeholder="Referencia de la dirección" />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── 4. DATOS BANCARIOS ──────────────────────────────────────── -->
+    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+      <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+        Datos Bancarios
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Banco CTS</label>
+          <p-select [(ngModel)]="form.IdBanco" [options]="bancos"
+            optionLabel="label" optionValue="value"
+            placeholder="Seleccione banco" styleClass="w-full"
+            [filter]="true" filterPlaceholder="Buscar banco..." />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Cuenta CTS</label>
+          <input type="text" pInputText [(ngModel)]="form.Cuenta_Cts"
+            class="w-full h-11" placeholder="Número de cuenta CTS" />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── 5. DOCUMENTOS / GALERÍA ─────────────────────────────────── -->
+    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+          Documentos y Fotos
+        </h3>
+        <label class="cursor-pointer">
+          <input type="file" class="hidden"
+            accept="image/*,.pdf"
+            (change)="onSeleccionarArchivo($event)" />
+          <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium
+            bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+            [class.opacity-60]="subiendoArchivo"
+            [class.pointer-events-none]="subiendoArchivo">
+            <i [class]="subiendoArchivo ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"></i>
+            {{ subiendoArchivo ? 'Subiendo...' : 'Subir archivo' }}
+          </span>
+        </label>
+      </div>
+
+      <!-- Cargando archivos -->
+      <div *ngIf="cargandoArchivos" class="flex gap-3 flex-wrap">
+        <div *ngFor="let _ of [1,2,3]"
+          class="w-28 h-28 rounded-lg bg-gray-200 dark:bg-slate-600 animate-pulse"></div>
+      </div>
+
+      <!-- Galería -->
+      <div *ngIf="!cargandoArchivos && archivos.length > 0"
+        class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+
+        <div *ngFor="let archivo of archivos"
+          class="relative group rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600
+                 bg-white dark:bg-slate-800 cursor-pointer"
+          [pTooltip]="archivo.nombre" tooltipPosition="top">
+
+          <!-- Imagen -->
+          <div *ngIf="archivo.esImagen"
+            class="w-full h-24 bg-gray-100 dark:bg-slate-700"
+            (click)="abrirLightbox(archivo.url)">
+            <img [src]="archivo.url" [alt]="archivo.nombre"
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              loading="lazy" />
+          </div>
+
+          <!-- PDF -->
+          <div *ngIf="!archivo.esImagen"
+            class="w-full h-24 flex flex-col items-center justify-center gap-1
+                   bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+            (click)="abrirArchivo(archivo.url)">
+            <i class="pi pi-file-pdf text-2xl text-red-500"></i>
+            <span class="text-xs text-red-600 dark:text-red-400 font-medium">PDF</span>
+          </div>
+
+          <!-- Nombre -->
+          <div class="p-1.5 border-t border-gray-100 dark:border-gray-700">
+            <p class="text-xs text-gray-600 dark:text-gray-300 truncate">{{ getNombreCorto(archivo.nombre) }}</p>
+          </div>
+
+          <!-- Overlay acción -->
+          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none rounded-lg"></div>
+        </div>
+
+      </div>
+
+      <!-- Vacío -->
+      <div *ngIf="!cargandoArchivos && archivos.length === 0"
+        class="text-center py-6 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg">
+        <i class="pi pi-images text-2xl block mb-1 opacity-40 text-gray-400 dark:text-gray-500"></i>
+        <p class="text-sm text-gray-400 dark:text-gray-500">Sin documentos. Use "Subir archivo" para agregar.</p>
+      </div>
 
     </div>
 
-    <!-- Footer botones -->
-    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800">
-        <button pButton type="button" label="Cancelar" icon="pi pi-times"
-            (click)="cerrarFormulario()" severity="secondary" class="h-11"></button>
-        <button pButton type="button" label="Guardar" icon="pi pi-check"
-            (click)="guardarPersonal()" [loading]="cargando" class="h-11"></button>
+    <!-- ── 6. BENEFICIARIOS / HIJOS ────────────────────────────────── -->
+    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+      <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+        Hijos / Beneficiarios
+      </h3>
+
+      <div class="flex gap-2 mb-4">
+        <input type="text" pInputText [(ngModel)]="nuevoBeneficiarioDni"
+          placeholder="DNI del beneficiario (8 dígitos)" class="w-full h-11"
+          maxlength="8" (keyup.enter)="agregarBeneficiarioPorDni(nuevoBeneficiarioDni)" />
+        <button pButton type="button" icon="pi pi-search" label="Buscar"
+          (click)="agregarBeneficiarioPorDni(nuevoBeneficiarioDni)"
+          [disabled]="nuevoBeneficiarioDni.length !== 8"
+          class="h-11 whitespace-nowrap"></button>
+      </div>
+
+      <div *ngIf="cargandoBeneficiarios" class="text-center py-4 text-gray-400 dark:text-gray-500 text-sm">
+        <i class="pi pi-spin pi-spinner mr-2"></i> Cargando beneficiarios...
+      </div>
+
+      <div *ngIf="!cargandoBeneficiarios && beneficiarios.length > 0"
+        class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="bg-gray-100 dark:bg-slate-600">
+              <th class="text-left p-2 pl-3 font-semibold text-gray-700 dark:text-gray-200 text-xs">DNI</th>
+              <th class="text-left p-2 font-semibold text-gray-700 dark:text-gray-200 text-xs">Apellidos y Nombres</th>
+              <th class="text-left p-2 font-semibold text-gray-700 dark:text-gray-200 text-xs">F. Nacimiento</th>
+              <th class="text-left p-2 font-semibold text-gray-700 dark:text-gray-200 text-xs">Sexo</th>
+              <th class="p-2 text-center font-semibold text-gray-700 dark:text-gray-200 text-xs">Estado</th>
+              <th class="p-2 w-24 text-center font-semibold text-gray-700 dark:text-gray-200 text-xs">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of beneficiarios; let i = index"
+              class="border-t border-gray-200 dark:border-gray-600 hover:bg-white dark:hover:bg-slate-700 transition-colors">
+
+              <td class="p-2 pl-3 text-gray-800 dark:text-gray-200 font-mono text-xs">{{ b.dni }}</td>
+
+              <td class="p-2">
+                <span *ngIf="b.buscando" class="flex items-center gap-1.5 text-gray-400 text-xs">
+                  <i class="pi pi-spin pi-spinner"></i> Consultando Factiliza...
+                </span>
+                <span *ngIf="!b.buscando && b.error && !b.guardado"
+                  class="text-red-500 text-xs flex items-center gap-1">
+                  <i class="pi pi-exclamation-triangle"></i> {{ b.error }}
+                </span>
+                <div *ngIf="!b.buscando && b.editando" class="flex flex-col gap-1">
+                  <input type="text" pInputText [(ngModel)]="b.nombres"
+                    placeholder="Nombres" class="h-8 text-xs w-full" />
+                  <div class="flex gap-1">
+                    <input type="text" pInputText [(ngModel)]="b.apellidoPaterno"
+                      placeholder="Ap. Paterno" class="h-8 text-xs w-full" />
+                    <input type="text" pInputText [(ngModel)]="b.apellidoMaterno"
+                      placeholder="Ap. Materno" class="h-8 text-xs w-full" />
+                  </div>
+                </div>
+                <span *ngIf="!b.buscando && !b.editando && !b.error"
+                  class="text-gray-800 dark:text-gray-200 text-sm">
+                  {{ b.apellidoPaterno }} {{ b.apellidoMaterno }}, {{ b.nombres }}
+                </span>
+              </td>
+
+              <td class="p-2 text-xs">
+                <input type="date" pInputText [(ngModel)]="b.fechaNacimiento"
+                  class="h-8 text-xs w-32" [disabled]="b.buscando" />
+              </td>
+
+              <td class="p-2 text-xs">
+                <select [(ngModel)]="b.sexo" [disabled]="b.buscando"
+                  class="h-8 text-xs w-28 rounded border border-gray-300 dark:border-gray-600
+                         bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200 px-2">
+                  <option value="">Sexo</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Femenino</option>
+                </select>
+              </td>
+
+              <td class="p-2 text-center">
+                <span *ngIf="b.buscando"
+                  class="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                  Buscando
+                </span>
+                <span *ngIf="!b.buscando && b.guardado && !b.editando"
+                  class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                  Guardado
+                </span>
+                <span *ngIf="!b.buscando && !b.guardado && !b.error"
+                  class="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                  Nuevo
+                </span>
+                <span *ngIf="b.editando"
+                  class="px-2 py-0.5 rounded-full text-xs bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300">
+                  Editando
+                </span>
+              </td>
+
+              <td class="p-2">
+                <div class="flex gap-1 justify-center">
+                  <button *ngIf="(!b.guardado || b.editando) && !b.buscando"
+                    pButton type="button" icon="pi pi-check"
+                    (click)="guardarBeneficiario(b)" [loading]="b.guardando"
+                    severity="success" class="p-button-sm p-button-text p-button-rounded"
+                    pTooltip="Guardar"></button>
+                  <button *ngIf="b.guardado && !b.editando && !b.buscando"
+                    pButton type="button" icon="pi pi-pencil"
+                    (click)="habilitarEdicion(b)" severity="secondary"
+                    class="p-button-sm p-button-text p-button-rounded"
+                    pTooltip="Editar"></button>
+                  <button *ngIf="b.editando"
+                    pButton type="button" icon="pi pi-times"
+                    (click)="cancelarEdicion(b, i)" severity="secondary"
+                    class="p-button-sm p-button-text p-button-rounded"
+                    pTooltip="Cancelar"></button>
+                  <button *ngIf="!b.guardando"
+                    pButton type="button" icon="pi pi-trash"
+                    (click)="eliminarBeneficiario(i)" severity="danger"
+                    class="p-button-sm p-button-text p-button-rounded"
+                    pTooltip="Eliminar"></button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="!cargandoBeneficiarios && beneficiarios.length === 0"
+        class="text-center py-5 text-gray-400 dark:text-gray-500 text-sm border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg">
+        <i class="pi pi-users text-2xl block mb-1 opacity-40"></i>
+        Sin beneficiarios registrados. Ingrese el DNI para consultar vía Factiliza.
+      </div>
+
     </div>
+
+  </div>
+
+  <!-- Footer botones -->
+  <div class="flex flex-wrap justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800">
+    <button pButton type="button" label="Cancelar" icon="pi pi-times"
+      (click)="cerrarFormulario()" severity="secondary" class="h-11"></button>
+    <button pButton type="button" label="Guardar" icon="pi pi-check"
+      (click)="guardarPersonal()" [loading]="cargando" class="h-11"></button>
+  </div>
 
 </p-dialog>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     LIGHTBOX
+═══════════════════════════════════════════════════════════════ -->
+<div *ngIf="imagenVistaPrevia"
+  class="fixed inset-0 z-[9999] bg-black/85 flex items-center justify-center p-4"
+  (click)="cerrarLightbox()">
+  <div class="relative max-w-4xl max-h-full" (click)="$event.stopPropagation()">
+    <img [src]="imagenVistaPrevia" alt="Vista previa"
+      class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+    <button
+      class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-gray-800
+             flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors"
+      (click)="cerrarLightbox()">
+      <i class="pi pi-times text-sm"></i>
+    </button>
+  </div>
+</div>
 
 <p-toast position="top-right"></p-toast>
