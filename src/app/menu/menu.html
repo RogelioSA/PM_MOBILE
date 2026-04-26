@@ -3,52 +3,61 @@
 <!-- Header fijo -->
 <div class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 shadow-md h-16 flex items-center px-4">
   <div class="flex items-center justify-between w-full">
-    <!-- Botón menú hamburguesa -->
-    <button
-      pButton
-      icon="pi pi-bars"
-      (click)="toggleDrawer()"
-      class="p-button-text p-button-rounded"
-    ></button>
 
-    <!-- Título centrado -->
+    <button pButton icon="pi pi-bars"
+      (click)="toggleDrawer()"
+      class="p-button-text p-button-rounded"></button>
+
     <span class="text-xl font-bold absolute left-1/2 transform -translate-x-1/2 text-gray-800 dark:text-white">
       PERUMOTOR
     </span>
 
-    <!-- Botón Dark Mode -->
-    <button
-      pButton
-      [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'"
+    <button pButton [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'"
       (click)="toggleDarkMode()"
       class="p-button-rounded p-button-text"
       [pTooltip]="isDarkMode ? 'Modo claro' : 'Modo oscuro'"
-      tooltipPosition="bottom"
-    ></button>
+      tooltipPosition="bottom"></button>
+
   </div>
 </div>
 
 <!-- Drawer -->
-<p-drawer 
-  [(visible)]="drawerVisible" 
-  position="left"
-  [style]="{'width': '280px'}"
->
+<p-drawer [(visible)]="drawerVisible" position="left" [style]="{'width': '280px'}">
+
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
       <span class="font-bold text-xl text-gray-800 dark:text-white">PERUMOTOR</span>
     </div>
   </ng-template>
 
-  <!-- Items del menú -->
   <div class="flex flex-col gap-1 mt-4 px-2">
-    <button
-      *ngFor="let item of items"
-      pButton
-      [label]="item.label || ''"
-      [icon]="item.icon || ''"
-      (click)="executeCommand(item)"
-      [class]="getButtonClass(item)"
-    ></button>
+
+    <!-- Cargando permisos -->
+    <div *ngIf="cargandoPermisos" class="flex flex-col gap-2 px-2 py-4">
+      <div *ngFor="let _ of [1,2,3,4,5]"
+        class="h-10 rounded-lg bg-gray-200 dark:bg-slate-600 animate-pulse"></div>
+    </div>
+
+    <!-- Items filtrados por permisos -->
+    <ng-container *ngIf="!cargandoPermisos">
+
+      <button *ngFor="let item of items"
+        pButton
+        [label]="item.label || ''"
+        [icon]="item.icon || ''"
+        (click)="executeCommand(item)"
+        [class]="getButtonClass(item)">
+      </button>
+
+      <!-- Sin accesos -->
+      <div *ngIf="items.length === 0"
+        class="text-center py-8 text-gray-400 dark:text-gray-500 text-sm">
+        <i class="pi pi-lock text-2xl block mb-2 opacity-50"></i>
+        Sin accesos asignados
+      </div>
+
+    </ng-container>
+
   </div>
+
 </p-drawer>

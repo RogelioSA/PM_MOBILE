@@ -7,12 +7,28 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { Api } from '../services/api';
+import { Auth } from '../services/auth';
 
 interface MenuItemExtended extends MenuItem {
   route?: string;
   icon?: string;
   isActive?: boolean;
 }
+
+// Catálogo completo de items — se filtra según permisos
+const ALL_ITEMS: MenuItemExtended[] = [
+  { label: 'Recepción de Vehículos',         icon: 'pi pi-car',                    route: 'recepcionvehiculos'  },
+  { label: 'Traslado entre Establecimientos', icon: 'pi pi-arrow-right-arrow-left', route: 'traslado'            },
+  { label: 'Salida por Orden de Trabajo',     icon: 'pi pi-sign-out',               route: 'salidaTrabajo'       },
+  { label: 'Checklist PDI',                   icon: 'pi pi-check-square',           route: 'checklist'           },
+  { label: 'Ingreso/Salida Taller',           icon: 'pi pi-wrench',                 route: 'ingresosalidataller' },
+  { label: 'Listar Checklist',                icon: 'pi pi-list',                   route: 'listarchecklist'     },
+  { label: 'Mantenimiento',                   icon: 'pi pi-cog',                    route: 'mantenimiento'       },
+  { label: 'Gestor Mantenimiento',            icon: 'pi pi-sliders-h',              route: 'mantenimientoestados'},
+  { label: 'Rendición de gastos',             icon: 'pi pi-dollar',                 route: 'rendicion-gastos'    },
+  { label: 'Personal',                        icon: 'pi pi-id-card',                route: 'personal'            },
+];
 
 @Component({
   selector: 'app-menu',
@@ -26,9 +42,13 @@ export class Menu implements OnInit {
   isDarkMode = false;
   drawerVisible = false;
   currentRoute = '';
+  cargandoPermisos = false;
 
-  constructor(private router: Router) {
-    // Escuchar cambios de ruta
+  constructor(
+    private router: Router,
+    private apiService: Api,
+     private authService: Auth
+  ) {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
@@ -38,108 +58,73 @@ export class Menu implements OnInit {
   }
 
   ngOnInit() {
-    this.items = [
-      {
-        label: 'Recepción de Vehículos',
-        icon: 'pi pi-car',
-        route: 'recepcionvehiculos',
-        command: () => this.navigateTo('recepcionvehiculos')
-      },
-      {
-        label: 'Traslado entre Establecimientos',
-        icon: 'pi pi-arrow-right-arrow-left',
-        route: 'traslado',
-        command: () => this.navigateTo('traslado')
-      },
-      {
-        label: 'Salida por Orden de Trabajo',
-        icon: 'pi pi-sign-out',
-        route: 'salidaTrabajo',
-        command: () => this.navigateTo('salidaTrabajo')
-      },
-      {
-        label: 'Checklist PDI',
-        icon: 'pi pi-check-square',
-        route: 'checklist',
-        command: () => this.navigateTo('checklist')
-      },
-      {
-        label: 'Ingreso/Salida Taller',
-        icon: 'pi pi-wrench',
-        route: 'ingresosalidataller',
-        command: () => this.navigateTo('ingresosalidataller')
-      },
-      {
-        label: 'Listar Checklist',
-        icon: 'pi pi-list',
-        route: 'listarchecklist',
-        command: () => this.navigateTo('listarchecklist')
-      },
-      {
-        label: 'Mantenimiento',
-        icon: 'pi pi-cog',
-        route: 'mantenimiento',
-        command: () => this.navigateTo('mantenimiento')
-      },
-      {
-        label: 'Gestor Mantenimiento',
-        icon: 'pi pi-sliders-h',
-        route: 'mantenimientoestados',
-        command: () => this.navigateTo('mantenimientoestados')
-      },
-      {
-        label: 'Rendición de gastos',
-        icon: 'pi pi-dollar',
-        route: 'rendicion-gastos',
-        command: () => this.navigateTo('rendicion-gastos')
-      },
-      {
-        label: 'Personal',
-        icon: 'pi pi-id-card',
-        route: 'personal',
-        command: () => this.navigateTo('personal')
-      },
-    ];
-
-    // Cargar tema desde localStorage
     this.loadTheme();
-
-    // Actualizar item activo inicial
     this.currentRoute = this.router.url.replace('/', '');
-    this.updateActiveItem();
+    this.cargarPermisos();
   }
 
+  // ── Permisos ──────────────────────────────────────────────────────────────
+  cargarPermisos() {
+  this.cargandoPermisos = true;
+
+  // Obtén el idUsuario desde cookies — ajusta según tu authService
+  const idUsuario = this.authService.getUsuario();
+  if (!idUsuario) {
+    this.cargandoPermisos = false;
+    this.items = [];
+    return;
+  }
+  const idAplicacion = 'MOB';
+
+  this.apiService.obtenerPermisosUsuario(idUsuario, idAplicacion).subscribe({
+    next: (response) => {
+      this.cargandoPermisos = false;
+
+      if (response?.success && Array.isArray(response.data)) {
+        // La API devuelve nombre en UPPERCASE, compara en lowercase
+        const rutasPermitidas: string[] = response.data
+          .map((m: any) => m.nombre.toLowerCase());
+
+        this.items = ALL_ITEMS
+          .filter(item => rutasPermitidas.includes(item.route?.toLowerCase() ?? ''))
+          .map(item => ({
+            ...item,
+            command: () => this.navigateTo(item.route!)
+          }));
+      } else {
+        this.items = [];
+      }
+
+      this.updateActiveItem();
+    },
+    error: () => {
+      this.cargandoPermisos = false;
+      this.items = [];       // en error, menú vacío (más seguro que mostrar todo)
+      this.updateActiveItem();
+    }
+  });
+}
+
+  // ── Tema ──────────────────────────────────────────────────────────────────
   loadTheme() {
     const savedTheme = localStorage.getItem('theme');
     this.isDarkMode = savedTheme === 'dark';
-
-    if (this.isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', this.isDarkMode);
   }
 
   toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
-
-    if (this.isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+    document.documentElement.classList.toggle('dark', this.isDarkMode);
+    localStorage.setItem('theme', this.isDarkMode ? 'dark' : 'light');
   }
 
+  // ── Drawer / navegación ───────────────────────────────────────────────────
   toggleDrawer() {
     this.drawerVisible = !this.drawerVisible;
   }
 
   executeCommand(item: MenuItemExtended) {
-    if (item.command) {
-      item.command({});
-    }
+    if (item.command) item.command({});
   }
 
   navigateTo(route: string) {
@@ -158,12 +143,7 @@ export class Menu implements OnInit {
   }
 
   getButtonClass(item: MenuItemExtended): string {
-    const baseClasses = 'p-button-text justify-start w-full h-12';
-
-    if (this.isActive(item.route || '')) {
-      return `${baseClasses} active-menu-item`;
-    }
-
-    return baseClasses;
+    const base = 'p-button-text justify-start w-full h-12';
+    return this.isActive(item.route ?? '') ? `${base} active-menu-item` : base;
   }
 }

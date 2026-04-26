@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import {from, Observable, throwError} from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Auth } from './auth';
@@ -156,11 +156,11 @@ export class Api {
   if (checklist.Color) {
     params = params.set('color', checklist.Color);
   }
-  
+
   if (checklist.FechaLlegada) {
     params = params.set('fechaLlegada', new Date(checklist.FechaLlegada).toISOString());
   }
-  
+
   if (checklist.FechaRecepcion) {
     params = params.set('fechaRecepcion', new Date(checklist.FechaRecepcion).toISOString());
   }
@@ -171,9 +171,9 @@ export class Api {
   return this.https.post(
     `${this.baseUrl}/Car/registroChecklistPDI`,
     body,
-    { 
+    {
       headers: this.authService.getHeaders(),
-      params 
+      params
     }
   ).pipe(
     map((response: any) => response),
@@ -187,22 +187,22 @@ export class Api {
     tipoArchivo: string
   ): Observable<any> {
     const carpeta = `Chk_${stock}`;
-    
-    // Determinar el tipo MIME correcto
-    let mimeType = 'application/octet-stream';
-    
-    if (tipoArchivo === 'imagen') {
-      mimeType = archivo.type || 'image/jpeg';
-    } else if (tipoArchivo === 'pdf') {
-      mimeType = 'application/pdf';
-    }
-    
+
+    // MIME real desde el archivo, igual que Personal
+    const mimeType = archivo.type && archivo.type.trim() !== ''
+      ? archivo.type
+      : 'application/octet-stream';
+
+    // Sanitizar nombre
+    const nombreLimpio = archivo.name
+      .trim()
+      .replace(/\s+/g, '_');
+
     const params = new HttpParams()
       .set('carpeta', carpeta)
-      .set('archivo', archivo.name)
+      .set('archivo', nombreLimpio)
       .set('tipoArchivo', mimeType);
 
-    // 1. Obtener URL pre-firmada
     return this.https.get<{ url: string }>(
       `${this.baseUrl}/Car/subirArchivoChecklist`,
       {
@@ -210,11 +210,14 @@ export class Api {
         params
       }
     ).pipe(
-      // 2. Subir el archivo a la URL pre-firmada
       switchMap(response => {
-        return this.https.put(response.url, archivo, {
-          headers: { 'Content-Type': mimeType }
-        });
+        // fetch nativo en lugar de HttpClient para evitar interceptores en la URL de S3
+        return from(
+          fetch(response.url, {
+            method: 'PUT',
+            body: archivo
+          })
+        );
       }),
       catchError(error => {
         console.error('Error al subir el archivo:', error);
@@ -227,7 +230,7 @@ export class Api {
   listarArchivosChecklist(stock: string): Observable<any> {
     // Construir ruta con formato Chk_P25-XXX
     const ruta = `Chk_${stock}`;
-    
+
     const params = new HttpParams()
       .set('ruta', ruta);
 
@@ -482,21 +485,21 @@ export class Api {
     archivo: File,
     tipoArchivo: string
   ): Observable<any> {
-
     const carpeta = `SM${idSolicitudMantenimiento}`;
 
-    let mimeType = 'application/octet-stream';
+    const mimeType = archivo.type && archivo.type.trim() !== ''
+      ? archivo.type
+      : 'application/octet-stream';
 
-    if (tipoArchivo === 'imagen') {
-      mimeType = archivo.type || 'image/jpeg';
-    } else if (tipoArchivo === 'pdf') {
-      mimeType = 'application/pdf';
-    }
+    const nombreLimpio = archivo.name
+      .trim()
+      .replace(/\s+/g, '_');
 
     const params = new HttpParams()
       .set('carpeta', carpeta)
-      .set('archivo', archivo.name)
+      .set('archivo', nombreLimpio)
       .set('tipoArchivo', mimeType);
+
     return this.https.get<{ url: string }>(
       `${this.baseUrl}/SolicitudMantenimiento/subirArchivoChecklist`,
       {
@@ -505,11 +508,12 @@ export class Api {
       }
     ).pipe(
       switchMap(response => {
-
-        return this.https.put(response.url, archivo, {
-          headers: { 'Content-Type': mimeType },
-          reportProgress: true
-        });
+        return from(
+          fetch(response.url, {
+            method: 'PUT',
+            body: archivo
+          })
+        );
       }),
       catchError(error => {
         console.error('Error al subir el archivo:', error);
@@ -586,20 +590,19 @@ export class Api {
     archivo: File,
     tipoArchivo: string
   ): Observable<any> {
-    // Carpeta: SM/idMantenimiento/idProveedor
     const carpeta = `SM/${idSolicitudMantenimiento}/${idProveedor}`;
 
-    let mimeType = 'application/octet-stream';
+    const mimeType = archivo.type && archivo.type.trim() !== ''
+      ? archivo.type
+      : 'application/octet-stream';
 
-    if (tipoArchivo === 'imagen') {
-      mimeType = archivo.type || 'image/jpeg';
-    } else if (tipoArchivo === 'pdf') {
-      mimeType = 'application/pdf';
-    }
+    const nombreLimpio = archivo.name
+      .trim()
+      .replace(/\s+/g, '_');
 
     const params = new HttpParams()
       .set('carpeta', carpeta)
-      .set('archivo', archivo.name)
+      .set('archivo', nombreLimpio)
       .set('tipoArchivo', mimeType);
 
     return this.https.get<{ url: string }>(
@@ -610,10 +613,12 @@ export class Api {
       }
     ).pipe(
       switchMap(response => {
-        return this.https.put(response.url, archivo, {
-          headers: { 'Content-Type': mimeType },
-          reportProgress: true
-        });
+        return from(
+          fetch(response.url, {
+            method: 'PUT',
+            body: archivo
+          })
+        );
       }),
       catchError(error => {
         console.error('Error al subir el archivo del proveedor:', error);
@@ -805,6 +810,120 @@ export class Api {
       `${this.baseUrl}/GastoSimple/ClieProv_CrearOActualizar`,
       {},
       { params: queryParams }
+    );
+  }
+
+  listarBeneficiarios(codigo: string): Observable<any> {
+    return this.https.get<any>(
+      `${this.baseUrl}/Personal/${codigo}/beneficiario`,
+      {
+        headers: this.authService.getHeaders()
+      }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  crearBeneficiario(codigo: string, request: any): Observable<any> {
+    return this.https.post<any>(
+      `${this.baseUrl}/Personal/${codigo}/crearbeneficiario`,
+      request,
+      {
+        headers: this.authService.getHeaders()
+      }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  editarBeneficiario(
+    codigo: string,
+    item: string,
+    request: any
+  ): Observable<any> {
+    return this.https.post<any>(
+      `${this.baseUrl}/Personal/${codigo}/editarbeneficiario/${item}`,
+      request,
+      {
+        headers: this.authService.getHeaders()
+      }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  obtenerPermisosUsuario(idUsuario: string, idAplicacion: string): Observable<any> {
+  return this.https.get(`${this.baseUrl}/AuthReport/ObtenerModulosPorUsuario`, {
+      headers: this.authService.getHeaders(),
+      params: new HttpParams()
+        .set('idUsuario', idUsuario)
+        .set('idAplicacion', idAplicacion)
+    }).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  subirArchivoPersonal(
+    carpeta: string,
+    archivo: File,
+    tipoArchivo: string
+  ): Observable<any> {
+
+    const mimeType = archivo.type && archivo.type.trim() !== ''
+      ? archivo.type
+      : 'application/octet-stream';
+
+    const carpetaLimpia = carpeta.trim();
+    const nombreLimpio = archivo.name
+      .trim()
+      .replace(/\s+/g, '_');
+
+    const params = new HttpParams()
+      .set('carpeta', carpetaLimpia)
+      .set('archivo', nombreLimpio)
+      .set('tipoArchivo', mimeType);
+
+    return this.https.get<{ url: string }>(
+      `${this.baseUrl}/Personal/subirArchivo`,
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      switchMap(response => {
+        return from(
+          fetch(response.url, {
+            method: 'PUT',
+            body: archivo
+          })
+        );
+      }),
+      catchError(error => {
+        console.error('Error al subir el archivo:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Listar archivos de checklist
+  listarArchivosPersonal(ruta: string): Observable<any> {
+
+    const params = new HttpParams()
+      .set('ruta', ruta);
+
+    return this.https.get(
+      `${this.baseUrl}/Personal/listarArchivos`,
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
     );
   }
 }

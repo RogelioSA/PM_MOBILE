@@ -51,6 +51,20 @@ export class Auth {
     );
   }
 
+
+  getUsuario(): string | null {
+  const name = 'usuario=';
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const ca = decodedCookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i].trim();
+    if (c.indexOf(name) === 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return null;
+}
+
   // Logout
   logout(): void {
     document.cookie = 'token=; path=/; max-age=0';

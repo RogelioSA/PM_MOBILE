@@ -179,4 +179,18 @@ export class Master {
       })
     );
   }
+
+    // Bancos
+  Bancos(idEmpresa: string): Observable<any> {
+    return this.https.get(
+      `${this.baseUrl}/TypeSale/ListarBancos`,
+      {
+        headers: this.authService.getHeaders(),
+        params: new HttpParams().set('idEmpresa', idEmpresa)
+      }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
 }
