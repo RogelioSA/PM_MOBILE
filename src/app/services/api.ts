@@ -188,21 +188,21 @@ export class Api {
   ): Observable<any> {
     const carpeta = `Chk_${stock}`;
 
-    // Determinar el tipo MIME correcto
-    let mimeType = 'application/octet-stream';
+    // MIME real desde el archivo, igual que Personal
+    const mimeType = archivo.type && archivo.type.trim() !== ''
+      ? archivo.type
+      : 'application/octet-stream';
 
-    if (tipoArchivo === 'imagen') {
-      mimeType = archivo.type || 'image/jpeg';
-    } else if (tipoArchivo === 'pdf') {
-      mimeType = 'application/pdf';
-    }
+    // Sanitizar nombre
+    const nombreLimpio = archivo.name
+      .trim()
+      .replace(/\s+/g, '_');
 
     const params = new HttpParams()
       .set('carpeta', carpeta)
-      .set('archivo', archivo.name)
+      .set('archivo', nombreLimpio)
       .set('tipoArchivo', mimeType);
 
-    // 1. Obtener URL pre-firmada
     return this.https.get<{ url: string }>(
       `${this.baseUrl}/Car/subirArchivoChecklist`,
       {
@@ -210,11 +210,14 @@ export class Api {
         params
       }
     ).pipe(
-      // 2. Subir el archivo a la URL pre-firmada
       switchMap(response => {
-        return this.https.put(response.url, archivo, {
-          headers: { 'Content-Type': mimeType }
-        });
+        // fetch nativo en lugar de HttpClient para evitar interceptores en la URL de S3
+        return from(
+          fetch(response.url, {
+            method: 'PUT',
+            body: archivo
+          })
+        );
       }),
       catchError(error => {
         console.error('Error al subir el archivo:', error);
@@ -482,21 +485,21 @@ export class Api {
     archivo: File,
     tipoArchivo: string
   ): Observable<any> {
-
     const carpeta = `SM${idSolicitudMantenimiento}`;
 
-    let mimeType = 'application/octet-stream';
+    const mimeType = archivo.type && archivo.type.trim() !== ''
+      ? archivo.type
+      : 'application/octet-stream';
 
-    if (tipoArchivo === 'imagen') {
-      mimeType = archivo.type || 'image/jpeg';
-    } else if (tipoArchivo === 'pdf') {
-      mimeType = 'application/pdf';
-    }
+    const nombreLimpio = archivo.name
+      .trim()
+      .replace(/\s+/g, '_');
 
     const params = new HttpParams()
       .set('carpeta', carpeta)
-      .set('archivo', archivo.name)
+      .set('archivo', nombreLimpio)
       .set('tipoArchivo', mimeType);
+
     return this.https.get<{ url: string }>(
       `${this.baseUrl}/SolicitudMantenimiento/subirArchivoChecklist`,
       {
@@ -505,11 +508,12 @@ export class Api {
       }
     ).pipe(
       switchMap(response => {
-
-        return this.https.put(response.url, archivo, {
-          headers: { 'Content-Type': mimeType },
-          reportProgress: true
-        });
+        return from(
+          fetch(response.url, {
+            method: 'PUT',
+            body: archivo
+          })
+        );
       }),
       catchError(error => {
         console.error('Error al subir el archivo:', error);
@@ -586,20 +590,19 @@ export class Api {
     archivo: File,
     tipoArchivo: string
   ): Observable<any> {
-    // Carpeta: SM/idMantenimiento/idProveedor
     const carpeta = `SM/${idSolicitudMantenimiento}/${idProveedor}`;
 
-    let mimeType = 'application/octet-stream';
+    const mimeType = archivo.type && archivo.type.trim() !== ''
+      ? archivo.type
+      : 'application/octet-stream';
 
-    if (tipoArchivo === 'imagen') {
-      mimeType = archivo.type || 'image/jpeg';
-    } else if (tipoArchivo === 'pdf') {
-      mimeType = 'application/pdf';
-    }
+    const nombreLimpio = archivo.name
+      .trim()
+      .replace(/\s+/g, '_');
 
     const params = new HttpParams()
       .set('carpeta', carpeta)
-      .set('archivo', archivo.name)
+      .set('archivo', nombreLimpio)
       .set('tipoArchivo', mimeType);
 
     return this.https.get<{ url: string }>(
@@ -610,10 +613,12 @@ export class Api {
       }
     ).pipe(
       switchMap(response => {
-        return this.https.put(response.url, archivo, {
-          headers: { 'Content-Type': mimeType },
-          reportProgress: true
-        });
+        return from(
+          fetch(response.url, {
+            method: 'PUT',
+            body: archivo
+          })
+        );
       }),
       catchError(error => {
         console.error('Error al subir el archivo del proveedor:', error);
@@ -834,12 +839,10 @@ export class Api {
     tipoArchivo: string
   ): Observable<any> {
 
-    // Obtener MIME real desde el archivo
     const mimeType = archivo.type && archivo.type.trim() !== ''
       ? archivo.type
       : 'application/octet-stream';
 
-    // Trim + sanitizar valores
     const carpetaLimpia = carpeta.trim();
     const nombreLimpio = archivo.name
       .trim()
