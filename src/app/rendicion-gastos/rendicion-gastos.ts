@@ -75,6 +75,25 @@ interface ProveedorOption {
   data: any;
 }
 
+// ─── Nuevo Proveedor ────────────────────────────────────────────────────────
+type TipoDocumento = 'DNI' | 'RUC';
+
+interface NuevoProveedorForm {
+  tipoDocumento: TipoDocumento;
+  nroDocumento: string;
+  // DNI
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  // RUC
+  razonSocial: string;
+  // Común
+  telefono1: string;
+  telefono2: string;
+  correo: string;
+  direccion: string;
+}
+
 @Component({
   selector: 'app-rendicion-gastos',
   standalone: true,
@@ -133,6 +152,10 @@ export class RendicionGastos implements OnInit {
   buscandoProveedoresOT = false;
   buscandoProveedoresFactura = false;
 
+  // Texto de filtro actual para saber si mostrar botón "Nuevo Proveedor"
+  filtroProveedorOTActual = '';
+  filtroProveedorFacturaActual = '';
+
   private busquedaOT$ = new Subject<string>();
   private busquedaFactura$ = new Subject<string>();
 
@@ -141,6 +164,21 @@ export class RendicionGastos implements OnInit {
 
   otForm: GastoOTForm = this.initOtForm();
   facturaForm: FacturaForm = this.initFacturaForm();
+
+  // ── Nuevo Proveedor ────────────────────────────────────────────────────────
+  mostrarNuevoProveedor = false;
+  /** 'OT' | 'FACTURA' — contexto desde donde se abrió el card */
+  nuevoProveedorContexto: 'OT' | 'FACTURA' = 'OT';
+  guardandoProveedor = false;
+  consultandoDocumento = false;
+  datosFactilizaCargados = false;
+
+  tiposDocumento: { label: string; value: TipoDocumento }[] = [
+    { label: 'DNI', value: 'DNI' },
+    { label: 'RUC', value: 'RUC' }
+  ];
+
+  nuevoProveedorForm: NuevoProveedorForm = this.initNuevoProveedorForm();
 
   // ── Constantes del módulo ──────────────────────────────────────────────────
   private readonly idEmpresa = '001';
@@ -229,6 +267,21 @@ export class RendicionGastos implements OnInit {
     };
   }
 
+  initNuevoProveedorForm(): NuevoProveedorForm {
+    return {
+      tipoDocumento: 'DNI',
+      nroDocumento: '',
+      nombres: '',
+      apellidoPaterno: '',
+      apellidoMaterno: '',
+      razonSocial: '',
+      telefono1: '',
+      telefono2: '',
+      correo: '',
+      direccion: ''
+    };
+  }
+
   // ─── Fechas ─────────────────────────────────────────────────────────────────
 
   inicializarFechasMes() {
@@ -311,12 +364,14 @@ export class RendicionGastos implements OnInit {
 
   onFiltroProveedorOT(event: any) {
     const filtro: string = event?.filter ?? event ?? '';
+    this.filtroProveedorOTActual = filtro;
     if (filtro.length >= 3) this.buscandoProveedoresOT = true;
     this.busquedaOT$.next(filtro);
   }
 
   onFiltroProveedorFactura(event: any) {
     const filtro: string = event?.filter ?? event ?? '';
+    this.filtroProveedorFacturaActual = filtro;
     if (filtro.length >= 3) this.buscandoProveedoresFactura = true;
     this.busquedaFactura$.next(filtro);
   }
@@ -331,6 +386,186 @@ export class RendicionGastos implements OnInit {
     const prov = this.proveedoresFactura.find(p => p.value === value);
     this.facturaForm.proveedor = prov?.label || '';
     this.facturaForm.proveedorId = value;
+  }
+
+  // ─── Helpers proveedor: ¿mostrar botón nuevo? ──────────────────────────────
+
+  get mostrarBtnNuevoProveedorOT(): boolean {
+    return this.filtroProveedorOTActual.length >= 3 && !this.buscandoProveedoresOT && this.proveedoresOT.length === 0;
+  }
+
+  get mostrarBtnNuevoProveedorFactura(): boolean {
+    return this.filtroProveedorFacturaActual.length >= 3 && !this.buscandoProveedoresFactura && this.proveedoresFactura.length === 0;
+  }
+
+  // ─── Abrir dialog Nuevo Proveedor ──────────────────────────────────────────
+
+  abrirNuevoProveedor(contexto: 'OT' | 'FACTURA') {
+    this.nuevoProveedorContexto = contexto;
+    this.nuevoProveedorForm = this.initNuevoProveedorForm();
+    this.datosFactilizaCargados = false;
+    this.mostrarNuevoProveedor = true;
+  }
+
+  cerrarNuevoProveedor() {
+    this.mostrarNuevoProveedor = false;
+  }
+
+  // ─── Cambio tipo documento → limpiar campos ────────────────────────────────
+
+  onTipoDocumentoChange() {
+    this.nuevoProveedorForm.nroDocumento = '';
+    this.nuevoProveedorForm.nombres = '';
+    this.nuevoProveedorForm.apellidoPaterno = '';
+    this.nuevoProveedorForm.apellidoMaterno = '';
+    this.nuevoProveedorForm.razonSocial = '';
+    this.nuevoProveedorForm.direccion = '';
+    this.datosFactilizaCargados = false;
+  }
+
+  // ─── Consultar Factiliza al completar el nro documento ────────────────────
+
+  onNroDocumentoInput() {
+    const nro = this.nuevoProveedorForm.nroDocumento.trim();
+    const esDNI = this.nuevoProveedorForm.tipoDocumento === 'DNI';
+    const esRUC = this.nuevoProveedorForm.tipoDocumento === 'RUC';
+
+    if ((esDNI && nro.length === 8) || (esRUC && nro.length === 11)) {
+      this.consultarFactiliza(nro);
+    } else {
+      // Limpiar si el usuario borra
+      this.datosFactilizaCargados = false;
+      if (esDNI) {
+        this.nuevoProveedorForm.nombres = '';
+        this.nuevoProveedorForm.apellidoPaterno = '';
+        this.nuevoProveedorForm.apellidoMaterno = '';
+      } else {
+        this.nuevoProveedorForm.razonSocial = '';
+      }
+      this.nuevoProveedorForm.direccion = '';
+    }
+  }
+
+  private consultarFactiliza(nroDocumento: string) {
+    this.consultandoDocumento = true;
+    this.datosFactilizaCargados = false;
+
+    this.masterService.factiliza(nroDocumento).subscribe({
+      next: (res: any) => {
+        this.consultandoDocumento = false;
+        if (!res?.success || !res.data) {
+          this.messageService.add({ severity: 'warn', summary: 'Sin resultados', detail: 'No se encontró información para el documento', life: 3000 });
+          return;
+        }
+        const d = res.data;
+        if (this.nuevoProveedorForm.tipoDocumento === 'DNI') {
+          this.nuevoProveedorForm.nombres = (d.nombres || '').toUpperCase();
+          this.nuevoProveedorForm.apellidoPaterno = (d.apellido_paterno || '').toUpperCase();
+          this.nuevoProveedorForm.apellidoMaterno = (d.apellido_materno || '').toUpperCase();
+          this.nuevoProveedorForm.direccion = (d.direccion || '').toUpperCase();
+        } else {
+          this.nuevoProveedorForm.razonSocial = (d.nombre_o_razon_social || '').toUpperCase();
+          this.nuevoProveedorForm.direccion = (d.direccion || '').toUpperCase();
+        }
+        this.datosFactilizaCargados = true;
+        this.messageService.add({ severity: 'success', summary: 'Datos cargados', detail: 'Información obtenida correctamente', life: 2500 });
+      },
+      error: () => {
+        this.consultandoDocumento = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo consultar el documento', life: 3000 });
+      }
+    });
+  }
+
+  // ─── Guardar nuevo proveedor ───────────────────────────────────────────────
+
+  guardarNuevoProveedor() {
+    const f = this.nuevoProveedorForm;
+    const esDNI = f.tipoDocumento === 'DNI';
+
+    // Validaciones básicas
+    if (!f.nroDocumento.trim()) {
+      this.messageService.add({ severity: 'warn', summary: 'Requerido', detail: 'Ingrese el número de documento', life: 3000 });
+      return;
+    }
+    if (esDNI && !f.nombres.trim()) {
+      this.messageService.add({ severity: 'warn', summary: 'Requerido', detail: 'Consulte el DNI primero', life: 3000 });
+      return;
+    }
+    if (!esDNI && !f.razonSocial.trim()) {
+      this.messageService.add({ severity: 'warn', summary: 'Requerido', detail: 'Consulte el RUC primero', life: 3000 });
+      return;
+    }
+
+    // Teléfono combinado sin espacios: "tel1,tel2"
+    const telefonoCombinado = [f.telefono1.trim(), f.telefono2.trim()].filter(Boolean).join(',');
+
+    const codigoDocumento = esDNI ? '01' : '06';
+
+    const params: any = {
+      idCliente: '0',
+      tipoDocumento: codigoDocumento,
+      nroDocumento: f.nroDocumento.trim(),
+      telefono: telefonoCombinado || '999999999,999999998',
+      email: f.correo.trim() || 'sinemail@perumotor.com.pe',
+      direccion: (f.direccion.trim().toUpperCase() || '-').substring(0, 100),
+    };
+
+    if (esDNI) {
+      params.nombres = f.nombres.trim().toUpperCase().substring(0, 80);
+      params.apellidoPaterno = f.apellidoPaterno.trim().toUpperCase().substring(0, 60);
+      params.apellidoMaterno = f.apellidoMaterno.trim().toUpperCase().substring(0, 60);
+      params.razonSocial = '';
+    } else {
+      params.razonSocial = f.razonSocial.trim().toUpperCase().substring(0, 200);
+      params.nombres = '';
+      params.apellidoPaterno = '';
+      params.apellidoMaterno = '';
+    }
+
+    this.guardandoProveedor = true;
+    this.apiService.crearOActualizarClieProv(params).subscribe({
+      next: (res: any) => {
+        this.guardandoProveedor = false;
+        if (!res?.success) {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: res?.message || 'No se pudo crear el proveedor', life: 4000 });
+          return;
+        }
+
+        this.messageService.add({ severity: 'success', summary: 'Proveedor creado', detail: 'El proveedor fue registrado exitosamente', life: 3000 });
+
+        // Determinar el nombre a mostrar
+        const nombreLabel = esDNI
+          ? `${f.apellidoPaterno.trim()} ${f.apellidoMaterno.trim()}, ${f.nombres.trim()}`.toUpperCase()
+          : f.razonSocial.trim().toUpperCase();
+
+        // El id devuelto por la API (ajustar según respuesta real)
+        const nuevoId = res?.data?.idCliente ?? res?.data ?? f.nroDocumento;
+
+        const nuevaOpcion: ProveedorOption = {
+          label: nombreLabel,
+          value: String(nuevoId),
+          data: res?.data
+        };
+
+        // Inyectar en el contexto correcto y seleccionarlo automáticamente
+        if (this.nuevoProveedorContexto === 'OT') {
+          this.proveedoresOT = [nuevaOpcion, ...this.proveedoresOT];
+          this.otForm.proveedorId = String(nuevoId);
+          this.otForm.proveedor = nombreLabel;
+        } else {
+          this.proveedoresFactura = [nuevaOpcion, ...this.proveedoresFactura];
+          this.facturaForm.proveedorId = String(nuevoId);
+          this.facturaForm.proveedor = nombreLabel;
+        }
+
+        this.cerrarNuevoProveedor();
+      },
+      error: () => {
+        this.guardandoProveedor = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear el proveedor', life: 4000 });
+      }
+    });
   }
 
   // ─── Órdenes de producción ───────────────────────────────────────────────────
@@ -394,11 +629,13 @@ export class RendicionGastos implements OnInit {
       this.otForm = this.initOtForm();
       this.ordenesProduccionOT = [];
       this.proveedoresOT = [];
+      this.filtroProveedorOTActual = '';
       this.mostrarFormGasto = true;
     } else {
       this.facturaForm = this.initFacturaForm();
       this.ordenesProduccionFactura = [];
       this.proveedoresFactura = [];
+      this.filtroProveedorFacturaActual = '';
       this.archivoFacturaPendiente = null;
       this.mostrarFormFactura = true;
     }
@@ -443,7 +680,6 @@ export class RendicionGastos implements OnInit {
     const usuario = this.cookieService.get('usuario') || '';
     this.cargando = true;
 
-    // 1. Guarda el registro en la BD propia
     this.apiService.insertarGastoSimple(
       fechaStr, sucursal, monto, usuario, ordenTrabajo,
       proveedorId, serie.trim().toUpperCase(), numero.trim(),
@@ -456,7 +692,6 @@ export class RendicionGastos implements OnInit {
           return;
         }
 
-        // 2. Crea jerarquía de carpetas + sube archivos
         this.crearJerarquiaYSubirArchivos(niveles, nombreDocumento, this.otForm.archivos)
           .then(() => {
             this.messageService.add({ severity: 'success', summary: 'Gasto registrado', detail: `Guardado en ${rutaFinal}/${nombreDocumento}`, life: 4000 });
@@ -482,14 +717,11 @@ export class RendicionGastos implements OnInit {
     this.otForm = this.initOtForm();
     this.ordenesProduccionOT = [];
     this.proveedoresOT = [];
+    this.filtroProveedorOTActual = '';
   }
 
   // ─── Jerarquía de carpetas ──────────────────────────────────────────────────
 
-  /**
-   * Construye los niveles jerárquicos y el nombre final del documento.
-   * Resultado: 2026 → SEDE PRINCIPAL → ABRIL → 2026-04-16 → RUC_SERIE-NUMERO
-   */
   private construirNiveles(
     fechaStr: string,
     idSucursal: string,
@@ -502,12 +734,11 @@ export class RendicionGastos implements OnInit {
     const año = String(d.getFullYear());
     const sucursalLabel = this.sucursales.find(s => s.value === idSucursal)?.label?.toUpperCase() || idSucursal;
     const mes = this.mesesNombre[d.getMonth()];
-    const fechaDia = fechaStr; // YYYY-MM-DD
+    const fechaDia = fechaStr;
 
     const ruc = proveedorId.trim();
-    const nombreDocumento = `${ruc}_${serie.trim().toUpperCase()}-${numero.trim()}`;
+    const nombreDocumento = `${ruc}-${serie.trim().toUpperCase()}-${numero.trim()}`;
 
-    // Solo el nombre de cada nivel; el idCarpetaPadre se encadena en tiempo de ejecución
     const niveles = [
       { nombre: año },
       { nombre: sucursalLabel },
@@ -519,14 +750,6 @@ export class RendicionGastos implements OnInit {
     return { niveles, rutaFinal, nombreDocumento };
   }
 
-  /**
-   * Navega o crea la jerarquía: 2026 → SUCURSAL → MES → FECHA → RUC_SERIE-NUMERO
-   * Lógica idéntica a BillingPayment:
-   *   1. listarCarpetas(idCarpeta) → busca el nombre del nivel actual
-   *   2. Si existe  → toma su idCarpeta y avanza al siguiente nivel
-   *   3. Si no existe → crearCarpeta(nombreCarpeta, idCarpetaPadre) → avanza
-   *   4. Al llegar al documento hoja → subirArchivoCarpeta por cada archivo
-   */
   private async crearJerarquiaYSubirArchivos(
     niveles: { nombre: string }[],
     nombreDocumento: string,
@@ -535,38 +758,49 @@ export class RendicionGastos implements OnInit {
     const usuario = this.cookieService.get('usuario') || '';
     let idCarpetaPadreActual = 0;
 
-    // ── Niveles: año, sucursal, mes, fecha (todos final=false) ───────────────
-    for (const nivel of niveles) {
+    for (let i = 0; i < niveles.length - 1; i++) {
       idCarpetaPadreActual = await this.navegarOCrearNivel(
-        nivel.nombre,
-        idCarpetaPadreActual,
-        usuario,
-        false
+        niveles[i].nombre, idCarpetaPadreActual, usuario, false
       );
     }
 
-    // ── Carpeta final: RUC_SERIE-NUMERO (final=true) ──────────────────────────
-    idCarpetaPadreActual = await this.navegarOCrearNivel(
-      nombreDocumento,
-      idCarpetaPadreActual,
-      usuario,
-      true
+    const idCarpetaFecha = await this.navegarOCrearNivel(
+      niveles[niveles.length - 1].nombre, idCarpetaPadreActual, usuario, true
     );
 
-    // ── Subir archivos dentro de la carpeta RUC_SERIE-NUMERO ─────────────────
+    const now = new Date();
+    const periodo = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    await this.crearDocumentoSiNoExiste(nombreDocumento, idCarpetaFecha, periodo, usuario);
+
     for (const archivo of archivos) {
       if (!archivo.archivo) continue;
       const nombreSinExt = archivo.nombre.replace(/\.[^/.]+$/, '');
       const tipo = archivo.archivo.type || 'application/octet-stream';
-      await this.subirArchivoApi(String(idCarpetaPadreActual), nombreSinExt, tipo, archivo.archivo);
+      await this.subirArchivoApi(nombreDocumento, nombreSinExt, tipo, archivo.archivo);
     }
   }
 
-  /**
-   * Lista los hijos del idCarpetaPadre y busca si ya existe una carpeta con ese nombre.
-   * - Si existe  → retorna su idCarpeta
-   * - Si no existe → la crea con crearCarpeta y retorna el idCarpeta nuevo
-   */
+  private crearDocumentoSiNoExiste(
+    idCarpeta: string,
+    idCarpetaPadre: number,
+    periodo: string,
+    usuario: string
+  ): Promise<void> {
+    return new Promise((resolve) => {
+      this.apiService.existeDocumento(this.idEmpresa, idCarpeta).subscribe({
+        next: (res) => {
+          if (res.success === false || !res.data?.length) {
+            this.apiService.crearDocumento(this.idEmpresa, idCarpeta, periodo, idCarpetaPadre, usuario)
+              .subscribe({ next: () => resolve(), error: () => resolve() });
+          } else {
+            resolve();
+          }
+        },
+        error: () => resolve()
+      });
+    });
+  }
+
   private navegarOCrearNivel(
     nombreCarpeta: string,
     idCarpetaPadre: number,
@@ -576,19 +810,14 @@ export class RendicionGastos implements OnInit {
     return new Promise((resolve, reject) => {
       const idParaListar = idCarpetaPadre === 0 ? '' : String(idCarpetaPadre);
 
-      console.log(`[LISTAR] Buscando "${nombreCarpeta}" en hijos de idCarpeta="${idParaListar}"`);
-
       this.apiService.listarCarpeta(idParaListar, this.modulo, usuario).subscribe({
         next: (res: any) => {
           const hijos: any[] = Array.isArray(res?.data) ? res.data : [];
-          console.log(`[LISTAR] Hijos encontrados:`, hijos.map((h: any) => `${h.nombreCarpeta}(${h.idCarpeta})`));
-
           const encontrada = hijos.find(
             (h: any) => (h.nombreCarpeta || '').trim().toUpperCase() === nombreCarpeta.trim().toUpperCase()
           );
 
           if (encontrada) {
-            console.log(`[EXISTE] "${nombreCarpeta}" → idCarpeta: ${encontrada.idCarpeta}`);
             resolve(Number(encontrada.idCarpeta));
           } else {
             const body = {
@@ -598,12 +827,9 @@ export class RendicionGastos implements OnInit {
               usuarioCreador: usuario,
               final: esFinal
             };
-            console.log(`[CREAR] Creando carpeta:`, body);
 
             this.apiService.crearCarpeta(body).subscribe({
               next: (resCrear: any) => {
-                console.log(`[CREAR] Respuesta COMPLETA de "${nombreCarpeta}":`, JSON.stringify(resCrear));
-
                 const nuevoId = (typeof resCrear?.data === 'number' ? resCrear.data : null)
                   ?? resCrear?.data?.idCarpeta
                   ?? resCrear?.data?.[0]?.idCarpeta
@@ -611,50 +837,36 @@ export class RendicionGastos implements OnInit {
                   ?? 0;
 
                 if (nuevoId !== 0) {
-                  console.log(`[CREAR] "${nombreCarpeta}" → idCarpeta resuelto: ${nuevoId}`);
                   resolve(Number(nuevoId));
                 } else {
-                  // La API crea la carpeta pero no devuelve el id — listamos de nuevo para obtenerlo
-                  console.log(`[CREAR] "${nombreCarpeta}" sin id en respuesta → listando de nuevo...`);
                   this.apiService.listarCarpeta(idParaListar, this.modulo, usuario).subscribe({
                     next: (resListar: any) => {
                       const hijosActualizados: any[] = Array.isArray(resListar?.data) ? resListar.data : [];
                       const creada = hijosActualizados.find(
                         (h: any) => (h.nombreCarpeta || '').trim().toUpperCase() === nombreCarpeta.trim().toUpperCase()
                       );
-                      const idFinal = creada ? Number(creada.idCarpeta) : 0;
-                      console.log(`[CREAR] "${nombreCarpeta}" encontrada tras listar → idCarpeta: ${idFinal}`);
-                      resolve(idFinal);
+                      resolve(creada ? Number(creada.idCarpeta) : 0);
                     },
                     error: () => resolve(0)
                   });
                 }
               },
-              error: (err: any) => {
-                console.error(`[CREAR] Error creando "${nombreCarpeta}":`, err);
-                reject(err);
-              }
+              error: (err: any) => reject(err)
             });
           }
         },
-        error: (err: any) => {
-          console.error(`[LISTAR] Error listando hijos de idCarpeta="${idParaListar}":`, err);
-          reject(err);
-        }
+        error: (err: any) => reject(err)
       });
     });
   }
 
-  /**
-   * Obtiene la pre-signed URL y sube el archivo a S3.
-   */
-  private subirArchivoApi(idCarpeta: string, nombreSinExt: string, tipo: string, file: File): Promise<void> {
+  private subirArchivoApi(referenciaCarpeta: string, nombreSinExt: string, tipo: string, file: File): Promise<void> {
     return new Promise((resolve) => {
-      this.apiService.subirArchivoCarpeta(idCarpeta, nombreSinExt, tipo, file).subscribe({
+      this.apiService.subirArchivoCarpeta(referenciaCarpeta, nombreSinExt, tipo, file).subscribe({
         next: () => resolve(),
         error: (err: any) => {
           console.warn(`subirArchivo (${nombreSinExt}):`, err?.message || err);
-          resolve(); // un archivo fallido no bloquea el resto
+          resolve();
         }
       });
     });
@@ -779,7 +991,6 @@ export class RendicionGastos implements OnInit {
     const usuario = this.cookieService.get('usuario') || '';
     this.cargando = true;
 
-    // TODO: reemplazar por la API real de factura cuando esté disponible
     this.apiService.insertarGastoSimple(
       fechaStr, sucursal, monto, usuario, ordenTrabajo,
       proveedorId, serie.trim().toUpperCase(), numero.trim(),
@@ -817,6 +1028,7 @@ export class RendicionGastos implements OnInit {
     this.facturaForm = this.initFacturaForm();
     this.ordenesProduccionFactura = [];
     this.proveedoresFactura = [];
+    this.filtroProveedorFacturaActual = '';
     this.archivoFacturaPendiente = null;
     this.escaneandoFactura = false;
   }
