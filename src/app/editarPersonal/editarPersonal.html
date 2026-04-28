@@ -190,50 +190,41 @@
         <!-- Ubigeo -->
         <div class="mt-4">
           <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">
-            Ubigeo — Perú
+            Ubigeo - Per�
           </p>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Departamento</label>
-              <p-select [(ngModel)]="depSeleccionado" [options]="departamentos"
-                optionLabel="label" optionValue="value"
-                placeholder="Seleccione" styleClass="w-full"
-                [filter]="true" filterPlaceholder="Buscar..."
-                [loading]="cargandoDep"
-                (onChange)="onDepChange()" />
-            </div>
-
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Provincia</label>
-              <p-select [(ngModel)]="provSeleccionada" [options]="provincias"
-                optionLabel="label" optionValue="value"
-                placeholder="Seleccione" styleClass="w-full"
-                [filter]="true" filterPlaceholder="Buscar..."
-                [loading]="cargandoProv"
-                [disabled]="!depSeleccionado"
-                (onChange)="onProvChange()" />
-            </div>
-
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Distrito</label>
-              <p-select [(ngModel)]="distSeleccionado" [options]="distritos"
-                optionLabel="label" optionValue="value"
-                placeholder="Seleccione" styleClass="w-full"
-                [filter]="true" filterPlaceholder="Buscar..."
-                [loading]="cargandoDist"
-                [disabled]="!provSeleccionada"
-                (onChange)="onDistChange()" />
-            </div>
-
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Distrito / Ubigeo</label>
+            <p-select [(ngModel)]="ubigeoSeleccionado" [options]="ubigeos"
+              optionLabel="label" optionValue="value"
+              placeholder="Seleccione ubigeo" styleClass="w-full"
+              [filter]="true" filterPlaceholder="Buscar ubigeo..."
+              [loading]="cargandoUbigeos"
+              (onChange)="onUbigeoChange()" />
           </div>
         </div>
-
+        <!-- Referencia -->
         <!-- Referencia -->
         <div class="mt-4 flex flex-col gap-2">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Referencia de ubicación</label>
-          <input type="text" pInputText [(ngModel)]="form.Direccion_Referencia"
-            class="w-full h-11" placeholder="Referencia de la dirección" />
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Referencia de ubicacion</label>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="text" pInputText [(ngModel)]="referenciaTexto" (ngModelChange)="onReferenciaInput()"
+              class="w-full h-11" placeholder="Referencia de la direccion" />
+            <button pButton type="button" label="Ubicar" icon="pi pi-map-marker"
+              (click)="buscarReferenciaEnMapa()" [loading]="cargandoMapaReferencia"
+              class="h-11 whitespace-nowrap"></button>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
+            <span class="text-gray-500 dark:text-gray-400">
+              Coordenadas: {{ getTextoCoordenadasReferencia() }}
+            </span>
+            <span class="text-gray-500 dark:text-gray-400">
+              Puede arrastrar el marker o hacer clic en el mapa para ajustarlo.
+            </span>
+          </div>
+          <div *ngIf="errorMapaReferencia" class="text-xs text-red-500">
+            {{ errorMapaReferencia }}
+          </div>
+          <div id="referencia-map" class="referencia-map rounded-xl border border-gray-200 dark:border-slate-600"></div>
         </div>
 
       </div>

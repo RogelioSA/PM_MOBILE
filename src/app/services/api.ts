@@ -826,6 +826,16 @@ export class Api {
     );
   }
 
+  listarUbigeosPersonal(): Observable<any> {
+    return this.https.get<any>(
+      `${this.baseUrl}/Personal/ubigeo`,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
   crearDocumento(
     idEmpresa: string,
     idCarpeta: string,

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -14,6 +14,7 @@ import { Menu } from '../menu/menu';
 import { Api } from '../services/api';
 import { Auth } from '../services/auth';
 import { Master } from '../services/master';
+import * as L from 'leaflet';
 
 interface PersonalNisira {
   codigo: string;
@@ -141,7 +142,7 @@ interface Contacto {
   styleUrls: ['./editarPersonal.css'],
   providers: [MessageService]
 })
-export class EditarPersonal implements OnInit {
+export class EditarPersonal implements OnInit, OnDestroy {
   cargandoPagina = false;
   sinAcceso = false;
   cargando = false;
@@ -194,12 +195,15 @@ export class EditarPersonal implements OnInit {
   departamentos: any[] = [];
   provincias: any[] = [];
   distritos: any[] = [];
+  ubigeos: any[] = [];
+  ubigeoSeleccionado = '';
   depSeleccionado = '';
   provSeleccionada = '';
   distSeleccionado = '';
   cargandoDep = false;
   cargandoProv = false;
   cargandoDist = false;
+  cargandoUbigeos = false;
 
   // ── Variables médicas ─────────────────────────────────────────────────────
   varGrupoSanguineo = '';
@@ -226,6 +230,24 @@ export class EditarPersonal implements OnInit {
   cargandoArchivos = false;
   subiendoArchivo = false;
   imagenVistaPrevia: string | null = null;
+  referenciaTexto = '';
+  referenciaLatitud: number | null = null;
+  referenciaLongitud: number | null = null;
+  cargandoMapaReferencia = false;
+  errorMapaReferencia = '';
+
+  private mapaReferencia: L.Map | null = null;
+  private markerReferencia: L.Marker | null = null;
+  private referenciaTimeout: ReturnType<typeof setTimeout> | null = null;
+  private readonly iconoMapa = L.icon({
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
 
   constructor(
     private messageService: MessageService,
@@ -243,7 +265,17 @@ export class EditarPersonal implements OnInit {
       this.sinAcceso = true;
     }
     this.cargarBancos();
-    this.cargarDepartamentos();
+    this.cargarUbigeos();
+  }
+
+  ngOnDestroy(): void {
+    if (this.referenciaTimeout) {
+      clearTimeout(this.referenciaTimeout);
+    }
+    if (this.mapaReferencia) {
+      this.mapaReferencia.remove();
+      this.mapaReferencia = null;
+    }
   }
 
   // ── Cookie ────────────────────────────────────────────────────────────────
@@ -303,6 +335,7 @@ export class EditarPersonal implements OnInit {
     this.varGrupoSanguineo = '';
     this.varAlergias = '';
     this.varMedicinas = '';
+    this.resetearReferenciaMapa();
 
     this.form = {
       Nombres: item.nombres ?? '',
@@ -334,9 +367,16 @@ export class EditarPersonal implements OnInit {
       Cuenta_Cts: item.cuenta_Cts?.trim() ?? ''
     };
 
-    this.precargarUbigeo(item.idUbigeo ?? '');
+    const referenciaGuardada = this.descomponerReferenciaGuardada(item.referencia?.trim() ?? '');
+    this.referenciaTexto = referenciaGuardada.texto;
+    this.referenciaLatitud = referenciaGuardada.latitud;
+    this.referenciaLongitud = referenciaGuardada.longitud;
+    this.form.Direccion_Referencia = referenciaGuardada.texto;
+    this.ubigeoSeleccionado = item.idUbigeo ?? '';
+
     this.cargarBeneficiarios(item.codigo);
     this.cargarArchivos(item.codigo);
+    setTimeout(() => this.configurarMapaReferenciaInicial(), 0);
   }
 
   private convertirFechaParaInput(fecha: string): string | null {
@@ -400,6 +440,26 @@ export class EditarPersonal implements OnInit {
         }
       },
       error: () => {}
+    });
+  }
+
+  cargarUbigeos() {
+    this.cargandoUbigeos = true;
+    this.apiService.listarUbigeosPersonal().subscribe({
+      next: (response) => {
+        this.cargandoUbigeos = false;
+        const data = response?.data ?? [];
+        if (Array.isArray(data)) {
+          this.ubigeos = data.map((u: any) => ({
+            label: u.descripcion?.trim() ?? '',
+            value: u.idubigeo ?? ''
+          }));
+        }
+      },
+      error: () => {
+        this.cargandoUbigeos = false;
+        this.ubigeos = [];
+      }
     });
   }
 
@@ -527,6 +587,10 @@ export class EditarPersonal implements OnInit {
     this.form.IdUbigeo = this.distSeleccionado;
   }
 
+  onUbigeoChange() {
+    this.form.IdUbigeo = this.ubigeoSeleccionado;
+  }
+
   // ── Variables ─────────────────────────────────────────────────────────────
   private parseContacto(valor: string, contacto: Contacto) {
     if (!valor?.trim()) {
@@ -548,6 +612,7 @@ export class EditarPersonal implements OnInit {
   // ── Guardar ───────────────────────────────────────────────────────────────
   guardarPersonal() {
     if (!this.personalSeleccionado) return;
+    this.form.Direccion_Referencia = this.construirReferenciaGuardada();
     this.cargando = true;
     const codigo = this.personalSeleccionado.codigo;
 
@@ -801,6 +866,70 @@ export class EditarPersonal implements OnInit {
     this.router.navigate(['/login-documento']);
   }
 
+  onReferenciaInput(): void {
+    this.form.Direccion_Referencia = this.referenciaTexto;
+  }
+
+  async buscarReferenciaEnMapa(): Promise<void> {
+    const referencia = this.referenciaTexto.trim();
+    const ubigeoTexto = this.getTextoUbigeoSeleccionado();
+    this.errorMapaReferencia = '';
+
+    this.asegurarMapaReferencia();
+
+    if (!ubigeoTexto) {
+      this.errorMapaReferencia = 'Seleccione ubigeo antes de ubicar la referencia.';
+      return;
+    }
+
+    this.cargandoMapaReferencia = true;
+
+    try {
+      let primerResultado: any = null;
+
+      for (const query of this.construirConsultasReferencia()) {
+        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
+        const response = await fetch(url, {
+          headers: { Accept: 'application/json' }
+        });
+
+        if (!response.ok) {
+          continue;
+        }
+
+        const data = await response.json();
+        const resultado = Array.isArray(data) ? data[0] : null;
+        if (resultado?.lat && resultado?.lon) {
+          primerResultado = resultado;
+          break;
+        }
+      }
+
+      if (!primerResultado?.lat || !primerResultado?.lon) {
+        this.errorMapaReferencia = 'No se encontr� la referencia con los datos de direcci�n indicados.';
+        return;
+      }
+
+      this.actualizarUbicacionReferencia(
+        Number(primerResultado.lat),
+        Number(primerResultado.lon),
+        true
+      );
+    } catch {
+      this.errorMapaReferencia = 'No se pudo obtener la ubicaci�n en el mapa.';
+    } finally {
+      this.cargandoMapaReferencia = false;
+    }
+  }
+
+  getTextoCoordenadasReferencia(): string {
+    if (this.referenciaLatitud == null || this.referenciaLongitud == null) {
+      return 'Sin coordenadas seleccionadas';
+    }
+
+    return `${this.referenciaLatitud.toFixed(6)}, ${this.referenciaLongitud.toFixed(6)}`;
+  }
+
   puedeBuscarBeneficiario(): boolean {
     return this.esDocumentoBeneficiarioValido(
       this.nuevoBeneficiarioDocumento,
@@ -820,6 +949,171 @@ export class EditarPersonal implements OnInit {
 
   getEtiquetaTipoDocumentoBeneficiario(tipoDocumento: string): string {
     return this.normalizarTipoDocumentoBeneficiario(tipoDocumento) === '04' ? 'CEE' : 'DNI';
+  }
+
+  private resetearReferenciaMapa(): void {
+    this.referenciaTexto = '';
+    this.referenciaLatitud = null;
+    this.referenciaLongitud = null;
+    this.errorMapaReferencia = '';
+    this.cargandoMapaReferencia = false;
+    if (this.referenciaTimeout) {
+      clearTimeout(this.referenciaTimeout);
+      this.referenciaTimeout = null;
+    }
+    if (this.markerReferencia) {
+      this.markerReferencia.remove();
+      this.markerReferencia = null;
+    }
+    if (this.mapaReferencia) {
+      this.mapaReferencia.remove();
+      this.mapaReferencia = null;
+    }
+  }
+
+  private descomponerReferenciaGuardada(valor: string): { texto: string; latitud: number | null; longitud: number | null } {
+    const limpio = `${valor ?? ''}`.trim();
+    if (!limpio) {
+      return { texto: '', latitud: null, longitud: null };
+    }
+
+    const partes = limpio.split(',').map(parte => parte.trim()).filter(Boolean);
+    if (partes.length < 3) {
+      return { texto: limpio, latitud: null, longitud: null };
+    }
+
+    const latitud = Number(partes[partes.length - 2]);
+    const longitud = Number(partes[partes.length - 1]);
+
+    if (Number.isNaN(latitud) || Number.isNaN(longitud)) {
+      return { texto: limpio, latitud: null, longitud: null };
+    }
+
+    return {
+      texto: partes.slice(0, -2).join(', '),
+      latitud,
+      longitud
+    };
+  }
+
+  private construirReferenciaGuardada(): string {
+    const referencia = this.referenciaTexto.trim();
+    if (!referencia) return '';
+    if (this.referenciaLatitud == null || this.referenciaLongitud == null) return referencia;
+    return `${referencia},${this.referenciaLatitud.toFixed(6)},${this.referenciaLongitud.toFixed(6)}`;
+  }
+
+
+  private construirConsultasReferencia(): string[] {
+    const ubigeo = this.getTextoUbigeoSeleccionado();
+    const referencia = this.referenciaTexto.trim();
+    const zona = `${this.form.Descripcion_Zona ?? ''}`.trim();
+    const via = `${this.form.Descripcion_Via ?? ''}`.trim();
+    const numero = this.form.Direccion_Numero != null ? `${this.form.Direccion_Numero}`.trim() : '';
+    const kilometro = `${this.form.Direccion_Kilometro ?? ''}`.trim();
+    const manzana = `${this.form.Direccion_Manzana ?? ''}`.trim();
+    const lote = `${this.form.Direccion_Lote ?? ''}`.trim();
+
+    const numeroKmMz = [
+      numero ? `N� ${numero}` : '',
+      kilometro ? `KM ${kilometro}` : '',
+      manzana ? `Mz ${manzana}` : '',
+      lote ? `Lote ${lote}` : ''
+    ].filter(Boolean).join(' ');
+
+    const candidatos = [
+      [referencia, ubigeo, 'Peru'],
+      [zona, ubigeo, 'Peru'],
+      [via, numeroKmMz, ubigeo, 'Peru'],
+      [via, ubigeo, 'Peru'],
+      [referencia, zona, ubigeo, 'Peru'],
+      [referencia, via, numeroKmMz, ubigeo, 'Peru'],
+      [zona, via, numeroKmMz, ubigeo, 'Peru']
+    ];
+
+    return candidatos
+      .map(partes => partes.filter(Boolean).join(', ').trim())
+      .filter((valor, index, array) => !!valor && array.indexOf(valor) === index);
+  }
+
+  private configurarMapaReferenciaInicial(): void {
+    this.asegurarMapaReferencia();
+
+    if (this.referenciaLatitud != null && this.referenciaLongitud != null) {
+      this.actualizarUbicacionReferencia(this.referenciaLatitud, this.referenciaLongitud, true);
+      return;
+    }
+
+    this.mapaReferencia?.setView([-12.046374, -77.042793], 12);
+  }
+
+  private asegurarMapaReferencia(): void {
+    if (this.mapaReferencia) {
+      setTimeout(() => this.mapaReferencia?.invalidateSize(), 0);
+      return;
+    }
+
+    const contenedorMapa = document.getElementById('referencia-map');
+    if (!contenedorMapa) {
+      setTimeout(() => this.asegurarMapaReferencia(), 100);
+      return;
+    }
+
+    this.mapaReferencia = L.map('referencia-map', {
+      zoomControl: true
+    }).setView([-12.046374, -77.042793], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(this.mapaReferencia);
+
+    this.mapaReferencia.on('click', (event: L.LeafletMouseEvent) => {
+      this.actualizarUbicacionReferencia(event.latlng.lat, event.latlng.lng, false);
+    });
+
+    setTimeout(() => this.mapaReferencia?.invalidateSize(), 0);
+  }
+
+  private actualizarUbicacionReferencia(latitud: number, longitud: number, centrarMapa: boolean): void {
+    this.referenciaLatitud = latitud;
+    this.referenciaLongitud = longitud;
+    this.errorMapaReferencia = '';
+    this.asegurarMapaReferencia();
+
+    if (!this.mapaReferencia) return;
+
+    if (!this.markerReferencia) {
+      this.markerReferencia = L.marker([latitud, longitud], {
+        draggable: true,
+        icon: this.iconoMapa
+      }).addTo(this.mapaReferencia);
+
+      this.markerReferencia.on('dragend', () => {
+        const posicion = this.markerReferencia?.getLatLng();
+        if (!posicion) return;
+        this.referenciaLatitud = posicion.lat;
+        this.referenciaLongitud = posicion.lng;
+      });
+    } else {
+      this.markerReferencia.setLatLng([latitud, longitud]);
+    }
+
+    if (centrarMapa) {
+      this.mapaReferencia.setView([latitud, longitud], 17);
+    }
+  }
+
+  private getTextoUbigeoSeleccionado(): string {
+    const ubigeo = this.ubigeos.find(u => u.value === this.ubigeoSeleccionado)?.label ?? '';
+    if (ubigeo) {
+      return ubigeo;
+    }
+
+    const departamento = this.departamentos.find(d => d.value === this.depSeleccionado)?.label ?? '';
+    const provincia = this.provincias.find(p => p.value === this.provSeleccionada)?.label ?? '';
+    const distrito = this.distritos.find(d => d.value === this.distSeleccionado)?.label ?? '';
+
+    return [distrito, provincia, departamento].filter(Boolean).join(', ');
   }
 
   private mapearBeneficiarioDesdeBackend(b: any): Beneficiario {
