@@ -1,0 +1,595 @@
+<!-- editarPersonal.html -->
+<app-menu></app-menu>
+
+<div class="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-6 pt-20 sm:pt-24">
+  <div class="max-w-[900px] mx-auto space-y-5">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">Mis Datos</h1>
+        <p *ngIf="personalSeleccionado" class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          {{ personalSeleccionado.codigo }} · {{ getNombreCompleto() }}
+        </p>
+      </div>
+      <div class="flex gap-2" *ngIf="personalSeleccionado">
+        <button pButton type="button" label="Salir" icon="pi pi-sign-out"
+          (click)="salir()" severity="secondary" class="h-10"></button>
+        <button pButton type="button" label="Guardar" icon="pi pi-check"
+          (click)="guardarPersonal()" [loading]="cargando" class="h-10"></button>
+      </div>
+    </div>
+
+    <!-- Estado: cargando -->
+    <div *ngIf="cargandoPagina" class="bg-white dark:bg-slate-800 rounded-xl shadow p-10 text-center">
+      <i class="pi pi-spin pi-spinner text-4xl text-blue-500 mb-3 block"></i>
+      <p class="text-gray-500 dark:text-gray-400 text-sm">Cargando datos...</p>
+    </div>
+
+    <!-- Estado: sin acceso -->
+    <div *ngIf="!cargandoPagina && sinAcceso"
+      class="bg-white dark:bg-slate-800 rounded-xl shadow p-10 text-center">
+      <i class="pi pi-lock text-4xl text-red-400 mb-3 block opacity-60"></i>
+      <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Sin acceso</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">No se encontró información de sesión.</p>
+    </div>
+
+    <!-- Estado: sin datos -->
+    <div *ngIf="!cargandoPagina && !sinAcceso && !personalSeleccionado"
+      class="bg-white dark:bg-slate-800 rounded-xl shadow p-10 text-center">
+      <i class="pi pi-user text-4xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
+      <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No se encontró personal</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">No hay un registro asociado al documento de sesión.</p>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         FORMULARIO INLINE
+    ════════════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="!cargandoPagina && personalSeleccionado">
+
+      <!-- ── 1. DATOS PERSONALES (solo lectura) ────────────────────── -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
+        <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+          Datos Personales
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500 dark:text-gray-400">Nombres</label>
+            <div class="h-11 flex items-center px-3 rounded-lg bg-gray-100 dark:bg-slate-700
+                        text-sm text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-slate-600">
+              {{ form.Nombres }}
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500 dark:text-gray-400">Ap. Paterno</label>
+            <div class="h-11 flex items-center px-3 rounded-lg bg-gray-100 dark:bg-slate-700
+                        text-sm text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-slate-600">
+              {{ form.A_Paterno }}
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500 dark:text-gray-400">Ap. Materno</label>
+            <div class="h-11 flex items-center px-3 rounded-lg bg-gray-100 dark:bg-slate-700
+                        text-sm text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-slate-600">
+              {{ form.A_Materno }}
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500 dark:text-gray-400">Nro Documento</label>
+            <div class="h-11 flex items-center px-3 rounded-lg bg-gray-100 dark:bg-slate-700
+                        text-sm text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-slate-600">
+              {{ form.NroDocumento }}
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500 dark:text-gray-400">Fecha de Nacimiento</label>
+            <div class="h-11 flex items-center px-3 rounded-lg bg-gray-100 dark:bg-slate-700
+                        text-sm text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-slate-600">
+              {{ form.Fecha_Nacimiento }}
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-500 dark:text-gray-400">Sexo</label>
+            <div class="h-11 flex items-center px-3 rounded-lg bg-gray-100 dark:bg-slate-700
+                        text-sm text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-slate-600">
+              {{ form.Sexo === 'M' ? 'Masculino' : form.Sexo === 'F' ? 'Femenino' : form.Sexo }}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── 2. ESTADO CIVIL Y NIVEL DE ESTUDIO ────────────────────── -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
+        <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+          Datos Civiles
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Estado Civil</label>
+            <p-select [(ngModel)]="form.Estado_Civil" [options]="estadosCiviles"
+              optionLabel="label" optionValue="value"
+              placeholder="Seleccione" styleClass="w-full" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Nivel de Estudio</label>
+            <p-select [(ngModel)]="form.Grado_Instruccion" [options]="nivelesEstudio"
+              optionLabel="label" optionValue="value"
+              placeholder="Seleccione" styleClass="w-full"
+              [filter]="true" filterPlaceholder="Buscar..." />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── 3. CONTACTO ────────────────────────────────────────────── -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
+        <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+          Contacto
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono 1</label>
+            <input type="text" pInputText [(ngModel)]="form.Telefono" class="w-full h-11" placeholder="Teléfono fijo" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono 2</label>
+            <input type="text" pInputText [(ngModel)]="form.Telefono2" class="w-full h-11" placeholder="Teléfono alternativo" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Celular</label>
+            <input type="text" pInputText [(ngModel)]="form.Celular" class="w-full h-11" placeholder="Celular" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+            <input type="email" pInputText [(ngModel)]="form.Email" class="w-full h-11" placeholder="correo@ejemplo.com" />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── 4. DIRECCIÓN ───────────────────────────────────────────── -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
+        <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+          Dirección
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="flex flex-col gap-2 sm:col-span-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Av./Jr./Calle/Psje/Otros</label>
+            <input type="text" pInputText [(ngModel)]="form.Descripcion_Via"
+              class="w-full h-11" placeholder="Nombre de vía" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">N°/KM/Mz</label>
+            <input type="text" pInputText [(ngModel)]="form.Descripcion_Via2"
+              class="w-full h-11" placeholder="Número, kilómetro o manzana" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Urb/PP.JJ./A.H./Otros</label>
+            <input type="text" pInputText [(ngModel)]="form.Descripcion_Zona"
+              class="w-full h-11" placeholder="Urbanización, pueblo joven..." />
+          </div>
+
+        </div>
+
+        <!-- Ubigeo -->
+        <div class="mt-4">
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">
+            Ubigeo — Perú
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Departamento</label>
+              <p-select [(ngModel)]="depSeleccionado" [options]="departamentos"
+                optionLabel="label" optionValue="value"
+                placeholder="Seleccione" styleClass="w-full"
+                [filter]="true" filterPlaceholder="Buscar..."
+                [loading]="cargandoDep"
+                (onChange)="onDepChange()" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Provincia</label>
+              <p-select [(ngModel)]="provSeleccionada" [options]="provincias"
+                optionLabel="label" optionValue="value"
+                placeholder="Seleccione" styleClass="w-full"
+                [filter]="true" filterPlaceholder="Buscar..."
+                [loading]="cargandoProv"
+                [disabled]="!depSeleccionado"
+                (onChange)="onProvChange()" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Distrito</label>
+              <p-select [(ngModel)]="distSeleccionado" [options]="distritos"
+                optionLabel="label" optionValue="value"
+                placeholder="Seleccione" styleClass="w-full"
+                [filter]="true" filterPlaceholder="Buscar..."
+                [loading]="cargandoDist"
+                [disabled]="!provSeleccionada"
+                (onChange)="onDistChange()" />
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Referencia -->
+        <div class="mt-4 flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Referencia de ubicación</label>
+          <input type="text" pInputText [(ngModel)]="form.Direccion_Referencia"
+            class="w-full h-11" placeholder="Referencia de la dirección" />
+        </div>
+
+      </div>
+
+      <!-- ── 5. DATOS BANCARIOS ─────────────────────────────────────── -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
+        <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+          Datos Bancarios
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Banco CTS</label>
+            <p-select [(ngModel)]="form.IdBanco" [options]="bancos"
+              optionLabel="label" optionValue="value"
+              placeholder="Seleccione banco" styleClass="w-full"
+              [filter]="true" filterPlaceholder="Buscar banco..." />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Cuenta CTS</label>
+            <input type="text" pInputText [(ngModel)]="form.Cuenta_Cts"
+              class="w-full h-11" placeholder="Número de cuenta CTS" />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── 6. DATOS MÉDICOS ───────────────────────────────────────── -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
+        <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+          Datos Médicos
+        </h3>
+
+        <div *ngIf="cargandoVariables" class="flex gap-3">
+          <div *ngFor="let _ of [1,2,3]"
+            class="flex-1 h-16 rounded-lg bg-gray-200 dark:bg-slate-600 animate-pulse"></div>
+        </div>
+
+        <div *ngIf="!cargandoVariables" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Grupo Sanguíneo</label>
+            <input type="text" pInputText [(ngModel)]="varGrupoSanguineo"
+              class="w-full h-11" placeholder="Ej: O+" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Alergias</label>
+            <input type="text" pInputText [(ngModel)]="varAlergias"
+              class="w-full h-11" placeholder="Alergias conocidas" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Medicinas Medicadas</label>
+            <input type="text" pInputText [(ngModel)]="varMedicinas"
+              class="w-full h-11" placeholder="Medicamentos actuales" />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── 7. CONTACTOS DE EMERGENCIA ─────────────────────────────── -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
+        <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+          Contactos de Emergencia
+        </h3>
+
+        <div *ngIf="cargandoVariables" class="space-y-3">
+          <div class="h-16 rounded-lg bg-gray-200 dark:bg-slate-600 animate-pulse"></div>
+          <div class="h-16 rounded-lg bg-gray-200 dark:bg-slate-600 animate-pulse"></div>
+        </div>
+
+        <div *ngIf="!cargandoVariables" class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="bg-gray-50 dark:bg-slate-700">
+                <th class="text-left p-2 pl-3 text-xs font-semibold text-gray-600 dark:text-gray-300">#</th>
+                <th class="text-left p-2 text-xs font-semibold text-gray-600 dark:text-gray-300">Nombre</th>
+                <th class="text-left p-2 text-xs font-semibold text-gray-600 dark:text-gray-300">Teléfono</th>
+                <th class="text-left p-2 text-xs font-semibold text-gray-600 dark:text-gray-300">Parentesco</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Contacto 1 -->
+              <tr class="border-t border-gray-100 dark:border-slate-700">
+                <td class="p-2 pl-3">
+                  <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    1
+                  </span>
+                </td>
+                <td class="p-2">
+                  <input type="text" pInputText [(ngModel)]="contacto1.nombre"
+                    class="h-9 text-sm w-full" placeholder="Nombre completo" />
+                </td>
+                <td class="p-2">
+                  <input type="text" pInputText [(ngModel)]="contacto1.telefono"
+                    class="h-9 text-sm w-full" placeholder="Teléfono" />
+                </td>
+                <td class="p-2">
+                  <input type="text" pInputText [(ngModel)]="contacto1.parentesco"
+                    class="h-9 text-sm w-full" placeholder="Ej: Esposa, Hijo..." />
+                </td>
+              </tr>
+              <!-- Contacto 2 -->
+              <tr class="border-t border-gray-100 dark:border-slate-700">
+                <td class="p-2 pl-3">
+                  <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                    2
+                  </span>
+                </td>
+                <td class="p-2">
+                  <input type="text" pInputText [(ngModel)]="contacto2.nombre"
+                    class="h-9 text-sm w-full" placeholder="Nombre completo" />
+                </td>
+                <td class="p-2">
+                  <input type="text" pInputText [(ngModel)]="contacto2.telefono"
+                    class="h-9 text-sm w-full" placeholder="Teléfono" />
+                </td>
+                <td class="p-2">
+                  <input type="text" pInputText [(ngModel)]="contacto2.parentesco"
+                    class="h-9 text-sm w-full" placeholder="Ej: Padre, Hermano..." />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── 8. DOCUMENTOS Y FOTOS ──────────────────────────────────── -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+            Documentos y Fotos
+          </h3>
+          <label class="cursor-pointer">
+            <input type="file" class="hidden"
+              accept="image/*,.pdf"
+              (change)="onSeleccionarArchivo($event)" />
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium
+              bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              [class.opacity-60]="subiendoArchivo"
+              [class.pointer-events-none]="subiendoArchivo">
+              <i [class]="subiendoArchivo ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"></i>
+              {{ subiendoArchivo ? 'Subiendo...' : 'Subir archivo' }}
+            </span>
+          </label>
+        </div>
+
+        <div *ngIf="cargandoArchivos" class="flex gap-3 flex-wrap">
+          <div *ngFor="let _ of [1,2,3]"
+            class="w-28 h-28 rounded-lg bg-gray-200 dark:bg-slate-600 animate-pulse"></div>
+        </div>
+
+        <div *ngIf="!cargandoArchivos && archivos.length > 0"
+          class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+
+          <div *ngFor="let archivo of archivos"
+            class="relative group rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600
+                   bg-white dark:bg-slate-800 cursor-pointer"
+            [pTooltip]="archivo.nombre" tooltipPosition="top">
+
+            <div *ngIf="archivo.esImagen"
+              class="w-full h-24 bg-gray-100 dark:bg-slate-700"
+              (click)="abrirLightbox(archivo.url)">
+              <img [src]="archivo.url" [alt]="archivo.nombre"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                loading="lazy" />
+            </div>
+
+            <div *ngIf="!archivo.esImagen"
+              class="w-full h-24 flex flex-col items-center justify-center gap-1
+                     bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              (click)="abrirArchivo(archivo.url)">
+              <i class="pi pi-file-pdf text-2xl text-red-500"></i>
+              <span class="text-xs text-red-600 dark:text-red-400 font-medium">PDF</span>
+            </div>
+
+            <div class="p-1.5 border-t border-gray-100 dark:border-gray-700">
+              <p class="text-xs text-gray-600 dark:text-gray-300 truncate">{{ getNombreCorto(archivo.nombre) }}</p>
+            </div>
+
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none rounded-lg"></div>
+          </div>
+
+        </div>
+
+        <div *ngIf="!cargandoArchivos && archivos.length === 0"
+          class="text-center py-6 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg">
+          <i class="pi pi-images text-2xl block mb-1 opacity-40 text-gray-400 dark:text-gray-500"></i>
+          <p class="text-sm text-gray-400 dark:text-gray-500">Sin documentos. Use "Subir archivo" para agregar.</p>
+        </div>
+      </div>
+
+      <!-- ── 9. HIJOS / BENEFICIARIOS ───────────────────────────────── -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
+        <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+          Hijos / Beneficiarios
+        </h3>
+
+        <div class="flex gap-2 mb-4">
+          <p-select [(ngModel)]="nuevoBeneficiarioTipoDocumento" [options]="tiposDocumentoBeneficiario"
+            optionLabel="label" optionValue="value" class="w-64" appendTo="body"></p-select>
+          <input type="text" pInputText [(ngModel)]="nuevoBeneficiarioDocumento"
+            [placeholder]="getPlaceholderDocumentoBeneficiario()" class="w-full h-11"
+            [maxlength]="getMaxLengthDocumentoBeneficiario()"
+            (keyup.enter)="agregarBeneficiarioPorDocumento(nuevoBeneficiarioDocumento, nuevoBeneficiarioTipoDocumento)" />
+          <button pButton type="button" icon="pi pi-search" label="Buscar"
+            (click)="agregarBeneficiarioPorDocumento(nuevoBeneficiarioDocumento, nuevoBeneficiarioTipoDocumento)"
+            [disabled]="!puedeBuscarBeneficiario()"
+            class="h-11 whitespace-nowrap"></button>
+        </div>
+        <div *ngIf="cargandoBeneficiarios" class="text-center py-4 text-gray-400 dark:text-gray-500 text-sm">
+          <i class="pi pi-spin pi-spinner mr-2"></i> Cargando beneficiarios...
+        </div>
+
+        <div *ngIf="!cargandoBeneficiarios && beneficiarios.length > 0"
+          class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="bg-gray-100 dark:bg-slate-600">
+                <th class="text-left p-2 pl-3 font-semibold text-gray-700 dark:text-gray-200 text-xs">Documento</th>
+                <th class="text-left p-2 font-semibold text-gray-700 dark:text-gray-200 text-xs">Apellidos y Nombres</th>
+                <th class="text-left p-2 font-semibold text-gray-700 dark:text-gray-200 text-xs">F. Nacimiento</th>
+                <th class="text-left p-2 font-semibold text-gray-700 dark:text-gray-200 text-xs">Sexo</th>
+                <th class="p-2 text-center font-semibold text-gray-700 dark:text-gray-200 text-xs">Estado</th>
+                <th class="p-2 w-24 text-center font-semibold text-gray-700 dark:text-gray-200 text-xs">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let b of beneficiarios; let i = index"
+                class="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+
+                <td class="p-2 pl-3 text-gray-800 dark:text-gray-200 font-mono text-xs">
+                  {{ getEtiquetaTipoDocumentoBeneficiario(b.tipoDocumento) }}: {{ b.dni }}
+                </td>
+                <td class="p-2">
+                  <span *ngIf="b.buscando" class="flex items-center gap-1.5 text-gray-400 text-xs">
+                    <i class="pi pi-spin pi-spinner"></i> Consultando Factiliza...
+                  </span>
+                  <span *ngIf="!b.buscando && b.error && !b.guardado"
+                    class="text-red-500 text-xs flex items-center gap-1">
+                    <i class="pi pi-exclamation-triangle"></i> {{ b.error }}
+                  </span>
+                  <div *ngIf="!b.buscando && b.editando" class="flex flex-col gap-1">
+                    <input type="text" pInputText [(ngModel)]="b.nombres"
+                      placeholder="Nombres" class="h-8 text-xs w-full" />
+                    <div class="flex gap-1">
+                      <input type="text" pInputText [(ngModel)]="b.apellidoPaterno"
+                        placeholder="Ap. Paterno" class="h-8 text-xs w-full" />
+                      <input type="text" pInputText [(ngModel)]="b.apellidoMaterno"
+                        placeholder="Ap. Materno" class="h-8 text-xs w-full" />
+                    </div>
+                  </div>
+                  <span *ngIf="!b.buscando && !b.editando && !b.error"
+                    class="text-gray-800 dark:text-gray-200 text-sm">
+                    {{ b.apellidoPaterno }} {{ b.apellidoMaterno }}, {{ b.nombres }}
+                  </span>
+                </td>
+
+                <td class="p-2 text-xs">
+                  <input type="date" pInputText [(ngModel)]="b.fechaNacimiento"
+                    class="h-8 text-xs w-32" [disabled]="b.buscando" />
+                </td>
+
+                <td class="p-2 text-xs">
+                  <select [(ngModel)]="b.sexo" [disabled]="b.buscando"
+                    class="h-8 text-xs w-28 rounded border border-gray-300 dark:border-gray-600
+                           bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200 px-2">
+                    <option value="">Sexo</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                  </select>
+                </td>
+
+                <td class="p-2 text-center">
+                  <span *ngIf="b.buscando"
+                    class="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                    Buscando
+                  </span>
+                  <span *ngIf="!b.buscando && b.guardado && !b.editando"
+                    class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                    Guardado
+                  </span>
+                  <span *ngIf="!b.buscando && !b.guardado && !b.error"
+                    class="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    Nuevo
+                  </span>
+                  <span *ngIf="b.editando"
+                    class="px-2 py-0.5 rounded-full text-xs bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300">
+                    Editando
+                  </span>
+                </td>
+
+                <td class="p-2">
+                  <div class="flex gap-1 justify-center">
+                    <button *ngIf="(!b.guardado || b.editando) && !b.buscando"
+                      pButton type="button" icon="pi pi-check"
+                      (click)="guardarBeneficiario(b)" [loading]="b.guardando"
+                      severity="success" class="p-button-sm p-button-text p-button-rounded"
+                      pTooltip="Guardar"></button>
+                    <button *ngIf="b.guardado && !b.editando && !b.buscando"
+                      pButton type="button" icon="pi pi-pencil"
+                      (click)="habilitarEdicion(b)" severity="secondary"
+                      class="p-button-sm p-button-text p-button-rounded"
+                      pTooltip="Editar"></button>
+                    <button *ngIf="b.editando"
+                      pButton type="button" icon="pi pi-times"
+                      (click)="cancelarEdicion(b, i)" severity="secondary"
+                      class="p-button-sm p-button-text p-button-rounded"
+                      pTooltip="Cancelar"></button>
+                    <button *ngIf="!b.guardando"
+                      pButton type="button" icon="pi pi-trash"
+                      (click)="eliminarBeneficiario(i)" severity="danger"
+                      class="p-button-sm p-button-text p-button-rounded"
+                      pTooltip="Eliminar"></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="!cargandoBeneficiarios && beneficiarios.length === 0"
+          class="text-center py-5 text-gray-400 dark:text-gray-500 text-sm border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg">
+          <i class="pi pi-users text-2xl block mb-1 opacity-40"></i>
+          Sin beneficiarios registrados. Ingrese DNI o CEE para consultar vía Factiliza.
+        </div>
+      </div>
+
+      <!-- Botón guardar fijo al fondo en mobile -->
+      <div class="flex justify-end gap-3 pb-6">
+        <button pButton type="button" label="Guardar cambios" icon="pi pi-check"
+          (click)="guardarPersonal()" [loading]="cargando" class="h-11"></button>
+      </div>
+
+    </ng-container>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     LIGHTBOX
+═══════════════════════════════════════════════════════════════ -->
+<div *ngIf="imagenVistaPrevia"
+  class="fixed inset-0 z-[9999] bg-black/85 flex items-center justify-center p-4"
+  (click)="cerrarLightbox()">
+  <div class="relative max-w-4xl max-h-full" (click)="$event.stopPropagation()">
+    <img [src]="imagenVistaPrevia" alt="Vista previa"
+      class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+    <button
+      class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-gray-800
+             flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors"
+      (click)="cerrarLightbox()">
+      <i class="pi pi-times text-sm"></i>
+    </button>
+  </div>
+</div>
+
+<p-toast position="top-right"></p-toast>

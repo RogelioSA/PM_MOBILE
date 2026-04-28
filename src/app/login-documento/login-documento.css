@@ -1,0 +1,83 @@
+:host ::ng-deep .login-doc-select .p-select-label,
+:host ::ng-deep .login-doc-select .p-select-dropdown {
+  color: inherit;
+}
+
+:host-context(.dark) ::ng-deep .login-doc-select.p-select {
+  background: #334155;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+:host-context(.dark) ::ng-deep .login-doc-select.p-select:hover {
+  border-color: #64748b;
+}
+
+:host-context(.dark) ::ng-deep .login-doc-select.p-select .p-select-label {
+  color: #f1f5f9;
+}
+
+:host-context(.dark) ::ng-deep .login-doc-select.p-select .p-select-dropdown {
+  color: #cbd5e1;
+}
+
+:host-context(.dark) ::ng-deep .p-select-overlay,
+:host-context(.dark) ::ng-deep .p-select-panel {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+:host-context(.dark) ::ng-deep .p-select-option {
+  color: #f1f5f9;
+}
+
+:host-context(.dark) ::ng-deep .p-select-option.p-select-option-selected {
+  background: #334155;
+  color: #f8fafc;
+}
+
+:host-context(.dark) ::ng-deep .p-select-option:hover {
+  background: #334155;
+}
+
+:host-context(.dark) ::ng-deep .login-doc-date .p-datepicker-input {
+  background: #334155;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+:host-context(.dark) ::ng-deep .login-doc-date .p-datepicker-dropdown,
+:host-context(.dark) ::ng-deep .login-doc-date .p-datepicker-input-icon-container {
+  color: #cbd5e1;
+}
+
+:host-context(.dark) ::ng-deep .p-datepicker {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+:host-context(.dark) ::ng-deep .p-datepicker-header {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+:host-context(.dark) ::ng-deep .p-datepicker-calendar-container table th,
+:host-context(.dark) ::ng-deep .p-datepicker-calendar-container table td,
+:host-context(.dark) ::ng-deep .p-datepicker-title,
+:host-context(.dark) ::ng-deep .p-datepicker-prev-button,
+:host-context(.dark) ::ng-deep .p-datepicker-next-button {
+  color: #f1f5f9;
+}
+
+:host-context(.dark) ::ng-deep .p-datepicker-calendar-container table td > span:hover {
+  background: #334155;
+}
+
+:host-context(.dark) ::ng-deep .p-datepicker-calendar-container table td.p-datepicker-today > span,
+:host-context(.dark) ::ng-deep .p-datepicker-calendar-container table td > span.p-highlight {
+  background: #2563eb;
+  color: #eff6ff;
+}

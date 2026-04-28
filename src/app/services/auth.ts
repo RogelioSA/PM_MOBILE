@@ -51,6 +51,31 @@ export class Auth {
     );
   }
 
+  iniciarSesionDocumento(
+    tipoDocumento: string,
+    documento: string,
+    fechaNacimiento: string,
+    digitoVerificador?: string
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('tipoDocumento', tipoDocumento)
+      .set('documento', documento)
+      .set('fechaNacimiento', fechaNacimiento);
+
+    const digito = (digitoVerificador ?? '').trim();
+    if (digito) {
+      params = params.set('digitoVerificador', digito);
+    }
+
+    return this.http.get(
+      `${this.baseUrl}/AuthReport/IniciarSesionDocumento`,
+      { params }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
 
   getUsuario(): string | null {
   const name = 'usuario=';

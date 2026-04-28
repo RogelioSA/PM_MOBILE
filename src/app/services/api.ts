@@ -136,7 +136,6 @@ export class Api {
   }
 
   guardarChecklistPDI(checklist: ChecklistPDI): Observable<any> {
-  // Parámetros en query string
   let params = new HttpParams()
     .set('sucursal', checklist.Sucursal)
     .set('almacen', checklist.Almacen)
@@ -152,7 +151,6 @@ export class Api {
     .set('observaciones', checklist.Observaciones)
     .set('nombreTecnico', checklist.NombreTecnico);
 
-  // Agregar parámetros opcionales
   if (checklist.Color) {
     params = params.set('color', checklist.Color);
   }
@@ -165,7 +163,6 @@ export class Api {
     params = params.set('fechaRecepcion', new Date(checklist.FechaRecepcion).toISOString());
   }
 
-  // Solo el equipamiento va en el body
   const body = checklist.Equipamiento;
 
   return this.https.post(
@@ -188,12 +185,10 @@ export class Api {
   ): Observable<any> {
     const carpeta = `Chk_${stock}`;
 
-    // MIME real desde el archivo, igual que Personal
     const mimeType = archivo.type && archivo.type.trim() !== ''
       ? archivo.type
       : 'application/octet-stream';
 
-    // Sanitizar nombre
     const nombreLimpio = archivo.name
       .trim()
       .replace(/\s+/g, '_');
@@ -211,7 +206,6 @@ export class Api {
       }
     ).pipe(
       switchMap(response => {
-        // fetch nativo en lugar de HttpClient para evitar interceptores en la URL de S3
         return from(
           fetch(response.url, {
             method: 'PUT',
@@ -226,9 +220,7 @@ export class Api {
     );
   }
 
-  // Listar archivos de checklist
   listarArchivosChecklist(stock: string): Observable<any> {
-    // Construir ruta con formato Chk_P25-XXX
     const ruta = `Chk_${stock}`;
 
     const params = new HttpParams()
@@ -546,7 +538,7 @@ export class Api {
 
     return this.https.post<any>(
       `${this.baseUrl}/SolicitudMantenimiento/GuardarSolicitudMantenimientoDocumento`,
-      {}, // body vacío
+      {},
       { headers: this.authService.getHeaders(), params: queryParams }
     ).pipe(
       map(response => response),
@@ -696,7 +688,7 @@ export class Api {
     const params = new HttpParams()
       .set('idCarpeta', idCarpeta)
       .set('Modulo', modulo)
-      .set('usuario', usuario); // respeta el nombre exacto que espera tu API
+      .set('usuario', usuario);
 
     return this.https.get(`${this.baseUrl}/BillingPayment/listarCarpetas`, { params });
   }
@@ -752,6 +744,87 @@ export class Api {
     return this.https.post(`${this.baseUrl}/BillingPayment/existeDocumento?idEmpresa=${idEmpresa}&idCarpeta=${idCarpeta}`, null);
   }
 
+  listarPersonal(
+    nroDocumento: string,
+    nombres: string,
+    apellidos: string,
+    pagina: number,
+    tamanio: number
+  ): Observable<any> {
+    const params = new HttpParams()
+      .set('nroDocumento', nroDocumento)
+      .set('nombres', nombres)
+      .set('apellidos', apellidos)
+      .set('pagina', pagina.toString())
+      .set('tamanio', tamanio.toString());
+
+    return this.https.get<any>(
+      `${this.baseUrl}/Personal`,
+      { headers: this.authService.getHeaders(), params }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  editarPersonal(codigo: string, request: any): Observable<any> {
+    return this.https.post<any>(
+      `${this.baseUrl}/Personal/${codigo}`,
+      request,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  guardarVariablePersonal(codigo: string, idVariable: string, valor: string): Observable<any> {
+    const params = new HttpParams()
+      .set('codigo_general', codigo)
+      .set('idvariable', idVariable)
+      .set('valor', valor);
+
+    return this.https.post<any>(
+      `${this.baseUrl}/Personal/variables`,
+      {},
+      { headers: this.authService.getHeaders(), params }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  listarDepartamentos(): Observable<any> {
+    return this.https.get<any>(
+      `${this.baseUrl}/Ubigeo/departamentos`,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  listarProvincias(codigoDep: string): Observable<any> {
+    const params = new HttpParams().set('codigo', codigoDep);
+    return this.https.get<any>(
+      `${this.baseUrl}/Ubigeo/provincias`,
+      { headers: this.authService.getHeaders(), params }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  listarDistritos(codigoProv: string): Observable<any> {
+    const params = new HttpParams().set('codigo', codigoProv);
+    return this.https.get<any>(
+      `${this.baseUrl}/Ubigeo/distritos`,
+      { headers: this.authService.getHeaders(), params }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
 
   crearDocumento(
     idEmpresa: string,
@@ -909,7 +982,6 @@ export class Api {
     );
   }
 
-  // Listar archivos de checklist
   listarArchivosPersonal(ruta: string): Observable<any> {
 
     const params = new HttpParams()
@@ -927,4 +999,3 @@ export class Api {
     );
   }
 }
-
