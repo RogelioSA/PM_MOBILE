@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { Login } from './login/login';
+import { LoginDocumento } from './login-documento/login-documento';
 import { SalidaTrabajo } from './salida-trabajo/salida-trabajo';
 import { authGuard } from './services/auth.guard';
 import { Traslado } from './traslado/traslado';
@@ -14,12 +15,17 @@ import { Viaticos } from './viaticos/viaticos';
 import { RendicionGastos } from './rendicion-gastos/rendicion-gastos';
 import { Home } from './home/home';
 import { Personal } from './personal/personal';
+import { EditarPersonal } from './editarPersonal/editarPersonal';
 
 export const routes: Routes = [
   // Ruta por defecto
   {
     path: '',
     component: Login
+  },
+  {
+    path: 'login-documento',
+    component: LoginDocumento
   },
 
   // Ruta protegida
@@ -92,6 +98,11 @@ export const routes: Routes = [
   {
     path: 'personal',
     component: Personal,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'editarDatos',
+    component: EditarPersonal,
     canActivate: [authGuard]
   },
   // Cualquier ruta no válida vuelve al login

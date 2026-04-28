@@ -1,0 +1,93 @@
+<div
+  class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-slate-900 px-4"
+>
+  <div
+    class="w-full max-w-sm bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg p-6"
+  >
+    <div class="flex justify-center mb-4">
+      <img
+        src="/assets/perumoto.png"
+        alt="PeruMoor"
+        class="h-12 object-contain"
+      />
+    </div>
+
+    <h2
+      class="text-center text-xl font-semibold text-gray-800 dark:text-white"
+    >
+      Ingreso por documento
+    </h2>
+    <p
+      class="text-center text-sm text-gray-500 dark:text-gray-400 mt-1 mb-6"
+    >
+      Valida tu documento y fecha de nacimiento para acceder al sistema
+    </p>
+
+    <form
+      [formGroup]="form"
+      (ngSubmit)="iniciarSesion()"
+      class="flex flex-col gap-4"
+    >
+      <p-select
+        formControlName="tipoDocumento"
+        [options]="tiposDocumento"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Tipo de documento"
+        styleClass="w-full login-doc-select"
+        appendTo="body"
+      ></p-select>
+
+      <input
+        pInputText
+        type="text"
+        [placeholder]="getPlaceholderDocumento()"
+        formControlName="documento"
+        class="w-full h-11 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-slate-600 rounded-md"
+      />
+
+      <div class="flex flex-col gap-1">
+        <label class="text-sm text-gray-600 dark:text-gray-300">
+          Fecha de nacimiento
+        </label>
+        <p-datepicker
+          formControlName="fechaNacimiento"
+          dateFormat="yy-mm-dd"
+          dataType="string"
+          [showIcon]="true"
+          iconDisplay="input"
+          [maxDate]="maxFechaNacimiento"
+          inputStyleClass="w-full h-11 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-slate-600 rounded-md"
+          styleClass="w-full login-doc-date"
+          appendTo="body"
+          placeholder="Seleccione fecha"
+        ></p-datepicker>
+      </div>
+
+      <input
+        pInputText
+        type="text"
+        placeholder="Digito verificador"
+        formControlName="digitoVerificador"
+        class="w-full h-11 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-slate-600 rounded-md"
+      />
+
+      <div
+        *ngIf="mensajeError"
+        class="text-sm text-red-600 dark:text-red-400"
+      >
+        {{ mensajeError }}
+      </div>
+
+      <button
+        pButton
+        type="submit"
+        label="Iniciar sesión"
+        class="w-full h-11 mt-2"
+        severity="primary"
+        [loading]="loading"
+        [disabled]="form.invalid || loading"
+      ></button>
+    </form>
+  </div>
+</div>

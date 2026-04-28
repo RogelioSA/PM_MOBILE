@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 @import "tailwindcss";
 @import "primeicons/primeicons.css";
+@import "leaflet/dist/leaflet.css";
 
 /* Configuración de tema con Tailwind 4 */
 @theme {

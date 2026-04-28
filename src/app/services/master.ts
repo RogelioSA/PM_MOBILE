@@ -12,6 +12,7 @@ import { HttpHeaders } from '@angular/common/http';
 export class Master {
   private baseUrl = environment.apiUrl;
   private secondaryApiUrlDNI = 'https://api.factiliza.com/v1/dni/info';
+  private secondaryApiUrlCEE = 'https://api.factiliza.com/v1/cee/info';
   private secondaryApiUrlRUC = 'https://api.factiliza.com/v1/ruc/info';
   private tokenAPI = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzODg5NyIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6ImNvbnN1bHRvciJ9.1nvg8UKFQFIc2JNZkD5lmzCZsR4-_PH7aIHiRvPhkU0';
   
@@ -175,6 +176,25 @@ export class Master {
       map(response => response),
       catchError(error => {
         console.error('Error en Factiliza:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  factilizaCee(cee: string): Observable<any> {
+    const nroDocumento = (cee ?? '').trim();
+    if (!nroDocumento) {
+      return throwError(() => new Error('Documento inválido'));
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${this.tokenAPI}`
+    });
+
+    return this.https.get<any>(`${this.secondaryApiUrlCEE}/${nroDocumento}`, { headers }).pipe(
+      map(response => response),
+      catchError(error => {
+        console.error('Error en Factiliza CEE:', error);
         return throwError(() => error);
       })
     );
