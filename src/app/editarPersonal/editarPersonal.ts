@@ -125,6 +125,12 @@ interface Contacto {
   parentesco: string;
 }
 
+interface VariablePersonal {
+  idcodigogeneral: string;
+  idvariable: string;
+  valor: string;
+}
+
 @Component({
   selector: 'app-personal',
   standalone: true,
@@ -376,6 +382,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
 
     this.cargarBeneficiarios(item.codigo);
     this.cargarArchivos(item.codigo);
+    this.cargarVariablesPersonal(item.dni ?? '');
     setTimeout(() => this.configurarMapaReferenciaInicial(), 0);
   }
 
@@ -610,6 +617,58 @@ export class EditarPersonal implements OnInit, OnDestroy {
   }
 
   // ── Guardar ───────────────────────────────────────────────────────────────
+  private cargarVariablesPersonal(documento: string) {
+    const dni = (documento ?? '').trim();
+    if (!dni) {
+      this.cargandoVariables = false;
+      return;
+    }
+
+    this.cargandoVariables = true;
+    this.apiService.listarVariablesPersonal(dni).subscribe({
+      next: (response) => {
+        this.cargandoVariables = false;
+        this.varGrupoSanguineo = '';
+        this.varAlergias = '';
+        this.varMedicinas = '';
+        this.contacto1 = { nombre: '', telefono: '', parentesco: '' };
+        this.contacto2 = { nombre: '', telefono: '', parentesco: '' };
+
+        const variables = Array.isArray(response?.data) ? response.data as VariablePersonal[] : [];
+        for (const variable of variables) {
+          const id = variable?.idvariable?.trim();
+          const valor = variable?.valor ?? '';
+
+          switch (id) {
+            case '018':
+              this.parseContacto(valor, this.contacto1);
+              break;
+            case '019':
+              this.varGrupoSanguineo = valor;
+              break;
+            case '020':
+              this.varAlergias = valor;
+              break;
+            case '021':
+              this.varMedicinas = valor;
+              break;
+            case '022':
+              this.parseContacto(valor, this.contacto2);
+              break;
+          }
+        }
+      },
+      error: () => {
+        this.cargandoVariables = false;
+        this.varGrupoSanguineo = '';
+        this.varAlergias = '';
+        this.varMedicinas = '';
+        this.contacto1 = { nombre: '', telefono: '', parentesco: '' };
+        this.contacto2 = { nombre: '', telefono: '', parentesco: '' };
+      }
+    });
+  }
+
   guardarPersonal() {
     if (!this.personalSeleccionado) return;
     this.form.Direccion_Referencia = this.construirReferenciaGuardada();
