@@ -794,6 +794,16 @@ export class Api {
     );
   }
 
+  listarVariablesPersonal(documento: string): Observable<any> {
+    return this.https.get<any>(
+      `${this.baseUrl}/Personal/${documento}/variables`,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
   listarDepartamentos(): Observable<any> {
     return this.https.get<any>(
       `${this.baseUrl}/Ubigeo/departamentos`,

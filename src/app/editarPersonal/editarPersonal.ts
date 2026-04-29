@@ -125,6 +125,12 @@ interface Contacto {
   parentesco: string;
 }
 
+interface VariablePersonal {
+  idcodigogeneral: string;
+  idvariable: string;
+  valor: string;
+}
+
 @Component({
   selector: 'app-personal',
   standalone: true,
@@ -143,6 +149,7 @@ interface Contacto {
   providers: [MessageService]
 })
 export class EditarPersonal implements OnInit, OnDestroy {
+  private readonly ubigeoFallback = '040101';
   cargandoPagina = false;
   sinAcceso = false;
   cargando = false;
@@ -376,6 +383,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
 
     this.cargarBeneficiarios(item.codigo);
     this.cargarArchivos(item.codigo);
+    this.cargarVariablesPersonal(item.dni ?? '');
     setTimeout(() => this.configurarMapaReferenciaInicial(), 0);
   }
 
@@ -454,6 +462,9 @@ export class EditarPersonal implements OnInit, OnDestroy {
             label: u.descripcion?.trim() ?? '',
             value: u.idubigeo ?? ''
           }));
+        }
+        if (this.personalSeleccionado && this.referenciaLatitud == null && this.referenciaLongitud == null) {
+          void this.configurarMapaReferenciaInicial();
         }
       },
       error: () => {
@@ -610,6 +621,58 @@ export class EditarPersonal implements OnInit, OnDestroy {
   }
 
   // ── Guardar ───────────────────────────────────────────────────────────────
+  private cargarVariablesPersonal(documento: string) {
+    const dni = (documento ?? '').trim();
+    if (!dni) {
+      this.cargandoVariables = false;
+      return;
+    }
+
+    this.cargandoVariables = true;
+    this.apiService.listarVariablesPersonal(dni).subscribe({
+      next: (response) => {
+        this.cargandoVariables = false;
+        this.varGrupoSanguineo = '';
+        this.varAlergias = '';
+        this.varMedicinas = '';
+        this.contacto1 = { nombre: '', telefono: '', parentesco: '' };
+        this.contacto2 = { nombre: '', telefono: '', parentesco: '' };
+
+        const variables = Array.isArray(response?.data) ? response.data as VariablePersonal[] : [];
+        for (const variable of variables) {
+          const id = variable?.idvariable?.trim();
+          const valor = variable?.valor ?? '';
+
+          switch (id) {
+            case '018':
+              this.parseContacto(valor, this.contacto1);
+              break;
+            case '019':
+              this.varGrupoSanguineo = valor;
+              break;
+            case '020':
+              this.varAlergias = valor;
+              break;
+            case '021':
+              this.varMedicinas = valor;
+              break;
+            case '022':
+              this.parseContacto(valor, this.contacto2);
+              break;
+          }
+        }
+      },
+      error: () => {
+        this.cargandoVariables = false;
+        this.varGrupoSanguineo = '';
+        this.varAlergias = '';
+        this.varMedicinas = '';
+        this.contacto1 = { nombre: '', telefono: '', parentesco: '' };
+        this.contacto2 = { nombre: '', telefono: '', parentesco: '' };
+      }
+    });
+  }
+
   guardarPersonal() {
     if (!this.personalSeleccionado) return;
     this.form.Direccion_Referencia = this.construirReferenciaGuardada();
@@ -871,39 +934,27 @@ export class EditarPersonal implements OnInit, OnDestroy {
   }
 
   async buscarReferenciaEnMapa(): Promise<void> {
-    const referencia = this.referenciaTexto.trim();
-    const ubigeoTexto = this.getTextoUbigeoSeleccionado();
     this.errorMapaReferencia = '';
 
     this.asegurarMapaReferencia();
 
-    if (!ubigeoTexto) {
-      this.errorMapaReferencia = 'Seleccione ubigeo antes de ubicar la referencia.';
-      return;
-    }
-
     this.cargandoMapaReferencia = true;
 
     try {
-      let primerResultado: any = null;
-
-      for (const query of this.construirConsultasReferencia()) {
-        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
-        const response = await fetch(url, {
-          headers: { Accept: 'application/json' }
-        });
-
-        if (!response.ok) {
-          continue;
-        }
-
-        const data = await response.json();
-        const resultado = Array.isArray(data) ? data[0] : null;
-        if (resultado?.lat && resultado?.lon) {
-          primerResultado = resultado;
-          break;
-        }
+      const primerResultado: any = null;
+      const coordenadas = await this.buscarCoordenadasPorConsultas(this.construirConsultasReferencia());
+      if (coordenadas) {
+        this.actualizarUbicacionReferencia(coordenadas.latitud, coordenadas.longitud, true);
+        return;
       }
+
+      if (!(await this.ubicarPorUbigeo(this.ubigeoFallback, true))) {
+        this.ubigeoSeleccionado = this.ubigeoFallback;
+        this.form.IdUbigeo = this.ubigeoFallback;
+        this.actualizarUbicacionReferencia(-16.398814, -71.536907, true);
+      }
+      this.errorMapaReferencia = 'No se encontró la referencia. Se ubicó el mapa en 040101; ingrese una referencia más exacta.';
+      return;
 
       if (!primerResultado?.lat || !primerResultado?.lon) {
         this.errorMapaReferencia = 'No se encontr� la referencia con los datos de direcci�n indicados.';
@@ -1004,11 +1055,13 @@ export class EditarPersonal implements OnInit, OnDestroy {
   }
 
 
-  private construirConsultasReferencia(): string[] {
-    const ubigeo = this.getTextoUbigeoSeleccionado();
+  private construirConsultasReferencia(idUbigeo?: string): string[] {
+    const codigoUbigeo = (idUbigeo ?? this.ubigeoSeleccionado) || this.form.IdUbigeo || this.ubigeoFallback;
+    const ubigeo = this.getTextoUbigeoPorId(codigoUbigeo);
     const referencia = this.referenciaTexto.trim();
     const zona = `${this.form.Descripcion_Zona ?? ''}`.trim();
     const via = `${this.form.Descripcion_Via ?? ''}`.trim();
+    const via2 = `${this.form.Descripcion_Via2 ?? ''}`.trim();
     const numero = this.form.Direccion_Numero != null ? `${this.form.Direccion_Numero}`.trim() : '';
     const kilometro = `${this.form.Direccion_Kilometro ?? ''}`.trim();
     const manzana = `${this.form.Direccion_Manzana ?? ''}`.trim();
@@ -1021,14 +1074,18 @@ export class EditarPersonal implements OnInit, OnDestroy {
       lote ? `Lote ${lote}` : ''
     ].filter(Boolean).join(' ');
 
+    const numeroCompuesto = [via2, numeroKmMz].filter(Boolean).join(' ').trim();
+
     const candidatos = [
       [referencia, ubigeo, 'Peru'],
       [zona, ubigeo, 'Peru'],
-      [via, numeroKmMz, ubigeo, 'Peru'],
+      [via, numeroCompuesto, ubigeo, 'Peru'],
       [via, ubigeo, 'Peru'],
+      [via, via2, ubigeo, 'Peru'],
       [referencia, zona, ubigeo, 'Peru'],
-      [referencia, via, numeroKmMz, ubigeo, 'Peru'],
-      [zona, via, numeroKmMz, ubigeo, 'Peru']
+      [referencia, via, numeroCompuesto, ubigeo, 'Peru'],
+      [zona, via, numeroCompuesto, ubigeo, 'Peru'],
+      [via, zona, ubigeo, 'Peru']
     ];
 
     return candidatos
@@ -1036,7 +1093,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
       .filter((valor, index, array) => !!valor && array.indexOf(valor) === index);
   }
 
-  private configurarMapaReferenciaInicial(): void {
+  private async configurarMapaReferenciaInicial(): Promise<void> {
     this.asegurarMapaReferencia();
 
     if (this.referenciaLatitud != null && this.referenciaLongitud != null) {
@@ -1044,7 +1101,25 @@ export class EditarPersonal implements OnInit, OnDestroy {
       return;
     }
 
-    this.mapaReferencia?.setView([-12.046374, -77.042793], 12);
+    const ubigeoObjetivo = this.form.IdUbigeo?.trim() || this.ubigeoSeleccionado || this.ubigeoFallback;
+
+    if (await this.ubicarPorUbigeo(ubigeoObjetivo, true)) {
+      return;
+    }
+
+    const coordenadasDireccion = await this.buscarCoordenadasPorConsultas(this.construirConsultasReferencia(ubigeoObjetivo));
+    if (coordenadasDireccion) {
+      this.actualizarUbicacionReferencia(coordenadasDireccion.latitud, coordenadasDireccion.longitud, true);
+      return;
+    }
+
+    if (ubigeoObjetivo !== this.ubigeoFallback && await this.ubicarPorUbigeo(this.ubigeoFallback, true)) {
+      return;
+    }
+
+    this.ubigeoSeleccionado = this.ubigeoFallback;
+    this.form.IdUbigeo = this.ubigeoFallback;
+    this.actualizarUbicacionReferencia(-16.398814, -71.536907, true);
   }
 
   private asegurarMapaReferencia(): void {
@@ -1103,8 +1178,58 @@ export class EditarPersonal implements OnInit, OnDestroy {
     }
   }
 
+  private async buscarCoordenadasPorConsultas(consultas: string[]): Promise<{ latitud: number; longitud: number } | null> {
+    for (const query of consultas) {
+      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
+      const response = await fetch(url, {
+        headers: { Accept: 'application/json' }
+      });
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const data = await response.json();
+      const resultado = Array.isArray(data) ? data[0] : null;
+      if (resultado?.lat && resultado?.lon) {
+        return {
+          latitud: Number(resultado.lat),
+          longitud: Number(resultado.lon)
+        };
+      }
+    }
+
+    return null;
+  }
+
+  private async ubicarPorUbigeo(idUbigeo: string, centrarMapa: boolean): Promise<boolean> {
+    const ubigeo = this.getTextoUbigeoPorId(idUbigeo);
+    if (!ubigeo) {
+      return false;
+    }
+
+    const coordenadas = await this.buscarCoordenadasPorConsultas([`${ubigeo}, Peru`]);
+    if (!coordenadas) {
+      return false;
+    }
+
+    this.ubigeoSeleccionado = idUbigeo;
+    this.form.IdUbigeo = idUbigeo;
+    this.actualizarUbicacionReferencia(coordenadas.latitud, coordenadas.longitud, centrarMapa);
+    return true;
+  }
+
+  private getTextoUbigeoPorId(idUbigeo: string): string {
+    const codigo = `${idUbigeo ?? ''}`.trim();
+    if (!codigo) {
+      return '';
+    }
+
+    return this.ubigeos.find(u => u.value === codigo)?.label ?? '';
+  }
+
   private getTextoUbigeoSeleccionado(): string {
-    const ubigeo = this.ubigeos.find(u => u.value === this.ubigeoSeleccionado)?.label ?? '';
+    const ubigeo = this.getTextoUbigeoPorId(this.ubigeoSeleccionado);
     if (ubigeo) {
       return ubigeo;
     }
