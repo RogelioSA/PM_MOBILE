@@ -81,3 +81,14 @@
   background: #2563eb;
   color: #eff6ff;
 }
+
+.dni-ayuda-img {
+  width: 100%;
+  max-width: 240px;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+}
+
+:host-context(.dark) .dni-ayuda-img {
+  border-color: #475569;
+}

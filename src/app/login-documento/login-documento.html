@@ -60,17 +60,41 @@
           inputStyleClass="w-full h-11 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-slate-600 rounded-md"
           styleClass="w-full login-doc-date"
           appendTo="body"
-          placeholder="Seleccione fecha"
+          placeholder="AAAA-MM-DD"
         ></p-datepicker>
+        <small class="text-xs text-gray-500 dark:text-gray-400">
+          Puede escribir la fecha directamente con formato AAAA-MM-DD.
+        </small>
       </div>
 
-      <input
-        pInputText
-        type="text"
-        placeholder="Digito verificador"
-        formControlName="digitoVerificador"
-        class="w-full h-11 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-slate-600 rounded-md"
-      />
+      <div class="flex flex-col gap-1">
+        <input
+          pInputText
+          type="text"
+          [placeholder]="requiereDigitoVerificador() ? 'Dígito verificador' : 'No aplica para CE'"
+          formControlName="digitoVerificador"
+          [readonly]="!requiereDigitoVerificador()"
+          class="w-full h-11 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-slate-600 rounded-md"
+        />
+        <small *ngIf="requiereDigitoVerificador()" class="text-xs text-gray-500 dark:text-gray-400">
+          Ejemplo de ubicación del dígito verificador en DNI:
+          <a
+            href="https://portal.andina.pe/edpespeciales/2024/img/dni.jpg"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-blue-600 dark:text-blue-400 underline"
+          >ver imagen</a>
+        </small>
+        <img
+          *ngIf="requiereDigitoVerificador()"
+          src="https://portal.andina.pe/edpespeciales/2024/img/dni.jpg"
+          alt="Ejemplo de ubicación del dígito verificador en DNI"
+          class="dni-ayuda-img"
+        />
+        <small *ngIf="!requiereDigitoVerificador()" class="text-xs text-gray-500 dark:text-gray-400">
+          Para carnet de extranjería (CE) no se utiliza dígito verificador.
+        </small>
+      </div>
 
       <div
         *ngIf="mensajeError"
