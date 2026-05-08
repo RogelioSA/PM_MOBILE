@@ -198,6 +198,50 @@ export class EditarPersonal implements OnInit, OnDestroy {
 
   bancos: any[] = [];
 
+  // ── Catálogos de tallas ───────────────────────────────────────────────────
+  // Camisa/Blusa y Polo: tallas tipo ropa S/M/L/XL
+  tallasCamisa: any[] = [
+    { label: 'XS',  value: 'XS'  },
+    { label: 'S',   value: 'S'   },
+    { label: 'M',   value: 'M'   },
+    { label: 'L',   value: 'L'   },
+    { label: 'XL',  value: 'XL'  },
+    { label: 'XXL', value: 'XXL' },
+    { label: '3XL', value: '3XL' },
+  ];
+
+  tallasPolo: any[] = [
+    { label: 'XS',  value: 'XS'  },
+    { label: 'S',   value: 'S'   },
+    { label: 'M',   value: 'M'   },
+    { label: 'L',   value: 'L'   },
+    { label: 'XL',  value: 'XL'  },
+    { label: 'XXL', value: 'XXL' },
+    { label: '3XL', value: '3XL' },
+  ];
+
+  tallasMameluco: any[] = [
+    { label: 'XS',  value: 'XS'  },
+    { label: 'S',   value: 'S'   },
+    { label: 'M',   value: 'M'   },
+    { label: 'L',   value: 'L'   },
+    { label: 'XL',  value: 'XL'  },
+    { label: 'XXL', value: 'XXL' },
+    { label: '3XL', value: '3XL' },
+  ];
+
+
+  // ── Variables de tallas (código 023–027) ──────────────────────────────────
+  varTallaCamisa   = '';   // 023
+  varTallaPolo     = '';   // 024
+  varTallaPantalon = '';   // 025
+  varTallaMameluco = '';   // 026
+  varTallaZapatos  = '';   // 027
+
+  // ── Foto del empleado ─────────────────────────────────────────────────────
+  fotoEmpleado: string | null = null;
+  subiendoFoto = false;
+
   // ── Ubigeo ────────────────────────────────────────────────────────────────
   departamentos: any[] = [];
   provincias: any[] = [];
@@ -273,6 +317,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
     }
     this.cargarBancos();
     this.cargarUbigeos();
+    this.cargarDepartamentos();
   }
 
   ngOnDestroy(): void {
@@ -342,6 +387,12 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.varGrupoSanguineo = '';
     this.varAlergias = '';
     this.varMedicinas = '';
+    this.varTallaCamisa   = '';
+    this.varTallaPolo     = '';
+    this.varTallaPantalon = '';
+    this.varTallaMameluco = '';
+    this.varTallaZapatos  = '';
+    this.fotoEmpleado = null;
     this.resetearReferenciaMapa();
 
     this.form = {
@@ -380,10 +431,11 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.referenciaLongitud = referenciaGuardada.longitud;
     this.form.Direccion_Referencia = referenciaGuardada.texto;
     this.ubigeoSeleccionado = item.idUbigeo ?? '';
-
+    this.precargarUbigeo(this.ubigeoSeleccionado);
     this.cargarBeneficiarios(item.codigo);
     this.cargarArchivos(item.codigo);
     this.cargarVariablesPersonal(item.dni ?? '');
+    this.cargarFotoEmpleado(item.codigo);
     setTimeout(() => this.configurarMapaReferenciaInicial(), 0);
   }
 
@@ -483,8 +535,8 @@ export class EditarPersonal implements OnInit, OnDestroy {
         const data = res?.data ?? res ?? [];
         if (Array.isArray(data)) {
           this.departamentos = data.map((d: any) => ({
-            label: d.descripcion?.trim() ?? d.nombre?.trim() ?? d.label,
-            value: d.id ?? d.codigo ?? d.value
+            label: d.descripcion?.trim() ?? d.DESCRIPCION?.trim() ?? '',
+            value: d.iddepartamento?.trim() ?? d.IDDEPARTAMENTO?.trim() ?? ''
           }));
         }
       },
@@ -501,8 +553,8 @@ export class EditarPersonal implements OnInit, OnDestroy {
         const data = res?.data ?? res ?? [];
         if (Array.isArray(data)) {
           this.provincias = data.map((p: any) => ({
-            label: p.descripcion?.trim() ?? p.nombre?.trim() ?? p.label,
-            value: p.id ?? p.codigo ?? p.value
+            label: p.descripcion?.trim() ?? p.DESCRIPCION?.trim() ?? '',
+            value: p.idprovincia?.trim() ?? p.IDPROVINCIA?.trim() ?? ''
           }));
         }
       },
@@ -519,8 +571,8 @@ export class EditarPersonal implements OnInit, OnDestroy {
         const data = res?.data ?? res ?? [];
         if (Array.isArray(data)) {
           this.distritos = data.map((d: any) => ({
-            label: d.descripcion?.trim() ?? d.nombre?.trim() ?? d.label,
-            value: d.id ?? d.codigo ?? d.value
+            label: d.descripcion?.trim() ?? d.DESCRIPCION?.trim() ?? '',
+            value: d.idubigeo?.trim() ?? d.IDUBIGEO?.trim() ?? ''
           }));
         }
       },
@@ -529,47 +581,47 @@ export class EditarPersonal implements OnInit, OnDestroy {
   }
 
   private precargarUbigeo(idUbigeo: string) {
-    this.depSeleccionado = '';
+    this.depSeleccionado  = '';
     this.provSeleccionada = '';
     this.distSeleccionado = '';
     this.provincias = [];
-    this.distritos = [];
+    this.distritos  = [];
 
-    if (!idUbigeo || idUbigeo.length < 2) return;
+    if (!idUbigeo || idUbigeo.length < 6) return;
 
-    const dep = idUbigeo.substring(0, 2);
+    const dep      = idUbigeo.substring(0, 2);  // '04'
+    const provCode = idUbigeo.substring(2, 4);  // '01'  ← solo el tramo de provincia
+    const provKey  = dep + provCode;             // '0401' ← para el value del select
+
     this.depSeleccionado = dep;
-
-    if (idUbigeo.length < 4) return;
-
-    const prov = idUbigeo.substring(0, 4);
     this.cargandoProv = true;
+
     this.apiService.listarProvincias(dep).subscribe({
       next: (res) => {
         this.cargandoProv = false;
         const data = res?.data ?? res ?? [];
         if (Array.isArray(data)) {
+          // value = dep + idprovincia  →  '04'+'01' = '0401'
           this.provincias = data.map((p: any) => ({
-            label: p.descripcion?.trim() ?? p.nombre?.trim() ?? p.label,
-            value: p.id ?? p.codigo ?? p.value
+            label: p.descripcion?.trim() ?? '',
+            value: dep + (p.idprovincia?.trim() ?? '')
           }));
         }
-        this.provSeleccionada = prov;
+        this.provSeleccionada = provKey;  // '0401'
 
-        if (idUbigeo.length < 6) return;
-
+        // Para la API de distritos solo se manda el código de provincia: '01'
         this.cargandoDist = true;
-        this.apiService.listarDistritos(prov).subscribe({
+        this.apiService.listarDistritos(provCode).subscribe({
           next: (res2) => {
             this.cargandoDist = false;
             const data2 = res2?.data ?? res2 ?? [];
             if (Array.isArray(data2)) {
               this.distritos = data2.map((d: any) => ({
-                label: d.descripcion?.trim() ?? d.nombre?.trim() ?? d.label,
-                value: d.id ?? d.codigo ?? d.value
+                label: d.descripcion?.trim() ?? '',
+                value: d.idubigeo?.trim() ?? ''   // '040129' completo
               }));
             }
-            this.distSeleccionado = idUbigeo;
+            this.distSeleccionado = idUbigeo;  // '040129'
           },
           error: () => { this.cargandoDist = false; }
         });
@@ -582,17 +634,50 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.provSeleccionada = '';
     this.distSeleccionado = '';
     this.provincias = [];
-    this.distritos = [];
+    this.distritos  = [];
     this.form.IdUbigeo = '';
-    if (this.depSeleccionado) this.cargarProvincias(this.depSeleccionado);
+    if (!this.depSeleccionado) return;
+
+    this.cargandoProv = true;
+    this.apiService.listarProvincias(this.depSeleccionado).subscribe({
+      next: (res) => {
+        this.cargandoProv = false;
+        const data = res?.data ?? res ?? [];
+        if (Array.isArray(data)) {
+          this.provincias = data.map((p: any) => ({
+            label: p.descripcion?.trim() ?? '',
+            value: this.depSeleccionado + (p.idprovincia?.trim() ?? '')
+          }));
+        }
+      },
+      error: () => { this.cargandoProv = false; }
+    });
   }
 
   onProvChange() {
     this.distSeleccionado = '';
     this.distritos = [];
     this.form.IdUbigeo = '';
-    if (this.provSeleccionada) this.cargarDistritos(this.provSeleccionada);
-  }
+    if (!this.provSeleccionada) return;
+
+    // provSeleccionada = '0401', la API solo quiere '01'
+    const provCode = this.provSeleccionada.substring(2);
+
+    this.cargandoDist = true;
+    this.apiService.listarDistritos(provCode).subscribe({
+      next: (res) => {
+        this.cargandoDist = false;
+        const data = res?.data ?? res ?? [];
+        if (Array.isArray(data)) {
+          this.distritos = data.map((d: any) => ({
+            label: d.descripcion?.trim() ?? '',
+            value: d.idubigeo?.trim() ?? ''
+          }));
+        }
+      },
+      error: () => { this.cargandoDist = false; }
+    });
+}
 
   onDistChange() {
     this.form.IdUbigeo = this.distSeleccionado;
@@ -620,7 +705,6 @@ export class EditarPersonal implements OnInit, OnDestroy {
     return [c.nombre, c.telefono, c.parentesco].join(',');
   }
 
-  // ── Guardar ───────────────────────────────────────────────────────────────
   private cargarVariablesPersonal(documento: string) {
     const dni = (documento ?? '').trim();
     if (!dni) {
@@ -633,46 +717,116 @@ export class EditarPersonal implements OnInit, OnDestroy {
       next: (response) => {
         this.cargandoVariables = false;
         this.varGrupoSanguineo = '';
-        this.varAlergias = '';
-        this.varMedicinas = '';
+        this.varAlergias       = '';
+        this.varMedicinas      = '';
+        this.varTallaCamisa    = '';
+        this.varTallaPolo      = '';
+        this.varTallaPantalon  = '';
+        this.varTallaMameluco  = '';
+        this.varTallaZapatos   = '';
         this.contacto1 = { nombre: '', telefono: '', parentesco: '' };
         this.contacto2 = { nombre: '', telefono: '', parentesco: '' };
 
         const variables = Array.isArray(response?.data) ? response.data as VariablePersonal[] : [];
         for (const variable of variables) {
-          const id = variable?.idvariable?.trim();
+          const id    = variable?.idvariable?.trim();
           const valor = variable?.valor ?? '';
 
           switch (id) {
-            case '018':
-              this.parseContacto(valor, this.contacto1);
-              break;
-            case '019':
-              this.varGrupoSanguineo = valor;
-              break;
-            case '020':
-              this.varAlergias = valor;
-              break;
-            case '021':
-              this.varMedicinas = valor;
-              break;
-            case '022':
-              this.parseContacto(valor, this.contacto2);
-              break;
+            case '018': this.parseContacto(valor, this.contacto1); break;
+            case '019': this.varGrupoSanguineo = valor; break;
+            case '020': this.varAlergias       = valor; break;
+            case '021': this.varMedicinas      = valor; break;
+            case '022': this.parseContacto(valor, this.contacto2); break;
+            case '023': this.varTallaCamisa    = valor; break;
+            case '024': this.varTallaPolo      = valor; break;
+            case '025': this.varTallaPantalon  = valor; break;
+            case '026': this.varTallaMameluco  = valor; break;
+            case '027': this.varTallaZapatos   = valor; break;
           }
         }
       },
       error: () => {
         this.cargandoVariables = false;
         this.varGrupoSanguineo = '';
-        this.varAlergias = '';
-        this.varMedicinas = '';
+        this.varAlergias       = '';
+        this.varMedicinas      = '';
+        this.varTallaCamisa    = '';
+        this.varTallaPolo      = '';
+        this.varTallaPantalon  = '';
+        this.varTallaMameluco  = '';
+        this.varTallaZapatos   = '';
         this.contacto1 = { nombre: '', telefono: '', parentesco: '' };
         this.contacto2 = { nombre: '', telefono: '', parentesco: '' };
       }
     });
   }
 
+  // ── Foto del empleado ─────────────────────────────────────────────────────
+  /**
+   * Carga la foto de perfil del empleado. Se asume que la API devuelve
+   * { success: boolean, data: { url: string } | null }.
+   * Ajusta el método según tu ApiService real.
+   */
+  cargarFotoEmpleado(codigo: string) {
+    this.fotoEmpleado = null;
+    this.apiService.listarArchivosPersonal(codigo).subscribe({
+      next: (response) => {
+        if (response?.success && Array.isArray(response.data)) {
+          const prefijo = `foto_${codigo}`.toLowerCase();
+          const foto = response.data.find((a: any) => {
+            const nombre = (a.nombre ?? a.name ?? '').toLowerCase();
+            return nombre.startsWith(prefijo);
+          });
+          this.fotoEmpleado = foto ? (foto.url ?? foto.ruta ?? null) : null;
+        }
+      },
+      error: () => { this.fotoEmpleado = null; }
+    });
+  }
+
+  onSeleccionarFoto(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length || !this.personalSeleccionado) return;
+
+    const archivoOriginal = input.files[0];
+    input.value = '';
+
+    if (!this.esImagen(archivoOriginal.name)) {
+      this.messageService.add({
+        severity: 'warn', summary: 'Formato inválido',
+        detail: 'Solo se permiten imágenes (JPG, PNG, WEBP)', life: 3000
+      });
+      return;
+    }
+
+    const codigo = this.personalSeleccionado.codigo;
+    // Renombrar con nombre fijo para identificarla
+    const extension = archivoOriginal.name.split('.').pop() ?? 'jpg';
+    const nombreFijo = `foto_${codigo}.${extension}`;
+    const archivoRenombrado = new File([archivoOriginal], nombreFijo, { type: archivoOriginal.type });
+
+    this.subiendoFoto = true;
+    this.apiService.subirArchivoPersonal(codigo, archivoRenombrado, 'imagen').subscribe({
+      next: () => {
+        this.subiendoFoto = false;
+        this.messageService.add({
+          severity: 'success', summary: 'Foto actualizada',
+          detail: 'La foto de perfil se actualizó correctamente', life: 3000
+        });
+        this.cargarFotoEmpleado(codigo);
+      },
+      error: () => {
+        this.subiendoFoto = false;
+        this.messageService.add({
+          severity: 'error', summary: 'Error',
+          detail: 'No se pudo subir la foto', life: 3000
+        });
+      }
+    });
+  }
+
+  // ── Guardar ───────────────────────────────────────────────────────────────
   guardarPersonal() {
     if (!this.personalSeleccionado) return;
     this.form.Direccion_Referencia = this.construirReferenciaGuardada();
@@ -686,6 +840,12 @@ export class EditarPersonal implements OnInit, OnDestroy {
       this.apiService.guardarVariablePersonal(codigo, '021', this.varMedicinas).pipe(catchError(() => of(null))),
       this.apiService.guardarVariablePersonal(codigo, '018', this.formatContacto(this.contacto1)).pipe(catchError(() => of(null))),
       this.apiService.guardarVariablePersonal(codigo, '022', this.formatContacto(this.contacto2)).pipe(catchError(() => of(null))),
+      // Tallas
+      this.apiService.guardarVariablePersonal(codigo, '023', this.varTallaCamisa).pipe(catchError(() => of(null))),
+      this.apiService.guardarVariablePersonal(codigo, '024', this.varTallaPolo).pipe(catchError(() => of(null))),
+      this.apiService.guardarVariablePersonal(codigo, '025', this.varTallaPantalon).pipe(catchError(() => of(null))),
+      this.apiService.guardarVariablePersonal(codigo, '026', this.varTallaMameluco).pipe(catchError(() => of(null))),
+      this.apiService.guardarVariablePersonal(codigo, '027', this.varTallaZapatos).pipe(catchError(() => of(null))),
     ];
 
     forkJoin(saves).subscribe({
@@ -935,13 +1095,10 @@ export class EditarPersonal implements OnInit, OnDestroy {
 
   async buscarReferenciaEnMapa(): Promise<void> {
     this.errorMapaReferencia = '';
-
     this.asegurarMapaReferencia();
-
     this.cargandoMapaReferencia = true;
 
     try {
-      const primerResultado: any = null;
       const coordenadas = await this.buscarCoordenadasPorConsultas(this.construirConsultasReferencia());
       if (coordenadas) {
         this.actualizarUbicacionReferencia(coordenadas.latitud, coordenadas.longitud, true);
@@ -954,20 +1111,8 @@ export class EditarPersonal implements OnInit, OnDestroy {
         this.actualizarUbicacionReferencia(-16.398814, -71.536907, true);
       }
       this.errorMapaReferencia = 'No se encontró la referencia. Se ubicó el mapa en 040101; ingrese una referencia más exacta.';
-      return;
-
-      if (!primerResultado?.lat || !primerResultado?.lon) {
-        this.errorMapaReferencia = 'No se encontr� la referencia con los datos de direcci�n indicados.';
-        return;
-      }
-
-      this.actualizarUbicacionReferencia(
-        Number(primerResultado.lat),
-        Number(primerResultado.lon),
-        true
-      );
     } catch {
-      this.errorMapaReferencia = 'No se pudo obtener la ubicaci�n en el mapa.';
+      this.errorMapaReferencia = 'No se pudo obtener la ubicación en el mapa.';
     } finally {
       this.cargandoMapaReferencia = false;
     }
@@ -977,7 +1122,6 @@ export class EditarPersonal implements OnInit, OnDestroy {
     if (this.referenciaLatitud == null || this.referenciaLongitud == null) {
       return 'Sin coordenadas seleccionadas';
     }
-
     return `${this.referenciaLatitud.toFixed(6)}, ${this.referenciaLongitud.toFixed(6)}`;
   }
 
@@ -1024,16 +1168,12 @@ export class EditarPersonal implements OnInit, OnDestroy {
 
   private descomponerReferenciaGuardada(valor: string): { texto: string; latitud: number | null; longitud: number | null } {
     const limpio = `${valor ?? ''}`.trim();
-    if (!limpio) {
-      return { texto: '', latitud: null, longitud: null };
-    }
+    if (!limpio) return { texto: '', latitud: null, longitud: null };
 
     const partes = limpio.split(',').map(parte => parte.trim()).filter(Boolean);
-    if (partes.length < 3) {
-      return { texto: limpio, latitud: null, longitud: null };
-    }
+    if (partes.length < 3) return { texto: limpio, latitud: null, longitud: null };
 
-    const latitud = Number(partes[partes.length - 2]);
+    const latitud  = Number(partes[partes.length - 2]);
     const longitud = Number(partes[partes.length - 1]);
 
     if (Number.isNaN(latitud) || Number.isNaN(longitud)) {
@@ -1054,24 +1194,23 @@ export class EditarPersonal implements OnInit, OnDestroy {
     return `${referencia},${this.referenciaLatitud.toFixed(6)},${this.referenciaLongitud.toFixed(6)}`;
   }
 
-
   private construirConsultasReferencia(idUbigeo?: string): string[] {
     const codigoUbigeo = (idUbigeo ?? this.ubigeoSeleccionado) || this.form.IdUbigeo || this.ubigeoFallback;
-    const ubigeo = this.getTextoUbigeoPorId(codigoUbigeo);
+    const ubigeo    = this.getTextoUbigeoPorId(codigoUbigeo);
     const referencia = this.referenciaTexto.trim();
-    const zona = `${this.form.Descripcion_Zona ?? ''}`.trim();
-    const via = `${this.form.Descripcion_Via ?? ''}`.trim();
-    const via2 = `${this.form.Descripcion_Via2 ?? ''}`.trim();
-    const numero = this.form.Direccion_Numero != null ? `${this.form.Direccion_Numero}`.trim() : '';
+    const zona      = `${this.form.Descripcion_Zona ?? ''}`.trim();
+    const via       = `${this.form.Descripcion_Via ?? ''}`.trim();
+    const via2      = `${this.form.Descripcion_Via2 ?? ''}`.trim();
+    const numero    = this.form.Direccion_Numero != null ? `${this.form.Direccion_Numero}`.trim() : '';
     const kilometro = `${this.form.Direccion_Kilometro ?? ''}`.trim();
-    const manzana = `${this.form.Direccion_Manzana ?? ''}`.trim();
-    const lote = `${this.form.Direccion_Lote ?? ''}`.trim();
+    const manzana   = `${this.form.Direccion_Manzana ?? ''}`.trim();
+    const lote      = `${this.form.Direccion_Lote ?? ''}`.trim();
 
     const numeroKmMz = [
-      numero ? `N� ${numero}` : '',
+      numero    ? `N° ${numero}`   : '',
       kilometro ? `KM ${kilometro}` : '',
-      manzana ? `Mz ${manzana}` : '',
-      lote ? `Lote ${lote}` : ''
+      manzana   ? `Mz ${manzana}`  : '',
+      lote      ? `Lote ${lote}`   : ''
     ].filter(Boolean).join(' ');
 
     const numeroCompuesto = [via2, numeroKmMz].filter(Boolean).join(' ').trim();
@@ -1103,9 +1242,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
 
     const ubigeoObjetivo = this.form.IdUbigeo?.trim() || this.ubigeoSeleccionado || this.ubigeoFallback;
 
-    if (await this.ubicarPorUbigeo(ubigeoObjetivo, true)) {
-      return;
-    }
+    if (await this.ubicarPorUbigeo(ubigeoObjetivo, true)) return;
 
     const coordenadasDireccion = await this.buscarCoordenadasPorConsultas(this.construirConsultasReferencia(ubigeoObjetivo));
     if (coordenadasDireccion) {
@@ -1113,9 +1250,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
       return;
     }
 
-    if (ubigeoObjetivo !== this.ubigeoFallback && await this.ubicarPorUbigeo(this.ubigeoFallback, true)) {
-      return;
-    }
+    if (ubigeoObjetivo !== this.ubigeoFallback && await this.ubicarPorUbigeo(this.ubigeoFallback, true)) return;
 
     this.ubigeoSeleccionado = this.ubigeoFallback;
     this.form.IdUbigeo = this.ubigeoFallback;
@@ -1134,9 +1269,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
       return;
     }
 
-    this.mapaReferencia = L.map('referencia-map', {
-      zoomControl: true
-    }).setView([-12.046374, -77.042793], 12);
+    this.mapaReferencia = L.map('referencia-map', { zoomControl: true }).setView([-12.046374, -77.042793], 12);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
@@ -1166,7 +1299,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
       this.markerReferencia.on('dragend', () => {
         const posicion = this.markerReferencia?.getLatLng();
         if (!posicion) return;
-        this.referenciaLatitud = posicion.lat;
+        this.referenciaLatitud  = posicion.lat;
         this.referenciaLongitud = posicion.lng;
       });
     } else {
@@ -1181,38 +1314,22 @@ export class EditarPersonal implements OnInit, OnDestroy {
   private async buscarCoordenadasPorConsultas(consultas: string[]): Promise<{ latitud: number; longitud: number } | null> {
     for (const query of consultas) {
       const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
-      const response = await fetch(url, {
-        headers: { Accept: 'application/json' }
-      });
-
-      if (!response.ok) {
-        continue;
-      }
-
+      const response = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!response.ok) continue;
       const data = await response.json();
       const resultado = Array.isArray(data) ? data[0] : null;
       if (resultado?.lat && resultado?.lon) {
-        return {
-          latitud: Number(resultado.lat),
-          longitud: Number(resultado.lon)
-        };
+        return { latitud: Number(resultado.lat), longitud: Number(resultado.lon) };
       }
     }
-
     return null;
   }
 
   private async ubicarPorUbigeo(idUbigeo: string, centrarMapa: boolean): Promise<boolean> {
     const ubigeo = this.getTextoUbigeoPorId(idUbigeo);
-    if (!ubigeo) {
-      return false;
-    }
-
+    if (!ubigeo) return false;
     const coordenadas = await this.buscarCoordenadasPorConsultas([`${ubigeo}, Peru`]);
-    if (!coordenadas) {
-      return false;
-    }
-
+    if (!coordenadas) return false;
     this.ubigeoSeleccionado = idUbigeo;
     this.form.IdUbigeo = idUbigeo;
     this.actualizarUbicacionReferencia(coordenadas.latitud, coordenadas.longitud, centrarMapa);
@@ -1221,23 +1338,16 @@ export class EditarPersonal implements OnInit, OnDestroy {
 
   private getTextoUbigeoPorId(idUbigeo: string): string {
     const codigo = `${idUbigeo ?? ''}`.trim();
-    if (!codigo) {
-      return '';
-    }
-
+    if (!codigo) return '';
     return this.ubigeos.find(u => u.value === codigo)?.label ?? '';
   }
 
   private getTextoUbigeoSeleccionado(): string {
     const ubigeo = this.getTextoUbigeoPorId(this.ubigeoSeleccionado);
-    if (ubigeo) {
-      return ubigeo;
-    }
-
+    if (ubigeo) return ubigeo;
     const departamento = this.departamentos.find(d => d.value === this.depSeleccionado)?.label ?? '';
-    const provincia = this.provincias.find(p => p.value === this.provSeleccionada)?.label ?? '';
-    const distrito = this.distritos.find(d => d.value === this.distSeleccionado)?.label ?? '';
-
+    const provincia    = this.provincias.find(p => p.value === this.provSeleccionada)?.label ?? '';
+    const distrito     = this.distritos.find(d => d.value === this.distSeleccionado)?.label ?? '';
     return [distrito, provincia, departamento].filter(Boolean).join(', ');
   }
 
@@ -1255,11 +1365,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
         b.fecha_Nacimiento ?? b.fechA_NACIMIENTO ?? b.fechaNacimiento ?? ''
       ),
       sexo: b.sexo ?? '',
-      buscando: false,
-      guardando: false,
-      guardado: true,
-      editando: false,
-      error: ''
+      buscando: false, guardando: false, guardado: true, editando: false, error: ''
     };
   }
 
@@ -1268,7 +1374,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
   }
 
   private esDocumentoBeneficiarioValido(documento: string, tipoDocumento: string): boolean {
-    const valor = (documento ?? '').trim();
+    const valor   = (documento ?? '').trim();
     const tipoDoc = this.normalizarTipoDocumentoBeneficiario(tipoDocumento);
     if (!valor) return false;
     if (tipoDoc === '01') return /^\d{8}$/.test(valor);
@@ -1279,13 +1385,11 @@ export class EditarPersonal implements OnInit, OnDestroy {
     const valor = `${fecha ?? ''}`.trim();
     if (!valor) return '';
     if (/^\d{4}-\d{2}-\d{2}/.test(valor)) return valor.substring(0, 10);
-
     const partes = valor.split('/');
     if (partes.length === 3) {
       const [dia, mes, anio] = partes;
       if (dia && mes && anio) return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
     }
-
     return valor;
   }
 
@@ -1295,5 +1399,4 @@ export class EditarPersonal implements OnInit, OnDestroy {
     const p = this.personalSeleccionado;
     return `${p.nombres ?? ''} ${p.apellido_Paterno ?? ''} ${p.apellido_Materno ?? ''}`.trim();
   }
-
 }
