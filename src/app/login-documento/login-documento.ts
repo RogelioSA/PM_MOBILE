@@ -46,6 +46,11 @@ export class LoginDocumento implements OnInit {
   }
 
   ngOnInit(): void {
+    this.form.get('tipoDocumento')?.valueChanges.subscribe((tipo) => {
+      this.actualizarValidacionDigitoVerificador(tipo);
+    });
+    this.actualizarValidacionDigitoVerificador(this.form.get('tipoDocumento')?.value);
+
     const token = this.getCookie('token');
     if (token) {
       this.router.navigate(['/editarDatos']);
@@ -93,6 +98,24 @@ export class LoginDocumento implements OnInit {
 
   getPlaceholderDocumento(): string {
     return this.form.get('tipoDocumento')?.value === 'CE' ? 'Ingrese CE' : 'Ingrese DNI';
+  }
+
+  requiereDigitoVerificador(): boolean {
+    return this.form.get('tipoDocumento')?.value !== 'CE';
+  }
+
+  private actualizarValidacionDigitoVerificador(tipoDocumento: string): void {
+    const control = this.form.get('digitoVerificador');
+    if (!control) return;
+
+    if (tipoDocumento === 'CE') {
+      control.clearValidators();
+      control.setValue('');
+    } else {
+      control.setValidators([Validators.required]);
+    }
+
+    control.updateValueAndValidity();
   }
 
   private getCookie(name: string): string | null {
