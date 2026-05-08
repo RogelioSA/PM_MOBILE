@@ -806,33 +806,22 @@ export class Api {
 
   listarDepartamentos(): Observable<any> {
     return this.https.get<any>(
-      `${this.baseUrl}/Ubigeo/departamentos`,
+      `${this.baseUrl}/Personal/departamentos`,
       { headers: this.authService.getHeaders() }
-    ).pipe(
-      map(response => response),
-      catchError(error => throwError(() => error))
     );
   }
 
-  listarProvincias(codigoDep: string): Observable<any> {
-    const params = new HttpParams().set('codigo', codigoDep);
+  listarProvincias(idDepartamento: string): Observable<any> {
     return this.https.get<any>(
-      `${this.baseUrl}/Ubigeo/provincias`,
-      { headers: this.authService.getHeaders(), params }
-    ).pipe(
-      map(response => response),
-      catchError(error => throwError(() => error))
+      `${this.baseUrl}/Personal/provincias/${idDepartamento}`,
+      { headers: this.authService.getHeaders() }
     );
   }
 
-  listarDistritos(codigoProv: string): Observable<any> {
-    const params = new HttpParams().set('codigo', codigoProv);
+  listarDistritos(idProvincia: string): Observable<any> {
     return this.https.get<any>(
-      `${this.baseUrl}/Ubigeo/distritos`,
-      { headers: this.authService.getHeaders(), params }
-    ).pipe(
-      map(response => response),
-      catchError(error => throwError(() => error))
+      `${this.baseUrl}/Personal/distritos/${idProvincia}`,
+      { headers: this.authService.getHeaders() }
     );
   }
 
