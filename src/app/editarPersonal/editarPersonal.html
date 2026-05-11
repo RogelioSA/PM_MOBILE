@@ -299,9 +299,17 @@
             </div>
             <div class="flex flex-col gap-2">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Distrito</label>
-              <p-select [(ngModel)]="distSeleccionado" [options]="distritos" optionLabel="label" optionValue="value"
-                placeholder="Seleccione" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar..."
-                [loading]="cargandoDist" [disabled]="!provSeleccionada" (onChange)="onDistChange()" />
+              <p-select
+                [(ngModel)]="distSeleccionado"
+                [options]="ubigeos"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Buscar distrito..."
+                styleClass="w-full"
+                [filter]="true"
+                filterPlaceholder="Escriba el nombre del distrito..."
+                [loading]="cargandoUbigeos"
+                (onChange)="onDistChange()" />
             </div>
           </div>
         </div>
@@ -545,7 +553,7 @@
                 <th class="text-left p-2 font-semibold text-gray-700 dark:text-gray-200 text-xs">Apellidos y Nombres
                 </th>
                 <th class="text-left p-2 font-semibold text-gray-700 dark:text-gray-200 text-xs">F. Nacimiento</th>
-                <th class="text-left p-2 font-semibold text-gray-700 dark:text-gray-200 text-xs">Sexo</th>
+
                 <th class="p-2 text-center font-semibold text-gray-700 dark:text-gray-200 text-xs">Estado</th>
                 <th class="p-2 w-24 text-center font-semibold text-gray-700 dark:text-gray-200 text-xs">Acciones</th>
               </tr>
@@ -585,14 +593,6 @@
                     [disabled]="b.buscando" />
                 </td>
 
-                <td class="p-2 text-xs">
-                  <select [(ngModel)]="b.sexo" [disabled]="b.buscando" class="h-8 text-xs w-28 rounded border border-gray-300 dark:border-gray-600
-                           bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200 px-2">
-                    <option value="">Sexo</option>
-                    <option value="M">Masculino</option>
-                    <option value="F">Femenino</option>
-                  </select>
-                </td>
 
                 <td class="p-2 text-center">
                   <span *ngIf="b.buscando"

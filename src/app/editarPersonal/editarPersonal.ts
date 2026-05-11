@@ -104,19 +104,22 @@ interface Beneficiario {
 }
 
 interface BeneficiarioRequest {
-  IdDocIdentidad: string;
-  Nombres: string;
-  A_Paterno: string;
-  A_Materno: string;
-  NroDocumento: string;
-  Fecha_Nacimiento: string | null;
-  Sexo: string;
+  item: string;
+  a_Paterno: string;
+  a_Materno: string;
+  nombres: string;
+  nroDocumento: string;
+  fechaNacimiento: string | null;
+  situacion: string;
+  idDocIdentidad: string;
+  idVinculo: string;
 }
 
 interface ArchivoPersonal {
   nombre: string;
   url: string;
   esImagen: boolean;
+  lastModified: string | null;
 }
 
 interface Contacto {
@@ -199,7 +202,6 @@ export class EditarPersonal implements OnInit, OnDestroy {
   bancos: any[] = [];
 
   // ── Catálogos de tallas ───────────────────────────────────────────────────
-  // Camisa/Blusa y Polo: tallas tipo ropa S/M/L/XL
   tallasCamisa: any[] = [
     { label: 'XS',  value: 'XS'  },
     { label: 'S',   value: 'S'   },
@@ -230,7 +232,6 @@ export class EditarPersonal implements OnInit, OnDestroy {
     { label: '3XL', value: '3XL' },
   ];
 
-
   // ── Variables de tallas (código 023–027) ──────────────────────────────────
   varTallaCamisa   = '';   // 023
   varTallaPolo     = '';   // 024
@@ -245,15 +246,14 @@ export class EditarPersonal implements OnInit, OnDestroy {
   // ── Ubigeo ────────────────────────────────────────────────────────────────
   departamentos: any[] = [];
   provincias: any[] = [];
-  distritos: any[] = [];
+  // distritos ya no se usa — el select de distrito usa `ubigeos` directamente
   ubigeos: any[] = [];
-  ubigeoSeleccionado = '';
+  ubigeoSeleccionado = '';   // se mantiene por compatibilidad con el mapa
   depSeleccionado = '';
   provSeleccionada = '';
-  distSeleccionado = '';
+  distSeleccionado = '';     // idubigeo completo (ej: '040129'), vinculado al select de distrito
   cargandoDep = false;
   cargandoProv = false;
-  cargandoDist = false;
   cargandoUbigeos = false;
 
   // ── Variables médicas ─────────────────────────────────────────────────────
@@ -421,7 +421,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
       Estado_Civil: this.resolverEstadoCivil(item.estado_Civil),
       Grado_Instruccion: this.resolverGradoInstruccion(item.grado_Instruccion),
       Nro_Hijos: item.nro_Hijos ?? '',
-      IdBanco: item.banco_Cts?.trim() ?? '',
+      IdBanco: this.resolverBancoPorDescripcion(item.banco_Cts?.trim() ?? ''),
       Cuenta_Cts: item.cuenta_Cts?.trim() ?? ''
     };
 
@@ -430,12 +430,13 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.referenciaLatitud = referenciaGuardada.latitud;
     this.referenciaLongitud = referenciaGuardada.longitud;
     this.form.Direccion_Referencia = referenciaGuardada.texto;
-    this.ubigeoSeleccionado = item.idUbigeo ?? '';
-    this.precargarUbigeo(this.ubigeoSeleccionado);
+
+    // Precargar ubigeo: dep, prov y dist (usando ubigeos para el distrito)
+    this.precargarUbigeo(item.idUbigeo ?? '');
+
     this.cargarBeneficiarios(item.codigo);
     this.cargarArchivos(item.codigo);
     this.cargarVariablesPersonal(item.dni ?? '');
-    this.cargarFotoEmpleado(item.codigo);
     setTimeout(() => this.configurarMapaReferenciaInicial(), 0);
   }
 
@@ -488,6 +489,20 @@ export class EditarPersonal implements OnInit, OnDestroy {
     return '';
   }
 
+  /**
+   * Busca el value (iddocumento) del banco cuya descripción coincida
+   * con el texto que devuelve el backend en banco_Cts.
+   * Se hace match bidireccional para cubrir truncados o variantes.
+   */
+  private resolverBancoPorDescripcion(descripcion: string): string {
+    if (!descripcion) return '';
+    const desc = descripcion.toUpperCase();
+    const banco = this.bancos.find(b =>
+      b.label?.toUpperCase().includes(desc) || desc.includes(b.label?.toUpperCase())
+    );
+    return banco?.value ?? '';
+  }
+
   // ── Bancos ────────────────────────────────────────────────────────────────
   cargarBancos() {
     this.masterService.Bancos('001').subscribe({
@@ -497,12 +512,19 @@ export class EditarPersonal implements OnInit, OnDestroy {
             label: b.descripcion?.trim(),
             value: b.iddocumento?.trim()
           }));
+          // Re-resolver banco si el personal ya fue cargado antes que los bancos
+          if (this.personalSeleccionado) {
+            this.form.IdBanco = this.resolverBancoPorDescripcion(
+              this.personalSeleccionado.banco_Cts?.trim() ?? ''
+            );
+          }
         }
       },
       error: () => {}
     });
   }
 
+  // ── Ubigeos (para el select de distrito) ─────────────────────────────────
   cargarUbigeos() {
     this.cargandoUbigeos = true;
     this.apiService.listarUbigeosPersonal().subscribe({
@@ -515,8 +537,9 @@ export class EditarPersonal implements OnInit, OnDestroy {
             value: u.idubigeo ?? ''
           }));
         }
-        if (this.personalSeleccionado && this.referenciaLatitud == null && this.referenciaLongitud == null) {
-          void this.configurarMapaReferenciaInicial();
+        // Si el personal ya estaba cargado, precargar el distrito en el select
+        if (this.personalSeleccionado) {
+          this.distSeleccionado = this.personalSeleccionado.idUbigeo ?? '';
         }
       },
       error: () => {
@@ -526,7 +549,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
     });
   }
 
-  // ── Ubigeo ────────────────────────────────────────────────────────────────
+  // ── Ubigeo (departamento / provincia / distrito) ──────────────────────────
   cargarDepartamentos() {
     this.cargandoDep = true;
     this.apiService.listarDepartamentos().subscribe({
@@ -554,7 +577,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
         if (Array.isArray(data)) {
           this.provincias = data.map((p: any) => ({
             label: p.descripcion?.trim() ?? p.DESCRIPCION?.trim() ?? '',
-            value: p.idprovincia?.trim() ?? p.IDPROVINCIA?.trim() ?? ''
+            value: codigoDep + (p.idprovincia?.trim() ?? p.IDPROVINCIA?.trim() ?? '')
           }));
         }
       },
@@ -562,36 +585,22 @@ export class EditarPersonal implements OnInit, OnDestroy {
     });
   }
 
-  cargarDistritos(codigoProv: string) {
-    this.cargandoDist = true;
-    this.distritos = [];
-    this.apiService.listarDistritos(codigoProv).subscribe({
-      next: (res) => {
-        this.cargandoDist = false;
-        const data = res?.data ?? res ?? [];
-        if (Array.isArray(data)) {
-          this.distritos = data.map((d: any) => ({
-            label: d.descripcion?.trim() ?? d.DESCRIPCION?.trim() ?? '',
-            value: d.idubigeo?.trim() ?? d.IDUBIGEO?.trim() ?? ''
-          }));
-        }
-      },
-      error: () => { this.cargandoDist = false; }
-    });
-  }
-
+  /**
+   * Precarga dep → prov → distrito a partir del idUbigeo completo (6 dígitos).
+   * El select de distrito usa `ubigeos` (ya cargado), por lo que solo asignamos
+   * distSeleccionado con el idubigeo completo.
+   */
   private precargarUbigeo(idUbigeo: string) {
     this.depSeleccionado  = '';
     this.provSeleccionada = '';
     this.distSeleccionado = '';
     this.provincias = [];
-    this.distritos  = [];
 
     if (!idUbigeo || idUbigeo.length < 6) return;
 
-    const dep      = idUbigeo.substring(0, 2);  // '04'
-    const provCode = idUbigeo.substring(2, 4);  // '01'  ← solo el tramo de provincia
-    const provKey  = dep + provCode;             // '0401' ← para el value del select
+    const dep      = idUbigeo.substring(0, 2);   // ej: '04'
+    const provCode = idUbigeo.substring(2, 4);   // ej: '01'
+    const provKey  = dep + provCode;              // ej: '0401'
 
     this.depSeleccionado = dep;
     this.cargandoProv = true;
@@ -601,30 +610,18 @@ export class EditarPersonal implements OnInit, OnDestroy {
         this.cargandoProv = false;
         const data = res?.data ?? res ?? [];
         if (Array.isArray(data)) {
-          // value = dep + idprovincia  →  '04'+'01' = '0401'
           this.provincias = data.map((p: any) => ({
             label: p.descripcion?.trim() ?? '',
             value: dep + (p.idprovincia?.trim() ?? '')
           }));
         }
-        this.provSeleccionada = provKey;  // '0401'
+        this.provSeleccionada = provKey;
 
-        // Para la API de distritos solo se manda el código de provincia: '01'
-        this.cargandoDist = true;
-        this.apiService.listarDistritos(provCode).subscribe({
-          next: (res2) => {
-            this.cargandoDist = false;
-            const data2 = res2?.data ?? res2 ?? [];
-            if (Array.isArray(data2)) {
-              this.distritos = data2.map((d: any) => ({
-                label: d.descripcion?.trim() ?? '',
-                value: d.idubigeo?.trim() ?? ''   // '040129' completo
-              }));
-            }
-            this.distSeleccionado = idUbigeo;  // '040129'
-          },
-          error: () => { this.cargandoDist = false; }
-        });
+        // El distrito se muestra directamente desde `ubigeos` con el id completo
+        this.distSeleccionado = idUbigeo;
+        this.form.IdUbigeo    = idUbigeo;
+        // También sincronizamos ubigeoSeleccionado para el mapa
+        this.ubigeoSeleccionado = idUbigeo;
       },
       error: () => { this.cargandoProv = false; }
     });
@@ -634,7 +631,6 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.provSeleccionada = '';
     this.distSeleccionado = '';
     this.provincias = [];
-    this.distritos  = [];
     this.form.IdUbigeo = '';
     if (!this.depSeleccionado) return;
 
@@ -656,35 +652,13 @@ export class EditarPersonal implements OnInit, OnDestroy {
 
   onProvChange() {
     this.distSeleccionado = '';
-    this.distritos = [];
     this.form.IdUbigeo = '';
-    if (!this.provSeleccionada) return;
-
-    // provSeleccionada = '0401', la API solo quiere '01'
-    const provCode = this.provSeleccionada.substring(2);
-
-    this.cargandoDist = true;
-    this.apiService.listarDistritos(provCode).subscribe({
-      next: (res) => {
-        this.cargandoDist = false;
-        const data = res?.data ?? res ?? [];
-        if (Array.isArray(data)) {
-          this.distritos = data.map((d: any) => ({
-            label: d.descripcion?.trim() ?? '',
-            value: d.idubigeo?.trim() ?? ''
-          }));
-        }
-      },
-      error: () => { this.cargandoDist = false; }
-    });
-}
-
-  onDistChange() {
-    this.form.IdUbigeo = this.distSeleccionado;
+    // No necesitamos cargar distritos — el select ya usa ubigeos completos
   }
 
-  onUbigeoChange() {
-    this.form.IdUbigeo = this.ubigeoSeleccionado;
+  onDistChange() {
+    this.form.IdUbigeo      = this.distSeleccionado;
+    this.ubigeoSeleccionado = this.distSeleccionado;
   }
 
   // ── Variables ─────────────────────────────────────────────────────────────
@@ -763,23 +737,12 @@ export class EditarPersonal implements OnInit, OnDestroy {
   }
 
   // ── Foto del empleado ─────────────────────────────────────────────────────
-  /**
-   * Carga la foto de perfil del empleado. Se asume que la API devuelve
-   * { success: boolean, data: { url: string } | null }.
-   * Ajusta el método según tu ApiService real.
-   */
   cargarFotoEmpleado(codigo: string) {
     this.fotoEmpleado = null;
     this.apiService.listarArchivosPersonal(codigo).subscribe({
       next: (response) => {
-        if (response?.success && Array.isArray(response.data)) {
-          const prefijo = `foto_${codigo}`.toLowerCase();
-          const foto = response.data.find((a: any) => {
-            const nombre = (a.nombre ?? a.name ?? '').toLowerCase();
-            return nombre.startsWith(prefijo);
-          });
-          this.fotoEmpleado = foto ? (foto.url ?? foto.ruta ?? null) : null;
-        }
+        const archivos = this.obtenerArchivosDesdeRespuesta(response);
+        this.fotoEmpleado = this.obtenerImagenMasReciente(archivos);
       },
       error: () => { this.fotoEmpleado = null; }
     });
@@ -801,7 +764,6 @@ export class EditarPersonal implements OnInit, OnDestroy {
     }
 
     const codigo = this.personalSeleccionado.codigo;
-    // Renombrar con nombre fijo para identificarla
     const extension = archivoOriginal.name.split('.').pop() ?? 'jpg';
     const nombreFijo = `foto_${codigo}.${extension}`;
     const archivoRenombrado = new File([archivoOriginal], nombreFijo, { type: archivoOriginal.type });
@@ -814,7 +776,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
           severity: 'success', summary: 'Foto actualizada',
           detail: 'La foto de perfil se actualizó correctamente', life: 3000
         });
-        this.cargarFotoEmpleado(codigo);
+        this.cargarArchivos(codigo);
       },
       error: () => {
         this.subiendoFoto = false;
@@ -840,7 +802,6 @@ export class EditarPersonal implements OnInit, OnDestroy {
       this.apiService.guardarVariablePersonal(codigo, '021', this.varMedicinas).pipe(catchError(() => of(null))),
       this.apiService.guardarVariablePersonal(codigo, '018', this.formatContacto(this.contacto1)).pipe(catchError(() => of(null))),
       this.apiService.guardarVariablePersonal(codigo, '022', this.formatContacto(this.contacto2)).pipe(catchError(() => of(null))),
-      // Tallas
       this.apiService.guardarVariablePersonal(codigo, '023', this.varTallaCamisa).pipe(catchError(() => of(null))),
       this.apiService.guardarVariablePersonal(codigo, '024', this.varTallaPolo).pipe(catchError(() => of(null))),
       this.apiService.guardarVariablePersonal(codigo, '025', this.varTallaPantalon).pipe(catchError(() => of(null))),
@@ -884,19 +845,28 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.apiService.listarArchivosPersonal(codigo).subscribe({
       next: (response) => {
         this.cargandoArchivos = false;
-        if (response?.success && Array.isArray(response.data)) {
-          this.archivos = response.data.map((a: any) => ({
-            nombre: a.nombre ?? a.name ?? '',
-            url: a.url ?? a.ruta ?? '',
-            esImagen: this.esImagen(a.nombre ?? a.name ?? '')
-          }));
+        const archivos = this.obtenerArchivosDesdeRespuesta(response);
+        if (archivos.length > 0) {
+          this.archivos = archivos
+            .map((a: any) => ({
+              nombre: a.nombre ?? a.name ?? '',
+              url: a.url ?? a.ruta ?? '',
+              esImagen: this.esImagen(a.nombre ?? a.name ?? ''),
+              lastModified: a.lastModified ?? null
+            }))
+            .sort((a: ArchivoPersonal, b: ArchivoPersonal) =>
+              this.obtenerFechaArchivo(b.lastModified) - this.obtenerFechaArchivo(a.lastModified)
+            );
+          this.fotoEmpleado = this.obtenerImagenMasReciente(archivos);
         } else {
           this.archivos = [];
+          this.fotoEmpleado = null;
         }
       },
       error: () => {
         this.cargandoArchivos = false;
         this.archivos = [];
+        this.fotoEmpleado = null;
       }
     });
   }
@@ -938,6 +908,31 @@ export class EditarPersonal implements OnInit, OnDestroy {
 
   esImagen(nombre: string): boolean {
     return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(nombre);
+  }
+
+  private obtenerImagenMasReciente(archivos: any[]): string | null {
+    const foto = archivos
+      .filter((a: any) => {
+        const nombre = (a.nombre ?? a.name ?? '').toLowerCase();
+        return this.esImagen(nombre);
+      })
+      .sort((a: any, b: any) =>
+        this.obtenerFechaArchivo(b.lastModified) - this.obtenerFechaArchivo(a.lastModified)
+      )[0];
+
+    return foto ? (foto.url ?? foto.ruta ?? null) : null;
+  }
+
+  private obtenerArchivosDesdeRespuesta(response: any): any[] {
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.data)) return response.data;
+    return [];
+  }
+
+  private obtenerFechaArchivo(lastModified: string | null | undefined): number {
+    if (!lastModified) return 0;
+    const fecha = new Date(lastModified).getTime();
+    return Number.isNaN(fecha) ? 0 : fecha;
   }
 
   getNombreCorto(nombre: string): string {
@@ -1012,56 +1007,63 @@ export class EditarPersonal implements OnInit, OnDestroy {
     });
   }
 
-  guardarBeneficiario(b: Beneficiario) {
-    if (!this.personalSeleccionado || b.buscando) return;
+guardarBeneficiario(b: Beneficiario) {
+  if (!this.personalSeleccionado || b.buscando) return;
 
-    const request: BeneficiarioRequest = {
-      IdDocIdentidad: this.normalizarTipoDocumentoBeneficiario(b.tipoDocumento),
-      Nombres: b.nombres,
-      A_Paterno: b.apellidoPaterno,
-      A_Materno: b.apellidoMaterno,
-      NroDocumento: b.dni,
-      Fecha_Nacimiento: b.fechaNacimiento || null,
-      Sexo: b.sexo || ''
-    };
+  const request: BeneficiarioRequest = {
+    item: b.item ?? '',
+    a_Paterno: b.apellidoPaterno,
+    a_Materno: b.apellidoMaterno,
+    nombres: b.nombres,
+    nroDocumento: b.dni,
+    fechaNacimiento: b.fechaNacimiento
+      ? `${b.fechaNacimiento}T00:00:00.000Z`
+      : null,
+    situacion: 'A',
+    idDocIdentidad: this.normalizarTipoDocumentoBeneficiario(b.tipoDocumento),
+    idVinculo: '1'
+  };
 
-    b.guardando = true;
-    const codigo = this.personalSeleccionado.codigo;
+  console.log('[guardarBeneficiario] codigo:', this.personalSeleccionado.codigo);
+  console.log('[guardarBeneficiario] request:', JSON.stringify(request, null, 2));
 
-    const accion$ = b.guardado && b.item
-      ? this.apiService.editarBeneficiario(codigo, b.item, request)
-      : this.apiService.crearBeneficiario(codigo, request);
+  b.guardando = true;
+  const codigo = this.personalSeleccionado.codigo;
 
-    accion$.subscribe({
-      next: (response) => {
-        b.guardando = false;
-        if (response?.success) {
-          b.guardado = true;
-          b.editando = false;
-          if (response.data?.item) b.item = response.data.item;
-          this.beneficiarios = [...this.beneficiarios];
-          this.messageService.add({
-            severity: 'success', summary: 'Guardado',
-            detail: `Beneficiario ${b.dni} guardado correctamente`, life: 3000
-          });
-        } else {
-          b.error = response?.message ?? 'No se pudo guardar';
-          this.beneficiarios = [...this.beneficiarios];
-          this.messageService.add({
-            severity: 'warn', summary: 'Advertencia', detail: b.error, life: 3000
-          });
-        }
-      },
-      error: () => {
-        b.guardando = false;
-        b.error = 'Error al guardar el beneficiario';
+  this.apiService.crearBeneficiario(codigo, request).subscribe({
+    next: (response) => {
+      console.log('[guardarBeneficiario] response:', JSON.stringify(response, null, 2));
+      b.guardando = false;
+      if (response?.success) {
+        b.guardado = true;
+        b.editando = false;
+        if (response.data?.item) b.item = response.data.item;
         this.beneficiarios = [...this.beneficiarios];
         this.messageService.add({
-          severity: 'error', summary: 'Error', detail: b.error, life: 3000
+          severity: 'success', summary: 'Guardado',
+          detail: `Beneficiario ${b.dni} guardado correctamente`, life: 3000
+        });
+      } else {
+        b.error = response?.message ?? 'No se pudo guardar';
+        this.beneficiarios = [...this.beneficiarios];
+        this.messageService.add({
+          severity: 'warn', summary: 'Advertencia', detail: b.error, life: 3000
         });
       }
-    });
-  }
+    },
+    error: (err) => {
+      console.error('[guardarBeneficiario] error:', err);
+      console.error('[guardarBeneficiario] error status:', err?.status);
+      console.error('[guardarBeneficiario] error body:', JSON.stringify(err?.error, null, 2));
+      b.guardando = false;
+      b.error = 'Error al guardar el beneficiario';
+      this.beneficiarios = [...this.beneficiarios];
+      this.messageService.add({
+        severity: 'error', summary: 'Error', detail: b.error, life: 3000
+      });
+    }
+  });
+}
 
   habilitarEdicion(b: Beneficiario) {
     b.editando = true;
@@ -1340,15 +1342,6 @@ export class EditarPersonal implements OnInit, OnDestroy {
     const codigo = `${idUbigeo ?? ''}`.trim();
     if (!codigo) return '';
     return this.ubigeos.find(u => u.value === codigo)?.label ?? '';
-  }
-
-  private getTextoUbigeoSeleccionado(): string {
-    const ubigeo = this.getTextoUbigeoPorId(this.ubigeoSeleccionado);
-    if (ubigeo) return ubigeo;
-    const departamento = this.departamentos.find(d => d.value === this.depSeleccionado)?.label ?? '';
-    const provincia    = this.provincias.find(p => p.value === this.provSeleccionada)?.label ?? '';
-    const distrito     = this.distritos.find(d => d.value === this.distSeleccionado)?.label ?? '';
-    return [distrito, provincia, departamento].filter(Boolean).join(', ');
   }
 
   private mapearBeneficiarioDesdeBackend(b: any): Beneficiario {
