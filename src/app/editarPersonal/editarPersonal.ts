@@ -152,6 +152,13 @@ interface VariablePersonal {
 })
 export class EditarPersonal implements OnInit, OnDestroy {
   private readonly ubigeoFallback = '040101';
+  private readonly coordenadaReferenciaDefault: [number, number] = [-16.3985482, -71.5374206];
+  private readonly limitesPeru = {
+    latMin: -18.6,
+    latMax: 0.1,
+    lonMin: -81.4,
+    lonMax: -68.4
+  };
   cargandoPagina = false;
   sinAcceso = false;
   cargando = false;
@@ -1259,7 +1266,7 @@ guardarBeneficiario(b: Beneficiario) {
 
     this.ubigeoSeleccionado = this.ubigeoFallback;
     this.form.IdUbigeo = this.ubigeoFallback;
-    this.actualizarUbicacionReferencia(-16.398814, -71.536907, true);
+    this.actualizarUbicacionReferencia(this.coordenadaReferenciaDefault[0], this.coordenadaReferenciaDefault[1], true, false);
   }
 
   private asegurarMapaReferencia(): void {
@@ -1322,16 +1329,26 @@ guardarBeneficiario(b: Beneficiario) {
 
   private async buscarCoordenadasPorConsultas(consultas: string[]): Promise<{ latitud: number; longitud: number } | null> {
     for (const query of consultas) {
-      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
+      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=pe&bounded=1&viewbox=-81.4,0.1,-68.4,-18.6&limit=1&q=${encodeURIComponent(query)}`;
       const response = await fetch(url, { headers: { Accept: 'application/json' } });
       if (!response.ok) continue;
       const data = await response.json();
       const resultado = Array.isArray(data) ? data[0] : null;
       if (resultado?.lat && resultado?.lon) {
-        return { latitud: Number(resultado.lat), longitud: Number(resultado.lon) };
+        const latitud = Number(resultado.lat);
+        const longitud = Number(resultado.lon);
+        if (!this.estaDentroDePeru(latitud, longitud)) continue;
+        return { latitud, longitud };
       }
     }
     return null;
+  }
+
+  private estaDentroDePeru(latitud: number, longitud: number): boolean {
+    return latitud >= this.limitesPeru.latMin &&
+      latitud <= this.limitesPeru.latMax &&
+      longitud >= this.limitesPeru.lonMin &&
+      longitud <= this.limitesPeru.lonMax;
   }
 
   private async ubicarPorUbigeo(idUbigeo: string, centrarMapa: boolean): Promise<boolean> {
