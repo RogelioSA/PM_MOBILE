@@ -50,18 +50,16 @@
         <label class="text-sm text-gray-600 dark:text-gray-300">
           Fecha de nacimiento
         </label>
-        <p-datepicker
+        <input
+          pInputText
+          type="text"
           formControlName="fechaNacimiento"
-          dateFormat="yy-mm-dd"
-          dataType="string"
-          [showIcon]="true"
-          iconDisplay="input"
-          [maxDate]="maxFechaNacimiento"
-          inputStyleClass="w-full h-11 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-slate-600 rounded-md"
-          styleClass="w-full login-doc-date"
-          appendTo="body"
+          inputmode="numeric"
+          maxlength="10"
+          (input)="onFechaNacimientoInput($event)"
+          class="w-full h-11 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-slate-600 rounded-md"
           placeholder="AAAA-MM-DD"
-        ></p-datepicker>
+        />
         <small class="text-xs text-gray-500 dark:text-gray-400">
           Puede escribir la fecha directamente con formato AAAA-MM-DD.
         </small>
