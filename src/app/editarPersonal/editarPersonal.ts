@@ -1344,7 +1344,21 @@ guardarBeneficiario(b: Beneficiario) {
   private getTextoUbigeoPorId(idUbigeo: string): string {
     const codigo = `${idUbigeo ?? ''}`.trim();
     if (!codigo) return '';
-    return this.ubigeos.find(u => u.value === codigo)?.label ?? '';
+
+    const etiquetaDistrito = `${this.ubigeos.find(u => u.value === codigo)?.label ?? ''}`.trim();
+    if (etiquetaDistrito) return etiquetaDistrito;
+
+    const codigoDep = codigo.substring(0, 2);
+    const codigoProv = codigo.substring(0, 4);
+
+    const nombreDep = `${this.departamentos.find(d => d.value === codigoDep)?.label ?? ''}`.trim();
+    const nombreProv = `${this.provincias.find(p => p.value === codigoProv)?.label ?? ''}`.trim();
+
+    if (nombreDep && nombreProv) return `${nombreProv}, ${nombreDep}`;
+    if (nombreDep) return nombreDep;
+    if (nombreProv) return nombreProv;
+
+    return '';
   }
 
   private mapearBeneficiarioDesdeBackend(b: any): Beneficiario {
