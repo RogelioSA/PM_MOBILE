@@ -349,13 +349,13 @@
           <div class="flex flex-col gap-2">
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Banco CTS</label>
             <p-select [(ngModel)]="form.IdBanco" [options]="bancos" optionLabel="label" optionValue="value"
-              placeholder="Seleccione banco" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar banco..." />
+              placeholder="Seleccione banco" styleClass="w-full" [filter]="true" filterPlaceholder="Buscar banco..." [disabled]="true" />
           </div>
 
           <div class="flex flex-col gap-2">
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Cuenta CTS</label>
-            <input type="text" pInputText [(ngModel)]="form.Cuenta_Cts" class="w-full h-11"
-              placeholder="Número de cuenta CTS" />
+            <input type="text" pInputText [(ngModel)]="form.Cuenta_Cts" class="w-full h-11 bg-gray-100 dark:bg-slate-700 cursor-not-allowed"
+              placeholder="Número de cuenta CTS" [disabled]="true" />
           </div>
 
         </div>
