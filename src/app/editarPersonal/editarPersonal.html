@@ -625,7 +625,7 @@
                       severity="secondary" class="p-button-sm p-button-text p-button-rounded"
                       pTooltip="Cancelar"></button>
                     <button *ngIf="!b.guardando" pButton type="button" icon="pi pi-trash"
-                      (click)="eliminarBeneficiario(i)" severity="danger"
+                      (click)="eliminarBeneficiario(b, i)" severity="danger"
                       class="p-button-sm p-button-text p-button-rounded" pTooltip="Eliminar"></button>
                   </div>
                 </td>
