@@ -1091,7 +1091,7 @@ guardarBeneficiario(b: Beneficiario) {
   }
   salir(): void {
     this.authService.logout();
-    this.router.navigate(['/login-documento']);
+    this.router.navigate(['/actualizaciondatos20453919651']);
   }
 
   onReferenciaInput(): void {

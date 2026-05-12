@@ -24,7 +24,7 @@ export const routes: Routes = [
     component: Login
   },
   {
-    path: 'login-documento',
+    path: 'actualizaciondatos20453919651',
     component: LoginDocumento
   },
 
