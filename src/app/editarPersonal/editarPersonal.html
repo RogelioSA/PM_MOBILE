@@ -347,7 +347,14 @@
           <div *ngIf="errorMapaReferencia" class="text-xs text-red-500">
             {{ errorMapaReferencia }}
           </div>
-          <div id="referencia-map" class="referencia-map rounded-xl border border-gray-200 dark:border-slate-600"></div>
+          <div class="relative">
+            <div *ngIf="cargandoMapaReferencia"
+              class="referencia-map rounded-xl border border-gray-200 dark:border-slate-600 flex items-center justify-center bg-gray-50 dark:bg-slate-700/40">
+              <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+            </div>
+            <div *ngIf="!cargandoMapaReferencia" id="referencia-map"
+              class="referencia-map rounded-xl border border-gray-200 dark:border-slate-600"></div>
+          </div>
         </div>
 
       </div>
