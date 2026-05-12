@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
-import { DatePickerModule } from 'primeng/datepicker';
 import { Auth } from '../services/auth';
 
 @Component({
@@ -16,8 +15,7 @@ import { Auth } from '../services/auth';
     ReactiveFormsModule,
     InputTextModule,
     ButtonModule,
-    SelectModule,
-    DatePickerModule
+    SelectModule
   ],
   templateUrl: './login-documento.html',
   styleUrls: ['./login-documento.css']
@@ -25,7 +23,6 @@ import { Auth } from '../services/auth';
 export class LoginDocumento implements OnInit {
   loading = false;
   form: FormGroup;
-  maxFechaNacimiento = new Date();
   tiposDocumento = [
     { label: 'DNI', value: 'DNI' },
     { label: 'CE', value: 'CE' }
@@ -102,6 +99,25 @@ export class LoginDocumento implements OnInit {
 
   requiereDigitoVerificador(): boolean {
     return this.form.get('tipoDocumento')?.value !== 'CE';
+  }
+
+  onFechaNacimientoInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digitos = input.value.replace(/\D/g, '').slice(0, 8);
+    let formateada = '';
+
+    if (digitos.length > 0) {
+      formateada = digitos.slice(0, 4);
+    }
+    if (digitos.length > 4) {
+      formateada += `-${digitos.slice(4, 6)}`;
+    }
+    if (digitos.length > 6) {
+      formateada += `-${digitos.slice(6, 8)}`;
+    }
+
+    input.value = formateada;
+    this.form.get('fechaNacimiento')?.setValue(formateada, { emitEvent: false });
   }
 
   private actualizarValidacionDigitoVerificador(tipoDocumento: string): void {
