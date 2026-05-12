@@ -1250,8 +1250,11 @@ guardarBeneficiario(b: Beneficiario) {
   private async configurarMapaReferenciaInicial(): Promise<void> {
     this.asegurarMapaReferencia();
 
-    if (this.referenciaLatitud != null && this.referenciaLongitud != null) {
-      this.actualizarUbicacionReferencia(this.referenciaLatitud, this.referenciaLongitud, true);
+    const tieneReferenciaGuardada = Number.isFinite(this.referenciaLatitud) && Number.isFinite(this.referenciaLongitud);
+    if (tieneReferenciaGuardada) {
+      const latitud = this.referenciaLatitud as number;
+      const longitud = this.referenciaLongitud as number;
+      this.actualizarUbicacionReferencia(latitud, longitud, true);
       return;
     }
 
