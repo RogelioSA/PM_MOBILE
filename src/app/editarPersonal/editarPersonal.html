@@ -144,7 +144,7 @@
       <!-- ── 2. ESTADO CIVIL Y NIVEL DE ESTUDIO ────────────────────── -->
       <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
         <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
-          Datos Civiles
+          Datos Civiles (DEBEN ADJUNTAR LOS CERTIFICADOS EN LA ULTIMA SECCIÓN)
         </h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
@@ -316,12 +316,12 @@
 
         <!-- Referencia -->
         <div class="mt-4 flex flex-col gap-2">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Referencia de ubicacion</label>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Referencia de dirección</label>
           <div class="flex flex-col sm:flex-row gap-2">
             <input type="text" pInputText [(ngModel)]="referenciaTexto" (ngModelChange)="onReferenciaInput()"
-              class="w-full h-11" placeholder="Referencia de la direccion" />
-            <button pButton type="button" label="Ubicar" icon="pi pi-map-marker" (click)="buscarReferenciaEnMapa()"
-              [loading]="cargandoMapaReferencia" class="h-11 whitespace-nowrap"></button>
+              class="w-full h-11" placeholder="Digite una referencia y a continuación ubíquela en el mapa" />
+            <!-- <button pButton type="button" label="Ubicar" icon="pi pi-map-marker" (click)="buscarReferenciaEnMapa()"
+              [loading]="cargandoMapaReferencia" class="h-11 whitespace-nowrap"></button> -->
           </div>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
             <span class="text-gray-500 dark:text-gray-400">
@@ -467,7 +467,7 @@
       <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Documentos y Fotos
+            FOTOS, CERTIFICADOS Y DOCUMENTACIÓN ADICIONAL
           </h3>
           <label class="cursor-pointer">
             <input type="file" class="hidden" accept="image/*,.pdf" (change)="onSeleccionarArchivo($event)" />
