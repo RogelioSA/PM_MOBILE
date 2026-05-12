@@ -1248,31 +1248,39 @@ guardarBeneficiario(b: Beneficiario) {
   }
 
   private async configurarMapaReferenciaInicial(): Promise<void> {
-    this.asegurarMapaReferencia();
+    this.cargandoMapaReferencia = true;
+    this.errorMapaReferencia = '';
 
-    const tieneReferenciaGuardada = Number.isFinite(this.referenciaLatitud) && Number.isFinite(this.referenciaLongitud);
-    if (tieneReferenciaGuardada) {
-      const latitud = this.referenciaLatitud as number;
-      const longitud = this.referenciaLongitud as number;
-      this.actualizarUbicacionReferencia(latitud, longitud, true);
-      return;
+    try {
+      const tieneReferenciaGuardada = Number.isFinite(this.referenciaLatitud) && Number.isFinite(this.referenciaLongitud);
+      if (tieneReferenciaGuardada) {
+        const latitud = this.referenciaLatitud as number;
+        const longitud = this.referenciaLongitud as number;
+        this.actualizarUbicacionReferencia(latitud, longitud, true);
+        return;
+      }
+
+      const ubigeoObjetivo = this.form.IdUbigeo?.trim() || this.ubigeoSeleccionado || this.ubigeoFallback;
+
+      if (await this.ubicarPorUbigeo(ubigeoObjetivo, true)) return;
+
+      const coordenadasDireccion = await this.buscarCoordenadasPorConsultas(this.construirConsultasReferencia(ubigeoObjetivo));
+      if (coordenadasDireccion) {
+        this.actualizarUbicacionReferencia(coordenadasDireccion.latitud, coordenadasDireccion.longitud, true);
+        return;
+      }
+
+      if (ubigeoObjetivo !== this.ubigeoFallback && await this.ubicarPorUbigeo(this.ubigeoFallback, true)) return;
+
+      this.ubigeoSeleccionado = this.ubigeoFallback;
+      this.form.IdUbigeo = this.ubigeoFallback;
+      this.actualizarUbicacionReferencia(this.coordenadaReferenciaDefault[0], this.coordenadaReferenciaDefault[1], true, false);
+    } catch {
+      this.errorMapaReferencia = 'No se pudo cargar la ubicación inicial en el mapa.';
+      this.actualizarUbicacionReferencia(this.coordenadaReferenciaDefault[0], this.coordenadaReferenciaDefault[1], true, false);
+    } finally {
+      this.cargandoMapaReferencia = false;
     }
-
-    const ubigeoObjetivo = this.form.IdUbigeo?.trim() || this.ubigeoSeleccionado || this.ubigeoFallback;
-
-    if (await this.ubicarPorUbigeo(ubigeoObjetivo, true)) return;
-
-    const coordenadasDireccion = await this.buscarCoordenadasPorConsultas(this.construirConsultasReferencia(ubigeoObjetivo));
-    if (coordenadasDireccion) {
-      this.actualizarUbicacionReferencia(coordenadasDireccion.latitud, coordenadasDireccion.longitud, true);
-      return;
-    }
-
-    if (ubigeoObjetivo !== this.ubigeoFallback && await this.ubicarPorUbigeo(this.ubigeoFallback, true)) return;
-
-    this.ubigeoSeleccionado = this.ubigeoFallback;
-    this.form.IdUbigeo = this.ubigeoFallback;
-    this.actualizarUbicacionReferencia(this.coordenadaReferenciaDefault[0], this.coordenadaReferenciaDefault[1], true, false);
   }
 
   private asegurarMapaReferencia(): void {
