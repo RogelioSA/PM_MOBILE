@@ -152,6 +152,13 @@ interface VariablePersonal {
 })
 export class EditarPersonal implements OnInit, OnDestroy {
   private readonly ubigeoFallback = '040101';
+  private readonly coordenadaReferenciaDefault: [number, number] = [-16.3985482, -71.5374206];
+  private readonly limitesPeru = {
+    latMin: -18.6,
+    latMax: 0.1,
+    lonMin: -81.4,
+    lonMax: -68.4
+  };
   cargandoPagina = false;
   sinAcceso = false;
   cargando = false;
@@ -1201,7 +1208,7 @@ guardarBeneficiario(b: Beneficiario) {
 
   private construirConsultasReferencia(idUbigeo?: string): string[] {
     const codigoUbigeo = (idUbigeo ?? this.ubigeoSeleccionado) || this.form.IdUbigeo || this.ubigeoFallback;
-    const ubigeo    = this.getTextoUbigeoPorId(codigoUbigeo);
+    const ubigeo    = this.getTextoUbigeoPorId(codigoUbigeo).texto;
     const referencia = this.referenciaTexto.trim();
     const zona      = `${this.form.Descripcion_Zona ?? ''}`.trim();
     const via       = `${this.form.Descripcion_Via ?? ''}`.trim();
@@ -1259,7 +1266,7 @@ guardarBeneficiario(b: Beneficiario) {
 
     this.ubigeoSeleccionado = this.ubigeoFallback;
     this.form.IdUbigeo = this.ubigeoFallback;
-    this.actualizarUbicacionReferencia(-16.398814, -71.536907, true);
+    this.actualizarUbicacionReferencia(this.coordenadaReferenciaDefault[0], this.coordenadaReferenciaDefault[1], true, false);
   }
 
   private asegurarMapaReferencia(): void {
@@ -1287,7 +1294,7 @@ guardarBeneficiario(b: Beneficiario) {
     setTimeout(() => this.mapaReferencia?.invalidateSize(), 0);
   }
 
-  private actualizarUbicacionReferencia(latitud: number, longitud: number, centrarMapa: boolean): void {
+  private actualizarUbicacionReferencia(latitud: number, longitud: number, centrarMapa: boolean, aplicarZoom: boolean = true): void {
     this.referenciaLatitud = latitud;
     this.referenciaLongitud = longitud;
     this.errorMapaReferencia = '';
@@ -1312,39 +1319,67 @@ guardarBeneficiario(b: Beneficiario) {
     }
 
     if (centrarMapa) {
-      this.mapaReferencia.setView([latitud, longitud], 17);
+      if (aplicarZoom) {
+        this.mapaReferencia.setView([latitud, longitud], 17);
+      } else {
+        this.mapaReferencia.panTo([latitud, longitud]);
+      }
     }
   }
 
   private async buscarCoordenadasPorConsultas(consultas: string[]): Promise<{ latitud: number; longitud: number } | null> {
     for (const query of consultas) {
-      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
+      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=pe&bounded=1&viewbox=-81.4,0.1,-68.4,-18.6&limit=1&q=${encodeURIComponent(query)}`;
       const response = await fetch(url, { headers: { Accept: 'application/json' } });
       if (!response.ok) continue;
       const data = await response.json();
       const resultado = Array.isArray(data) ? data[0] : null;
       if (resultado?.lat && resultado?.lon) {
-        return { latitud: Number(resultado.lat), longitud: Number(resultado.lon) };
+        const latitud = Number(resultado.lat);
+        const longitud = Number(resultado.lon);
+        if (!this.estaDentroDePeru(latitud, longitud)) continue;
+        return { latitud, longitud };
       }
     }
     return null;
   }
 
+  private estaDentroDePeru(latitud: number, longitud: number): boolean {
+    return latitud >= this.limitesPeru.latMin &&
+      latitud <= this.limitesPeru.latMax &&
+      longitud >= this.limitesPeru.lonMin &&
+      longitud <= this.limitesPeru.lonMax;
+  }
+
   private async ubicarPorUbigeo(idUbigeo: string, centrarMapa: boolean): Promise<boolean> {
-    const ubigeo = this.getTextoUbigeoPorId(idUbigeo);
-    if (!ubigeo) return false;
-    const coordenadas = await this.buscarCoordenadasPorConsultas([`${ubigeo}, Peru`]);
+    const ubicacion = this.getTextoUbigeoPorId(idUbigeo);
+    if (!ubicacion.texto) return false;
+    const coordenadas = await this.buscarCoordenadasPorConsultas([`${ubicacion.texto}, Peru`]);
     if (!coordenadas) return false;
     this.ubigeoSeleccionado = idUbigeo;
     this.form.IdUbigeo = idUbigeo;
-    this.actualizarUbicacionReferencia(coordenadas.latitud, coordenadas.longitud, centrarMapa);
+    this.actualizarUbicacionReferencia(coordenadas.latitud, coordenadas.longitud, centrarMapa, !ubicacion.esRespaldo);
     return true;
   }
 
-  private getTextoUbigeoPorId(idUbigeo: string): string {
+  private getTextoUbigeoPorId(idUbigeo: string): { texto: string; esRespaldo: boolean } {
     const codigo = `${idUbigeo ?? ''}`.trim();
-    if (!codigo) return '';
-    return this.ubigeos.find(u => u.value === codigo)?.label ?? '';
+    if (!codigo) return { texto: '', esRespaldo: false };
+
+    const etiquetaDistrito = `${this.ubigeos.find(u => u.value === codigo)?.label ?? ''}`.trim();
+    if (etiquetaDistrito) return { texto: etiquetaDistrito, esRespaldo: false };
+
+    const codigoDep = codigo.substring(0, 2);
+    const codigoProv = codigo.substring(0, 4);
+
+    const nombreDep = `${this.departamentos.find(d => d.value === codigoDep)?.label ?? ''}`.trim();
+    const nombreProv = `${this.provincias.find(p => p.value === codigoProv)?.label ?? ''}`.trim();
+
+    if (nombreDep && nombreProv) return { texto: `${nombreProv}, ${nombreDep}`, esRespaldo: true };
+    if (nombreDep) return { texto: nombreDep, esRespaldo: true };
+    if (nombreProv) return { texto: nombreProv, esRespaldo: true };
+
+    return { texto: '', esRespaldo: false };
   }
 
   private mapearBeneficiarioDesdeBackend(b: any): Beneficiario {
