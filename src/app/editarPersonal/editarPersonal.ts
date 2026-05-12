@@ -748,14 +748,13 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.fotoEmpleado = null;
     this.apiService.listarArchivosPersonal(codigo).subscribe({
       next: (response) => {
-        if (response?.success && Array.isArray(response.data)) {
-          const prefijo = `foto_${codigo}`.toLowerCase();
-          const foto = response.data.find((a: any) => {
-            const nombre = (a.nombre ?? a.name ?? '').toLowerCase();
-            return nombre.startsWith(prefijo);
-          });
-          this.fotoEmpleado = foto ? (foto.url ?? foto.ruta ?? null) : null;
-        }
+        const archivos = this.obtenerListaArchivos(response);
+        const prefijo = `foto_${codigo}`.toLowerCase();
+        const foto = archivos.find((a: any) => {
+          const nombre = (a.nombre ?? a.name ?? '').toLowerCase();
+          return nombre.startsWith(prefijo);
+        });
+        this.fotoEmpleado = foto ? (foto.url ?? foto.ruta ?? null) : null;
       },
       error: () => { this.fotoEmpleado = null; }
     });
@@ -858,15 +857,12 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.apiService.listarArchivosPersonal(codigo).subscribe({
       next: (response) => {
         this.cargandoArchivos = false;
-        if (response?.success && Array.isArray(response.data)) {
-          this.archivos = response.data.map((a: any) => ({
-            nombre: a.nombre ?? a.name ?? '',
-            url: a.url ?? a.ruta ?? '',
-            esImagen: this.esImagen(a.nombre ?? a.name ?? '')
-          }));
-        } else {
-          this.archivos = [];
-        }
+        const archivos = this.obtenerListaArchivos(response);
+        this.archivos = archivos.map((a: any) => ({
+          nombre: a.nombre ?? a.name ?? '',
+          url: a.url ?? a.ruta ?? '',
+          esImagen: this.esImagen(a.nombre ?? a.name ?? '')
+        }));
       },
       error: () => {
         this.cargandoArchivos = false;
@@ -909,6 +905,13 @@ export class EditarPersonal implements OnInit, OnDestroy {
   abrirLightbox(url: string) { this.imagenVistaPrevia = url; }
   cerrarLightbox() { this.imagenVistaPrevia = null; }
   abrirArchivo(url: string) { window.open(url, '_blank'); }
+
+
+  private obtenerListaArchivos(response: any): any[] {
+    if (Array.isArray(response)) return response;
+    if (response?.success && Array.isArray(response.data)) return response.data;
+    return [];
+  }
 
   esImagen(nombre: string): boolean {
     return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(nombre);
