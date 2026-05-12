@@ -121,8 +121,8 @@
               </div>
             </div>
 
-            <!-- Botón subir foto -->
-            <label class="cursor-pointer w-full max-w-[160px]" [class.pointer-events-none]="subiendoFoto">
+            <!-- Botón subir foto (desktop) -->
+            <label class="hidden sm:block cursor-pointer w-full max-w-[160px]" [class.pointer-events-none]="subiendoFoto">
               <input type="file" class="hidden" accept="image/*" (change)="onSeleccionarFoto($event)" />
               <span class="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium
                            border border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-700
@@ -131,6 +131,19 @@
                     [class.opacity-60]="subiendoFoto">
                 <i [class]="subiendoFoto ? 'pi pi-spin pi-spinner' : 'pi pi-camera'"></i>
                 {{ subiendoFoto ? 'Subiendo...' : 'Cambiar foto' }}
+              </span>
+            </label>
+
+            <!-- Botón subir foto (mobile: permite selfie con cámara frontal) -->
+            <label class="sm:hidden cursor-pointer w-full max-w-[160px]" [class.pointer-events-none]="subiendoFoto">
+              <input type="file" class="hidden" accept="image/*" capture="user" (change)="onSeleccionarFoto($event)" />
+              <span class="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium
+                           border border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-700
+                           hover:bg-gray-50 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200
+                           transition-colors w-full"
+                    [class.opacity-60]="subiendoFoto">
+                <i [class]="subiendoFoto ? 'pi pi-spin pi-spinner' : 'pi pi-camera'"></i>
+                {{ subiendoFoto ? 'Subiendo...' : 'Cambiar foto / Tomar selfie' }}
               </span>
             </label>
             <p class="text-[10px] text-gray-400 dark:text-gray-500 text-center max-w-[160px]">
