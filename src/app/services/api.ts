@@ -778,6 +778,14 @@ export class Api {
     );
   }
 
+  eliminarBeneficiario(codigo: string, item: string): Observable<any> {
+    return this.https.post<any>(
+      `${this.baseUrl}/Personal/${codigo}/eliminarbeneficiario/${item}`,
+      {},
+      { headers: this.authService.getHeaders() }
+    );
+  }
+
   guardarVariablePersonal(codigo: string, idVariable: string, valor: string): Observable<any> {
     const params = new HttpParams()
       .set('codigo_general', codigo)

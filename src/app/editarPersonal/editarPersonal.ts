@@ -119,7 +119,6 @@ interface ArchivoPersonal {
   nombre: string;
   url: string;
   esImagen: boolean;
-  lastModified: string | null;
 }
 
 interface Contacto {
@@ -437,6 +436,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.cargarBeneficiarios(item.codigo);
     this.cargarArchivos(item.codigo);
     this.cargarVariablesPersonal(item.dni ?? '');
+    this.cargarFotoEmpleado(item.codigo);
     setTimeout(() => this.configurarMapaReferenciaInicial(), 0);
   }
 
@@ -741,8 +741,14 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.fotoEmpleado = null;
     this.apiService.listarArchivosPersonal(codigo).subscribe({
       next: (response) => {
-        const archivos = this.obtenerArchivosDesdeRespuesta(response);
-        this.fotoEmpleado = this.obtenerImagenMasReciente(archivos);
+        if (response?.success && Array.isArray(response.data)) {
+          const prefijo = `foto_${codigo}`.toLowerCase();
+          const foto = response.data.find((a: any) => {
+            const nombre = (a.nombre ?? a.name ?? '').toLowerCase();
+            return nombre.startsWith(prefijo);
+          });
+          this.fotoEmpleado = foto ? (foto.url ?? foto.ruta ?? null) : null;
+        }
       },
       error: () => { this.fotoEmpleado = null; }
     });
@@ -776,7 +782,7 @@ export class EditarPersonal implements OnInit, OnDestroy {
           severity: 'success', summary: 'Foto actualizada',
           detail: 'La foto de perfil se actualizó correctamente', life: 3000
         });
-        this.cargarArchivos(codigo);
+        this.cargarFotoEmpleado(codigo);
       },
       error: () => {
         this.subiendoFoto = false;
@@ -845,28 +851,19 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.apiService.listarArchivosPersonal(codigo).subscribe({
       next: (response) => {
         this.cargandoArchivos = false;
-        const archivos = this.obtenerArchivosDesdeRespuesta(response);
-        if (archivos.length > 0) {
-          this.archivos = archivos
-            .map((a: any) => ({
-              nombre: a.nombre ?? a.name ?? '',
-              url: a.url ?? a.ruta ?? '',
-              esImagen: this.esImagen(a.nombre ?? a.name ?? ''),
-              lastModified: a.lastModified ?? null
-            }))
-            .sort((a: ArchivoPersonal, b: ArchivoPersonal) =>
-              this.obtenerFechaArchivo(b.lastModified) - this.obtenerFechaArchivo(a.lastModified)
-            );
-          this.fotoEmpleado = this.obtenerImagenMasReciente(archivos);
+        if (response?.success && Array.isArray(response.data)) {
+          this.archivos = response.data.map((a: any) => ({
+            nombre: a.nombre ?? a.name ?? '',
+            url: a.url ?? a.ruta ?? '',
+            esImagen: this.esImagen(a.nombre ?? a.name ?? '')
+          }));
         } else {
           this.archivos = [];
-          this.fotoEmpleado = null;
         }
       },
       error: () => {
         this.cargandoArchivos = false;
         this.archivos = [];
-        this.fotoEmpleado = null;
       }
     });
   }
@@ -908,31 +905,6 @@ export class EditarPersonal implements OnInit, OnDestroy {
 
   esImagen(nombre: string): boolean {
     return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(nombre);
-  }
-
-  private obtenerImagenMasReciente(archivos: any[]): string | null {
-    const foto = archivos
-      .filter((a: any) => {
-        const nombre = (a.nombre ?? a.name ?? '').toLowerCase();
-        return this.esImagen(nombre);
-      })
-      .sort((a: any, b: any) =>
-        this.obtenerFechaArchivo(b.lastModified) - this.obtenerFechaArchivo(a.lastModified)
-      )[0];
-
-    return foto ? (foto.url ?? foto.ruta ?? null) : null;
-  }
-
-  private obtenerArchivosDesdeRespuesta(response: any): any[] {
-    if (Array.isArray(response)) return response;
-    if (Array.isArray(response?.data)) return response.data;
-    return [];
-  }
-
-  private obtenerFechaArchivo(lastModified: string | null | undefined): number {
-    if (!lastModified) return 0;
-    const fecha = new Date(lastModified).getTime();
-    return Number.isNaN(fecha) ? 0 : fecha;
   }
 
   getNombreCorto(nombre: string): string {
@@ -1082,13 +1054,44 @@ guardarBeneficiario(b: Beneficiario) {
     }
   }
 
-  eliminarBeneficiario(index: number) {
-    this.beneficiarios = this.beneficiarios.filter((_, i) => i !== index);
-  }
+  eliminarBeneficiario(b: Beneficiario, index: number) {
+    if (!this.personalSeleccionado) return;
 
+    // Si no está guardado en BD, solo quitar del array local
+    if (!b.guardado || !b.item) {
+      this.beneficiarios = this.beneficiarios.filter((_, i) => i !== index);
+      return;
+    }
+
+    b.guardando = true;
+    this.apiService.eliminarBeneficiario(this.personalSeleccionado.codigo, b.item).subscribe({
+      next: (response) => {
+        b.guardando = false;
+        if (response?.success || response?.data?.success) {
+          this.beneficiarios = this.beneficiarios.filter((_, i) => i !== index);
+          this.messageService.add({
+            severity: 'success', summary: 'Eliminado',
+            detail: `Beneficiario ${b.dni} eliminado correctamente`, life: 3000
+          });
+        } else {
+          this.messageService.add({
+            severity: 'warn', summary: 'Advertencia',
+            detail: response?.data?.message ?? 'No se pudo eliminar', life: 3000
+          });
+        }
+      },
+      error: () => {
+        b.guardando = false;
+        this.messageService.add({
+          severity: 'error', summary: 'Error',
+          detail: 'Error al eliminar el beneficiario', life: 3000
+        });
+      }
+    });
+  }
   salir(): void {
     this.authService.logout();
-    this.router.navigate(['/login-documento']);
+    this.router.navigate(['/actualizaciondatos20453919651']);
   }
 
   onReferenciaInput(): void {
