@@ -609,8 +609,9 @@
                 </td>
 
                 <td class="p-2 text-xs">
-                  <input type="date" pInputText [(ngModel)]="b.fechaNacimiento" class="h-8 text-xs w-32"
-                    [disabled]="b.buscando" />
+                  <input type="text" pInputText [(ngModel)]="b.fechaNacimiento" class="h-8 text-xs w-32"
+                    [disabled]="b.buscando || (b.guardado && !b.editando)" maxlength="10" placeholder="YYYY-MM-DD"
+                    (input)="onFechaNacimientoInput(b)" />
                 </td>
 
 
