@@ -1185,6 +1185,7 @@ guardarBeneficiario(b: Beneficiario) {
   }
 
   onReferenciaInput(): void {
+    this.referenciaTexto = this.referenciaTexto.replace(/[^a-zA-Z\s]/g, '');
     this.form.Direccion_Referencia = this.referenciaTexto;
   }
 
