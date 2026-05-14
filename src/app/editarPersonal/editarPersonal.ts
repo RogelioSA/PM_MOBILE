@@ -806,7 +806,36 @@ export class EditarPersonal implements OnInit, OnDestroy {
     this.form.Direccion_Referencia = this.construirReferenciaGuardada();
     this.cargando = true;
     const codigo = this.personalSeleccionado.codigo;
-
+    const body = {
+    Nombres: this.form.Nombres,
+    A_Paterno: this.form.A_Paterno,
+    A_Materno: this.form.A_Materno,
+    NroDocumento: this.form.NroDocumento,
+    Fecha_Nacimiento: this.form.Fecha_Nacimiento,
+    Sexo: this.form.Sexo,
+    Telefono: this.form.Telefono,
+    Telefono2: this.form.Telefono2,
+    Celular: this.form.Celular,
+    Email: this.form.Email,
+    Descripcion_Via: this.form.Descripcion_Via,
+    Descripcion_Via2: this.form.Descripcion_Via2,
+    IdUbigeo: this.form.IdUbigeo,
+    Direccion_Numero: this.form.Direccion_Numero,
+    Direccion_Interior: this.form.Direccion_Interior,
+    Direccion_Manzana: this.form.Direccion_Manzana,
+    Direccion_Lote: this.form.Direccion_Lote,
+    Direccion_Block: this.form.Direccion_Block,
+    Direccion_Etapa: this.form.Direccion_Etapa,
+    Direccion_Kilometro: this.form.Direccion_Kilometro,
+    Descripcion_Zona: this.form.Descripcion_Zona,
+    Direccion_Referencia: this.form.Direccion_Referencia,
+    IdEstadoCivil: this.form.Estado_Civil,      // ← mapeo correcto
+    IdNivelEstudio: this.form.Grado_Instruccion, // ← mapeo correcto
+    Cuenta_Banco: '',
+    IdBanco: this.form.IdBanco,
+    Cuenta_Cts: this.form.Cuenta_Cts,
+    IdBancoCts: this.form.IdBanco,              // mismo banco CTS
+  };
     const saves = [
       this.apiService.editarPersonal(codigo, this.form),
       this.apiService.guardarVariablePersonal(codigo, '019', this.varGrupoSanguineo).pipe(catchError(() => of(null))),
