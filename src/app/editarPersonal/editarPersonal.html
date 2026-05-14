@@ -546,7 +546,7 @@
       <!-- ── 10. HIJOS / BENEFICIARIOS ──────────────────────────────── -->
       <div class="bg-white dark:bg-slate-800 rounded-xl shadow p-4">
         <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
-          Hijos / Beneficiarios
+          Hijos Beneficiarios(una vez agregados o modificados debe confirmar con el ✔)
         </h3>
 
         <div class="flex gap-2 mb-4">
@@ -587,7 +587,7 @@
                 </td>
                 <td class="p-2">
                   <span *ngIf="b.buscando" class="flex items-center gap-1.5 text-gray-400 text-xs">
-                    <i class="pi pi-spin pi-spinner"></i> Consultando Factiliza...
+                    <i class="pi pi-spin pi-spinner"></i> Consultando Datos...
                   </span>
                   <span *ngIf="!b.buscando && b.error && !b.guardado"
                     class="text-red-500 text-xs flex items-center gap-1">
@@ -657,7 +657,7 @@
         <div *ngIf="!cargandoBeneficiarios && beneficiarios.length === 0"
           class="text-center py-5 text-gray-400 dark:text-gray-500 text-sm border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg">
           <i class="pi pi-users text-2xl block mb-1 opacity-40"></i>
-          Sin beneficiarios registrados. Ingrese DNI o CEE para consultar vía Factiliza.
+          Sin registros. Ingrese DNI o CEE para consultar y validar sus datos.IMPORTANTE CONFIRMAR CON (✔)
         </div>
       </div>
 
