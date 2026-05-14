@@ -1021,19 +1021,15 @@ export class EditarPersonal implements OnInit, OnDestroy {
 guardarBeneficiario(b: Beneficiario) {
   if (!this.personalSeleccionado || b.buscando) return;
 
-  const request: BeneficiarioRequest = {
-    item: b.item ?? '',
-    a_Paterno: b.apellidoPaterno,
-    a_Materno: b.apellidoMaterno,
-    nombres: b.nombres,
-    nroDocumento: b.dni,
-    fechaNacimiento: b.fechaNacimiento
-      ? `${b.fechaNacimiento}T00:00:00.000Z`
-      : null,
-    situacion: 'A',
-    idDocIdentidad: this.normalizarTipoDocumentoBeneficiario(b.tipoDocumento),
-    idVinculo: '1'
-  };
+  b.fechaNacimiento = this.formatearFechaNacimientoConGuiones(b.fechaNacimiento);
+  if (b.fechaNacimiento && !/^\d{4}-\d{2}-\d{2}$/.test(b.fechaNacimiento)) {
+    this.messageService.add({
+      severity: 'warn', summary: 'Fecha inválida', detail: 'Use el formato YYYY-MM-DD', life: 3000
+    });
+    return;
+  }
+
+  const request: BeneficiarioRequest = this.construirRequestBeneficiario(b);
 
   console.log('[guardarBeneficiario] codigo:', this.personalSeleccionado.codigo);
   console.log('[guardarBeneficiario] request:', JSON.stringify(request, null, 2));
@@ -1041,33 +1037,59 @@ guardarBeneficiario(b: Beneficiario) {
   b.guardando = true;
   const codigo = this.personalSeleccionado.codigo;
 
-  this.apiService.crearBeneficiario(codigo, request).subscribe({
+  const operacion$ = (b.guardado && b.editando && b.item)
+    ? this.apiService.eliminarBeneficiario(codigo, b.item)
+    : of({ success: true });
+
+  operacion$.subscribe({
     next: (response) => {
-      console.log('[guardarBeneficiario] response:', JSON.stringify(response, null, 2));
-      b.guardando = false;
-      if (response?.success) {
-        b.guardado = true;
-        b.editando = false;
-        if (response.data?.item) b.item = response.data.item;
-        this.beneficiarios = [...this.beneficiarios];
-        this.messageService.add({
-          severity: 'success', summary: 'Guardado',
-          detail: `Beneficiario ${b.dni} guardado correctamente`, life: 3000
-        });
-      } else {
-        b.error = response?.message ?? 'No se pudo guardar';
+      if (b.guardado && b.editando && b.item && !(response?.success || response?.data?.success)) {
+        b.guardando = false;
+        b.error = response?.data?.message ?? 'No se pudo reemplazar el beneficiario';
         this.beneficiarios = [...this.beneficiarios];
         this.messageService.add({
           severity: 'warn', summary: 'Advertencia', detail: b.error, life: 3000
         });
+        return;
       }
+
+      this.apiService.crearBeneficiario(codigo, request).subscribe({
+        next: (crearResponse) => {
+          console.log('[guardarBeneficiario] response:', JSON.stringify(crearResponse, null, 2));
+          b.guardando = false;
+          if (crearResponse?.success) {
+            b.guardado = true;
+            b.editando = false;
+            if (crearResponse.data?.item) b.item = crearResponse.data.item;
+            this.beneficiarios = [...this.beneficiarios];
+            this.messageService.add({
+              severity: 'success', summary: 'Guardado',
+              detail: `Beneficiario ${b.dni} guardado correctamente`, life: 3000
+            });
+          } else {
+            b.error = crearResponse?.message ?? 'No se pudo guardar';
+            this.beneficiarios = [...this.beneficiarios];
+            this.messageService.add({
+              severity: 'warn', summary: 'Advertencia', detail: b.error, life: 3000
+            });
+          }
+        },
+        error: (err) => {
+          console.error('[guardarBeneficiario] error:', err);
+          console.error('[guardarBeneficiario] error status:', err?.status);
+          console.error('[guardarBeneficiario] error body:', JSON.stringify(err?.error, null, 2));
+          b.guardando = false;
+          b.error = 'Error al guardar el beneficiario';
+          this.beneficiarios = [...this.beneficiarios];
+          this.messageService.add({
+            severity: 'error', summary: 'Error', detail: b.error, life: 3000
+          });
+        }
+      });
     },
-    error: (err) => {
-      console.error('[guardarBeneficiario] error:', err);
-      console.error('[guardarBeneficiario] error status:', err?.status);
-      console.error('[guardarBeneficiario] error body:', JSON.stringify(err?.error, null, 2));
+    error: () => {
       b.guardando = false;
-      b.error = 'Error al guardar el beneficiario';
+      b.error = 'Error al reemplazar el beneficiario';
       this.beneficiarios = [...this.beneficiarios];
       this.messageService.add({
         severity: 'error', summary: 'Error', detail: b.error, life: 3000
@@ -1075,6 +1097,35 @@ guardarBeneficiario(b: Beneficiario) {
     }
   });
 }
+
+  onFechaNacimientoInput(b: Beneficiario) {
+    b.fechaNacimiento = this.formatearFechaNacimientoConGuiones(b.fechaNacimiento);
+  }
+
+  private formatearFechaNacimientoConGuiones(valor: string): string {
+    const soloNumeros = (valor ?? '').replace(/\D/g, '').substring(0, 8);
+    const partes: string[] = [];
+    if (soloNumeros.length > 0) partes.push(soloNumeros.substring(0, 4));
+    if (soloNumeros.length > 4) partes.push(soloNumeros.substring(4, 6));
+    if (soloNumeros.length > 6) partes.push(soloNumeros.substring(6, 8));
+    return partes.join('-');
+  }
+
+  private construirRequestBeneficiario(b: Beneficiario): BeneficiarioRequest {
+    return {
+      item: b.item ?? '',
+      a_Paterno: b.apellidoPaterno,
+      a_Materno: b.apellidoMaterno,
+      nombres: b.nombres,
+      nroDocumento: b.dni,
+      fechaNacimiento: b.fechaNacimiento
+        ? `${b.fechaNacimiento}T00:00:00.000Z`
+        : null,
+      situacion: 'A',
+      idDocIdentidad: this.normalizarTipoDocumentoBeneficiario(b.tipoDocumento),
+      idVinculo: '1'
+    };
+  }
 
   habilitarEdicion(b: Beneficiario) {
     b.editando = true;
