@@ -803,6 +803,15 @@ export class EditarPersonal implements OnInit, OnDestroy {
   // ── Guardar ───────────────────────────────────────────────────────────────
   guardarPersonal() {
     if (!this.personalSeleccionado) return;
+
+    if (!this.tieneCertificadoUnicoLaboralPdf()) {
+      this.messageService.add({
+        severity: 'warn', summary: 'Documento requerido',
+        detail: 'Falta el CERTIFICADO ÚNICO LABORAL en formato PDF', life: 4000
+      });
+      return;
+    }
+
     this.form.Direccion_Referencia = this.construirReferenciaGuardada();
     this.cargando = true;
     const codigo = this.personalSeleccionado.codigo;
@@ -944,6 +953,23 @@ export class EditarPersonal implements OnInit, OnDestroy {
 
   esImagen(nombre: string): boolean {
     return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(nombre);
+  }
+
+  private esPdf(nombre: string): boolean {
+    return /\.pdf$/i.test(nombre);
+  }
+
+  private esFotoPerfil(nombre: string): boolean {
+    if (!this.personalSeleccionado) return false;
+
+    return nombre.toLowerCase().startsWith(`foto_${this.personalSeleccionado.codigo}`.toLowerCase());
+  }
+
+  private tieneCertificadoUnicoLaboralPdf(): boolean {
+    return this.archivos.some((archivo) => {
+      const nombre = archivo.nombre ?? '';
+      return !this.esFotoPerfil(nombre) && this.esPdf(nombre);
+    });
   }
 
   getNombreCorto(nombre: string): string {
