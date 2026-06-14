@@ -16,6 +16,7 @@ import { RendicionGastos } from './rendicion-gastos/rendicion-gastos';
 import { Home } from './home/home';
 import { Personal } from './personal/personal';
 import { EditarPersonal } from './editarPersonal/editarPersonal';
+import { Reportecotventas } from './reportecotventas/reportecotventas';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -103,6 +104,11 @@ export const routes: Routes = [
   {
     path: 'editarDatos',
     component: EditarPersonal,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'reporte_ventas',
+    component: Reportecotventas,
     canActivate: [authGuard]
   },
   // Cualquier ruta no válida vuelve al login
