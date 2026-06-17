@@ -5,21 +5,17 @@
   <div class="max-w-[1400px] mx-auto">
 
     <!-- ══ HEADER ═══════════════════════════════════════════════════════════ -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div class="flex items-center justify-between gap-4 mb-6">
       <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
         Cotización de Ventas
       </h1>
-      <div class="flex gap-2">
-        <button pButton type="button" icon="pi pi-refresh" label="Limpiar"
-          (click)="limpiarCotizacion()" severity="secondary" class="h-11"></button>
-        <button pButton type="button" icon="pi pi-file-pdf" label="Generar PDF"
-          (click)="generarCotizacionPDF()" severity="danger" class="h-11"></button>
-      </div>
+      <button pButton type="button" icon="pi pi-refresh" label="Limpiar"
+        (click)="limpiarCotizacion()" severity="secondary" class="h-9 shrink-0"></button>
     </div>
 
     <!-- ══ CABECERA ══════════════════════════════════════════════════════════ -->
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 mb-4">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 items-end">
 
         <!-- Sucursal -->
         <div class="flex flex-col gap-2">
@@ -28,10 +24,8 @@
           </label>
           <p-select [(ngModel)]="cabecera.idSucursal" [options]="sucursales"
             optionLabel="label" optionValue="value"
-            placeholder="Seleccione sucursal"
-            styleClass="w-full"
-            panelStyleClass="!w-auto"
-            [autoOptionFocus]="false"
+            placeholder="Seleccione" styleClass="w-full"
+            panelStyleClass="!w-auto" [autoOptionFocus]="false"
             (onChange)="onSucursalChange()" />
         </div>
 
@@ -39,44 +33,64 @@
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Moneda</label>
           <p-select [(ngModel)]="cabecera.moneda" [options]="monedas"
-            optionLabel="label" optionValue="value"
-            styleClass="w-full" />
+            optionLabel="label" optionValue="value" styleClass="w-full" />
         </div>
 
         <!-- Cliente -->
-        <div class="flex flex-col gap-2 lg:col-span-2">
+        <div class="flex flex-col gap-2 xl:col-span-2">
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
             Cliente <span class="text-red-500">*</span>
           </label>
           <div class="flex gap-2">
-            <input type="text" pInputText [(ngModel)]="docCliente"
-              placeholder="DNI / RUC" class="w-32 h-11 shrink-0"
-              maxlength="11" (keyup.enter)="buscarCliente()" />
-            <button pButton type="button" icon="pi pi-search"
-              (click)="buscarCliente()" [loading]="buscandoCliente"
-              class="h-11 shrink-0"></button>
+            <div class="relative shrink-0">
+              <input type="text" pInputText [(ngModel)]="docCliente"
+                placeholder="DNI / RUC" class="w-32 h-11 pr-8"
+                maxlength="11"
+                (ngModelChange)="onDocClienteChange()"
+                (keyup.enter)="buscarCliente()"
+                (blur)="buscarCliente()" />
+              <i *ngIf="buscandoCliente"
+                class="pi pi-spin pi-spinner absolute right-2 top-1/2 -translate-y-1/2
+                       text-gray-400 text-sm pointer-events-none"></i>
+            </div>
             <input type="text" pInputText [(ngModel)]="cabecera.nombreCliente"
               placeholder="Nombre / Razón Social" class="flex-1 h-11 min-w-0" />
           </div>
         </div>
 
+        <!-- Teléfono 1 -->
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono 1</label>
+          <input type="text" pInputText [(ngModel)]="cabecera.telefonoCliente"
+            placeholder="Teléfono principal" class="w-full h-11" maxlength="15" />
+        </div>
+
+        <!-- Teléfono 2 -->
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono 2</label>
+          <input type="text" pInputText [(ngModel)]="cabecera.telefonoCliente2"
+            placeholder="Teléfono alternativo" class="w-full h-11" maxlength="15" />
+        </div>
+
         <!-- Placa -->
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Placa</label>
-          <div class="flex gap-2">
+          <div class="relative">
             <input type="text" pInputText [(ngModel)]="inputPlaca"
-              placeholder="ABC-123" class="flex-1 h-11 min-w-0"
+              placeholder="ABC-123" class="w-full h-11 pr-8"
               style="text-transform:uppercase"
-              (keyup.enter)="buscarVehiculo()" />
-            <button pButton type="button" icon="pi pi-search"
-              (click)="buscarVehiculo()" [loading]="buscandoVehiculo"
-              severity="secondary" class="h-11 shrink-0"></button>
+              (ngModelChange)="onInputPlacaChange()"
+              (keyup.enter)="buscarVehiculo()"
+              (blur)="buscarVehiculo()" />
+            <i *ngIf="buscandoVehiculo"
+              class="pi pi-spin pi-spinner absolute right-2 top-1/2 -translate-y-1/2
+                     text-gray-400 text-sm pointer-events-none"></i>
           </div>
         </div>
 
       </div>
 
-      <!-- Fila secundaria: datos resueltos -->
+      <!-- Fila secundaria -->
       <div class="flex flex-wrap items-center gap-x-6 gap-y-1 mt-3 pt-3
                   border-t border-gray-100 dark:border-slate-700 text-sm">
         <span class="text-gray-500 dark:text-gray-400">
@@ -89,9 +103,6 @@
         <span *ngIf="cabecera.rucDni" class="text-gray-500 dark:text-gray-400">
           {{ cabecera.rucDni.length === 11 ? 'RUC' : 'DNI' }}:
           <span class="font-medium text-gray-700 dark:text-gray-200">{{ cabecera.rucDni }}</span>
-        </span>
-        <span *ngIf="cabecera.telefonoCliente" class="text-gray-500 dark:text-gray-400">
-          Tel: <span class="font-medium text-gray-700 dark:text-gray-200">{{ cabecera.telefonoCliente }}</span>
         </span>
         <span class="ml-auto text-gray-400 dark:text-gray-500">
           Válido del <strong class="text-gray-600 dark:text-gray-300">{{ fechaHoy }}</strong>
@@ -123,11 +134,12 @@
         </span>
       </div>
 
-      <!-- Tabla desktop -->
+      <!-- Tabla desktop / tablet (md+) -->
       <div class="hidden md:block overflow-x-auto">
         <table class="w-full border-collapse" style="min-width: 860px">
 
           <thead>
+            <!-- Cabecera columnas -->
             <tr class="bg-gray-50 dark:bg-slate-700">
               <th class="text-center p-3 text-gray-700 dark:text-gray-200 font-semibold text-sm w-12">#</th>
               <th class="text-left   p-3 text-gray-700 dark:text-gray-200 font-semibold text-sm">Descripción Producto</th>
@@ -135,21 +147,96 @@
               <th class="text-right  p-3 text-gray-700 dark:text-gray-200 font-semibold text-sm w-24">Cantidad</th>
               <th class="text-right  p-3 text-gray-700 dark:text-gray-200 font-semibold text-sm w-32">P.Unitario</th>
               <th class="text-right  p-3 text-gray-700 dark:text-gray-200 font-semibold text-sm w-28">Sub Total</th>
-              <th class="text-right  p-3 text-gray-700 dark:text-gray-200 font-semibold text-sm w-24">% Dscto 1</th>
+              <th class="text-right  p-3 text-gray-700 dark:text-gray-200 font-semibold text-sm w-24">% Dscto</th>
               <th class="text-right  p-3 text-gray-700 dark:text-gray-200 font-semibold text-sm w-28">Descuento</th>
               <th class="text-right  p-3 text-gray-700 dark:text-gray-200 font-semibold text-sm w-28">Valor</th>
               <th class="text-center p-3 text-gray-700 dark:text-gray-200 font-semibold text-sm w-16">Acc.</th>
+            </tr>
+
+            <!-- Fila nueva siempre fija arriba -->
+            <tr class="border-b-2 border-green-400 dark:border-green-600
+                       bg-green-50 dark:bg-green-900/10">
+              <td class="p-2 text-center text-green-500 text-xs font-bold">N</td>
+              <td class="p-2">
+                <p-autoComplete
+                  [(ngModel)]="filaActiva.inputDescripcion"
+                  [suggestions]="productosSugeridos"
+                  field="nombre"
+                  [minLength]="3"
+                  [delay]="350"
+                  [forceSelection]="false"
+                  (completeMethod)="buscarProductos($event)"
+                  (onSelect)="seleccionarProducto($event.value, filaActiva)"
+                  (onClear)="filaActiva.descripcion = ''; filaActiva.idProducto = ''"
+                  placeholder="Descripción del producto..."
+                  styleClass="w-full"
+                  inputStyleClass="w-full h-9"
+                  (keyup.enter)="confirmarFila()">
+                  <ng-template #item let-producto>
+                    <div class="flex flex-col py-1">
+                      <span class="text-xs font-mono text-gray-400">{{ producto.idProducto?.trim() }}</span>
+                      <span class="text-sm text-gray-800 dark:text-gray-100">{{ producto.nombre }}</span>
+                    </div>
+                  </ng-template>
+                </p-autoComplete>
+              </td>
+              <td class="p-2">
+                <input type="text" pInputText [(ngModel)]="filaActiva.um"
+                  class="w-full h-9 text-center"
+                  style="text-transform:uppercase" maxlength="5" />
+              </td>
+              <td class="p-2">
+                <input type="number" pInputText [(ngModel)]="filaActiva.cantidad"
+                  (ngModelChange)="recalc(filaActiva)"
+                  class="w-full h-9 text-right" min="0.001" />
+              </td>
+              <td class="p-2">
+                <input type="number" pInputText [(ngModel)]="filaActiva.precioUnitario"
+                  (ngModelChange)="recalc(filaActiva)"
+                  class="w-full h-9 text-right" min="0" step="0.0001" />
+              </td>
+              <td class="p-2 text-right text-sm text-gray-400 pr-3">
+                {{ filaActiva.subTotal | number:'1.2-2' }}
+              </td>
+              <td class="p-2">
+                <input type="number" pInputText [(ngModel)]="filaActiva.descuentoPct"
+                  (ngModelChange)="recalc(filaActiva)"
+                  class="w-full h-9 text-right" min="0" max="100" step="0.01" />
+              </td>
+              <td class="p-2 text-right text-sm text-red-400 pr-3">
+                {{ filaActiva.descuentoMonto | number:'1.2-2' }}
+              </td>
+              <td class="p-2 text-right text-sm font-semibold text-green-600 dark:text-green-400 pr-3">
+                {{ filaActiva.valor | number:'1.2-2' }}
+              </td>
+              <td class="p-2 text-center">
+                <button pButton type="button" icon="pi pi-check"
+                  (click)="confirmarFila()" severity="success"
+                  class="p-button-sm p-button-rounded"
+                  pTooltip="Agregar (Enter)"></button>
+              </td>
             </tr>
           </thead>
 
           <tbody>
 
-            <!-- Filas confirmadas -->
+            <!-- Sin productos -->
+            <tr *ngIf="detalle.length === 0">
+              <td colspan="10" class="text-center py-8">
+                <div class="text-gray-500 dark:text-gray-400">
+                  <i class="pi pi-inbox text-4xl mb-3 block opacity-50"></i>
+                  <p class="text-sm font-medium">Sin productos</p>
+                  <p class="text-xs mt-1">Complete la fila de arriba y presione ✓ para agregar</p>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Filas confirmadas / en edición -->
             <ng-container *ngFor="let fila of detalle; let i = index">
 
-              <!-- Lectura -->
+              <!-- Vista -->
               <tr *ngIf="fila.confirmado"
-                class="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors group"
+                class="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                 [class.bg-yellow-50]="i % 2 === 0">
                 <td class="p-3 text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
                   {{ (i+1).toString().padStart(3,'0') }}
@@ -179,7 +266,7 @@
                   {{ fila.valor | number:'1.2-2' }}
                 </td>
                 <td class="p-3 text-center">
-                  <div class="flex gap-1 justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div class="flex gap-1 justify-center">
                     <button pButton type="button" icon="pi pi-pencil"
                       (click)="editarFila(i)" severity="secondary"
                       class="p-button-sm p-button-text p-button-rounded"
@@ -200,8 +287,25 @@
                   {{ (i+1).toString().padStart(3,'0') }}
                 </td>
                 <td class="p-2">
-                  <input type="text" pInputText [(ngModel)]="fila.descripcion"
-                    class="w-full h-9" placeholder="Descripción *" />
+                  <p-autoComplete
+                    [(ngModel)]="fila.inputDescripcion"
+                    [suggestions]="productosSugeridos"
+                    field="nombre"
+                    [minLength]="3"
+                    [delay]="350"
+                    [forceSelection]="false"
+                    (completeMethod)="buscarProductos($event)"
+                    (onSelect)="seleccionarProducto($event.value, fila)"
+                    (onClear)="fila.descripcion = ''; fila.idProducto = ''"
+                    styleClass="w-full"
+                    inputStyleClass="w-full h-9">
+                    <ng-template #item let-producto>
+                      <div class="flex flex-col py-1">
+                        <span class="text-xs font-mono text-gray-400">{{ producto.idProducto?.trim() }}</span>
+                        <span class="text-sm text-gray-800 dark:text-gray-100">{{ producto.nombre }}</span>
+                      </div>
+                    </ng-template>
+                  </p-autoComplete>
                 </td>
                 <td class="p-2">
                   <input type="text" pInputText [(ngModel)]="fila.um"
@@ -246,68 +350,9 @@
 
             </ng-container>
 
-            <!-- Fila nueva -->
-            <tr class="border-t-2 border-dashed border-green-300 dark:border-green-700
-                       bg-green-50 dark:bg-green-900/10">
-              <td class="p-2 text-center">
-                <i class="pi pi-plus text-green-400 text-xs"></i>
-              </td>
-              <td class="p-2">
-                <input type="text" pInputText [(ngModel)]="filaActiva.descripcion"
-                  class="w-full h-9" placeholder="Descripción del producto..."
-                  (keyup.enter)="confirmarFila()" />
-              </td>
-              <td class="p-2">
-                <input type="text" pInputText [(ngModel)]="filaActiva.um"
-                  class="w-full h-9 text-center"
-                  style="text-transform:uppercase" maxlength="5" />
-              </td>
-              <td class="p-2">
-                <input type="number" pInputText [(ngModel)]="filaActiva.cantidad"
-                  (ngModelChange)="recalc(filaActiva)"
-                  class="w-full h-9 text-right" min="0.001" />
-              </td>
-              <td class="p-2">
-                <input type="number" pInputText [(ngModel)]="filaActiva.precioUnitario"
-                  (ngModelChange)="recalc(filaActiva)"
-                  class="w-full h-9 text-right" min="0" step="0.0001" />
-              </td>
-              <td class="p-2 text-right text-sm text-gray-400 pr-3">
-                {{ filaActiva.subTotal | number:'1.2-2' }}
-              </td>
-              <td class="p-2">
-                <input type="number" pInputText [(ngModel)]="filaActiva.descuentoPct"
-                  (ngModelChange)="recalc(filaActiva)"
-                  class="w-full h-9 text-right" min="0" max="100" step="0.01" />
-              </td>
-              <td class="p-2 text-right text-sm text-red-400 pr-3">
-                {{ filaActiva.descuentoMonto | number:'1.2-2' }}
-              </td>
-              <td class="p-2 text-right text-sm font-semibold text-green-600 dark:text-green-400 pr-3">
-                {{ filaActiva.valor | number:'1.2-2' }}
-              </td>
-              <td class="p-2 text-center">
-                <button pButton type="button" icon="pi pi-check"
-                  (click)="confirmarFila()" severity="success"
-                  class="p-button-sm p-button-rounded"
-                  pTooltip="Agregar (Enter)"></button>
-              </td>
-            </tr>
-
-            <!-- Vacío -->
-            <tr *ngIf="detalle.length === 0">
-              <td colspan="10" class="text-center py-8">
-                <div class="text-gray-500 dark:text-gray-400">
-                  <i class="pi pi-inbox text-4xl mb-3 block opacity-50"></i>
-                  <p class="text-sm font-medium">Sin productos</p>
-                  <p class="text-xs mt-1">Complete la fila y presione ✓ para agregar</p>
-                </div>
-              </td>
-            </tr>
-
           </tbody>
 
-          <!-- Totales -->
+          <!-- Totales desktop -->
           <tfoot *ngIf="detalle.length > 0">
             <tr class="bg-gray-50 dark:bg-slate-700 border-t border-gray-200 dark:border-slate-600">
               <td colspan="5" class="p-3 text-right text-sm text-gray-500 dark:text-gray-400 font-medium">
@@ -336,9 +381,9 @@
             </tr>
             <tr class="bg-gray-800 dark:bg-slate-900 text-white">
               <td colspan="7" class="p-3 text-right text-sm font-bold">
-                TOTAL {{ simboloMoneda }}
+                TOTAL GENERAL {{ simboloMoneda }}
               </td>
-              <td colspan="2" class="p-3 text-right text-base font-bold">
+              <td colspan="2" class="p-3 text-right text-lg font-bold">
                 {{ totalGeneral | number:'1.2-2' }}
               </td>
               <td></td>
@@ -348,8 +393,65 @@
         </table>
       </div>
 
-      <!-- Mobile cards -->
+      <!-- ══ Vista móvil ═══════════════════════════════════════════════════ -->
       <div class="md:hidden p-4 space-y-4">
+
+        <!-- Fila nueva móvil -->
+        <div class="bg-green-50 dark:bg-green-900/10 rounded-lg p-4
+                    border-2 border-dashed border-green-300 dark:border-green-700">
+          <p class="text-xs font-semibold text-green-600 dark:text-green-400 mb-3">
+            Nuevo producto
+          </p>
+          <div class="flex flex-col gap-3">
+            <p-autoComplete
+              [(ngModel)]="filaActiva.inputDescripcion"
+              [suggestions]="productosSugeridos"
+              field="nombre"
+              [minLength]="3"
+              [delay]="350"
+              [forceSelection]="false"
+              (completeMethod)="buscarProductos($event)"
+              (onSelect)="seleccionarProducto($event.value, filaActiva)"
+              (onClear)="filaActiva.descripcion = ''; filaActiva.idProducto = ''"
+              placeholder="Descripción del producto..."
+              styleClass="w-full"
+              inputStyleClass="w-full h-10">
+              <ng-template #item let-producto>
+                <div class="flex flex-col py-1">
+                  <span class="text-xs font-mono text-gray-400">{{ producto.idProducto?.trim() }}</span>
+                  <span class="text-sm text-gray-800 dark:text-gray-100">{{ producto.nombre }}</span>
+                </div>
+              </ng-template>
+            </p-autoComplete>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="text-xs text-gray-500 dark:text-gray-400">U.M.</label>
+                <input type="text" pInputText [(ngModel)]="filaActiva.um"
+                  class="w-full h-9 mt-1 text-center"
+                  style="text-transform:uppercase" maxlength="5" />
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 dark:text-gray-400">Cantidad</label>
+                <input type="number" pInputText [(ngModel)]="filaActiva.cantidad"
+                  (ngModelChange)="recalc(filaActiva)" class="w-full h-9 mt-1" min="0.001" />
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 dark:text-gray-400">Precio</label>
+                <input type="number" pInputText [(ngModel)]="filaActiva.precioUnitario"
+                  (ngModelChange)="recalc(filaActiva)" class="w-full h-9 mt-1" min="0" />
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-bold text-green-700 dark:text-green-400">
+                Valor: {{ simboloMoneda }} {{ filaActiva.valor | number:'1.2-2' }}
+              </span>
+              <button pButton type="button" icon="pi pi-check" label="Agregar"
+                (click)="confirmarFila()" severity="success" class="h-9"></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Productos agregados -->
         <div *ngFor="let fila of detalle; let i = index"
           class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4
                  border border-gray-200 dark:border-gray-600">
@@ -357,6 +459,7 @@
             <div>
               <span class="text-xs font-bold text-gray-400">{{ (i+1).toString().padStart(3,'0') }}</span>
               <p class="text-sm font-semibold text-gray-800 dark:text-white mt-0.5">{{ fila.descripcion }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ fila.um }}</p>
             </div>
             <button pButton type="button" icon="pi pi-trash"
               (click)="eliminarFila(i)" severity="danger"
@@ -391,8 +494,33 @@
           <i class="pi pi-inbox text-4xl block mb-3 opacity-50 text-gray-400"></i>
           <p class="text-sm text-gray-500">Sin productos</p>
         </div>
+
+        <!-- Total móvil -->
+        <div *ngIf="detalle.length > 0"
+          class="bg-gray-800 dark:bg-slate-900 text-white rounded-xl p-4 space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-300">Valor venta</span>
+            <span>{{ totalValorVenta | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-300">IGV {{ igvPct }}%</span>
+            <span>{{ totalIgv | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between text-base font-bold border-t border-gray-600 pt-2">
+            <span>TOTAL {{ simboloMoneda }}</span>
+            <span>{{ totalGeneral | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
       </div>
 
+    </div>
+
+    <!-- ══ BOTÓN GRABAR ════════════════════════════════════════════════════ -->
+    <div class="flex justify-end mt-4">
+      <button pButton type="button" icon="pi pi-save" label="Grabar"
+        (click)="grabar()" severity="success" [loading]="guardando"
+        class="h-11 px-6 text-base font-semibold"></button>
     </div>
 
   </div>

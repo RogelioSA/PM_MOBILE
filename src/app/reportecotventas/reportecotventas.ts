@@ -12,34 +12,37 @@ import { MessageService } from 'primeng/api';
 import { Menu } from '../menu/menu';
 import { Api } from '../services/api';
 import { Master } from '../services/master';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 
 export interface DetalleCotizacion {
-  idProducto:     string;
-  descripcion:    string;
-  um:             string;
-  cantidad:       number;
-  precioUnitario: number;
-  descuentoPct:   number;
-  subTotal:       number;
-  descuentoMonto: number;
-  valor:          number;
-  confirmado:     boolean;
+  idProducto:       string;
+  descripcion:      string;
+  um:               string;
+  cantidad:         number;
+  precioUnitario:   number;
+  descuentoPct:     number;
+  subTotal:         number;
+  descuentoMonto:   number;
+  valor:            number;
+  confirmado:       boolean;
+  inputDescripcion: string;
 }
 
 export interface CabeceraCotizacion {
-  idSucursal:       string;
-  nombreSucursal:   string;
-  moneda:           string;
-  nombreCliente:    string;
-  rucDni:           string;
-  direccionCliente: string;
-  telefonoCliente:  string;
-  vendedor:         string;
-  placa:            string;
-  vin:              string;
-  observaciones:    string;
-  validezDias:      number;
-  formaPago:        string;
+  idSucursal:        string;
+  nombreSucursal:    string;
+  moneda:            string;
+  nombreCliente:     string;
+  rucDni:            string;
+  direccionCliente:  string;
+  telefonoCliente:   string;
+  telefonoCliente2:  string;
+  vendedor:          string;
+  placa:             string;
+  vin:               string;
+  observaciones:     string;
+  validezDias:       number;
+  formaPago:         string;
 }
 
 @Component({
@@ -53,7 +56,8 @@ export interface CabeceraCotizacion {
     SelectModule,
     ToastModule,
     TooltipModule,
-    Menu
+    Menu,
+    AutoCompleteModule
   ],
   templateUrl: './reportecotventas.html',
   styleUrls: ['./reportecotventas.css'],
@@ -62,7 +66,6 @@ export interface CabeceraCotizacion {
 export class Reportecotventas implements OnInit {
 
   cabecera: CabeceraCotizacion = this.cabeceraVacia();
-
   sucursales: any[] = [];
 
   monedas = [
@@ -76,18 +79,21 @@ export class Reportecotventas implements OnInit {
     { label: 'Crédito 30 días', value: 'CREDITO30' },
   ];
 
-  // Búsquedas cabecera
   buscandoCliente  = false;
   docCliente       = '';
+  clienteYaBuscado = false;
+
   buscandoVehiculo = false;
   inputPlaca       = '';
+  placaYaBuscada   = false;
 
-  // Detalle — tabla editable inline
   detalle:    DetalleCotizacion[] = [];
   filaActiva: DetalleCotizacion   = this.filaVacia();
 
-  igvPct    = 18;
-  guardando = false;
+  productosSugeridos: any[] = [];
+  buscandoProducto    = false;
+  igvPct              = 18;
+  guardando           = false;
 
   constructor(
     private messageService: MessageService,
@@ -103,13 +109,11 @@ export class Reportecotventas implements OnInit {
     this.cabecera.formaPago   = 'CONTADO';
   }
 
-  // ── Vacíos ────────────────────────────────────────────────────────────────
   cabeceraVacia(): CabeceraCotizacion {
     return {
-      idSucursal: '',          // FIX: string vacío en vez de null para que PrimeNG haga el binding correctamente
-      nombreSucursal: '',
+      idSucursal: '', nombreSucursal: '',
       moneda: 'PEN', nombreCliente: '', rucDni: '', direccionCliente: '',
-      telefonoCliente: '', vendedor: '', placa: '', vin: '',
+      telefonoCliente: '', telefonoCliente2: '', vendedor: '', placa: '', vin: '',
       observaciones: '', validezDias: 10, formaPago: 'CONTADO'
     };
   }
@@ -118,115 +122,202 @@ export class Reportecotventas implements OnInit {
     return {
       idProducto: '', descripcion: '', um: 'UND',
       cantidad: 1, precioUnitario: 0, descuentoPct: 0,
-      subTotal: 0, descuentoMonto: 0, valor: 0, confirmado: false
+      subTotal: 0, descuentoMonto: 0, valor: 0, confirmado: false,
+      inputDescripcion: ''
     };
   }
 
-obtenerUsuarioActual(): string {
-  const match = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('usuario='));
-  if (!match) return '';
-  try {
-    const val = decodeURIComponent(match.split('=')[1]);
-    const u = JSON.parse(val);
-    return u.nombre ?? u.username ?? u.usuario ?? val;
-  } catch {
-    return decodeURIComponent(match.split('=')[1]);
+  obtenerUsuarioActual(): string {
+    const match = document.cookie.split('; ').find(r => r.startsWith('usuario='));
+    if (!match) return '';
+    try {
+      const val = decodeURIComponent(match.split('=')[1]);
+      const u = JSON.parse(val);
+      return u.nombre ?? u.username ?? u.usuario ?? val;
+    } catch {
+      return decodeURIComponent(match.split('=')[1]);
+    }
   }
-}
-  // ── Getters ───────────────────────────────────────────────────────────────
-  get simboloMoneda() { return this.cabecera.moneda === 'USD' ? 'US$' : 'S/'; }
 
-  get fechaHoy() { return new Date().toLocaleDateString('es-PE'); }
-
+  get simboloMoneda()    { return this.cabecera.moneda === 'USD' ? 'US$' : 'S/'; }
+  get fechaHoy()         { return new Date().toLocaleDateString('es-PE'); }
   get fechaVencimiento() {
     const d = new Date();
     d.setDate(d.getDate() + (this.cabecera.validezDias ?? 10));
     return d.toLocaleDateString('es-PE');
   }
 
-  // ── Sucursales ────────────────────────────────────────────────────────────
   cargarSucursales() {
     this.masterService.getSucursales().subscribe({
       next: (res: any) => {
         const data = res?.success && Array.isArray(res.data) ? res.data
           : Array.isArray(res) ? res : [];
-this.sucursales = data.map((s: any) => ({
-  label: (s.descripcion ?? '').trim(),
-  value: String(s.idSucursal ?? '')   // ← era s.id ?? s.idsucursal → ambos undefined
-}));
-        // FIX: forzar re-evaluación del binding después de cargar opciones
+        this.sucursales = data.map((s: any) => ({
+          label: (s.descripcion ?? '').trim(),
+          value: String(s.idSucursal ?? '')
+        }));
         this.cabecera.idSucursal = '';
       },
       error: () => {}
     });
   }
+
   onSucursalChange() {
-    // FIX: comparar como strings para evitar mismatch número vs string
-    const sel = this.sucursales.find(
-      s => String(s.value) === String(this.cabecera.idSucursal)
-    );
+    const sel = this.sucursales.find(s => String(s.value) === String(this.cabecera.idSucursal));
     this.cabecera.nombreSucursal = sel?.label ?? '';
   }
 
-  // ── Cliente (Factiliza) ───────────────────────────────────────────────────
+  onDocClienteChange() {
+    this.clienteYaBuscado          = false;
+    this.cabecera.nombreCliente    = '';
+    this.cabecera.rucDni           = '';
+    this.cabecera.direccionCliente = '';
+    this.cabecera.telefonoCliente  = '';
+    this.cabecera.telefonoCliente2 = '';
+  }
+
   buscarCliente() {
+    if (this.clienteYaBuscado) return;
     const doc = (this.docCliente ?? '').trim();
     if (doc.length !== 8 && doc.length !== 11) {
-      this.messageService.add({ severity: 'warn', summary: 'Aviso',
-        detail: 'Ingrese DNI (8) o RUC (11)', life: 3000 });
+      if (doc.length > 0)
+        this.messageService.add({ severity: 'warn', summary: 'Aviso',
+          detail: 'Ingrese DNI (8) o RUC (11)', life: 3000 });
       return;
     }
     this.buscandoCliente = true;
+
+    this.masterService.getClientByDocument(doc).subscribe({
+      next: (res: any) => {
+        const lista = Array.isArray(res?.data) ? res.data : [];
+        const d = lista[0];
+        if (d?.name || d?.nombre) {
+          this.buscandoCliente  = false;
+          this.clienteYaBuscado = true;
+          this.cabecera.rucDni  = doc;
+          this.cabecera.nombreCliente    = d.name ?? d.nombre ?? '';
+          this.cabecera.direccionCliente = d.direccion ?? '';
+          const telefonos = (d.telefono ?? '').split(',').map((t: string) => t.trim());
+          this.cabecera.telefonoCliente  = telefonos[0] ?? '';
+          this.cabecera.telefonoCliente2 = telefonos[1] ?? '';
+        } else {
+          this.buscarEnFactiliza(doc);
+        }
+      },
+      error: () => this.buscarEnFactiliza(doc)
+    });
+  }
+
+  private buscarEnFactiliza(doc: string) {
     this.masterService.factiliza(doc).subscribe({
       next: (res: any) => {
         this.buscandoCliente = false;
         if (res?.success && res?.data) {
           const d = res.data;
+          this.clienteYaBuscado          = true;
           this.cabecera.rucDni           = doc;
           this.cabecera.nombreCliente    = doc.length === 11
             ? (d.razon_social ?? d.nombre ?? '')
             : `${d.nombres ?? ''} ${d.apellido_paterno ?? ''} ${d.apellido_materno ?? ''}`.trim();
           this.cabecera.direccionCliente = d.direccion ?? d.domicilio_fiscal ?? '';
-          this.cabecera.telefonoCliente  = d.telefono ?? '';
+          const telefonos = (d.telefono ?? '').split(',').map((t: string) => t.trim());
+          this.cabecera.telefonoCliente  = telefonos[0] ?? '';
+          this.cabecera.telefonoCliente2 = telefonos[1] ?? '';
         } else {
           this.messageService.add({ severity: 'warn', summary: 'No encontrado',
-            detail: 'Documento no hallado en Factiliza', life: 3000 });
+            detail: 'Documento no hallado', life: 3000 });
         }
       },
       error: () => {
         this.buscandoCliente = false;
         this.messageService.add({ severity: 'error', summary: 'Error',
-          detail: 'Error al consultar Factiliza', life: 3000 });
+          detail: 'Error al consultar el documento', life: 3000 });
       }
     });
   }
 
-  // ── Vehículo ──────────────────────────────────────────────────────────────
+  onInputPlacaChange() {
+    this.placaYaBuscada = false;
+    this.cabecera.placa = '';
+    this.cabecera.vin   = '';
+  }
+
   buscarVehiculo() {
+    if (this.placaYaBuscada) return;
     const input = (this.inputPlaca ?? '').trim().toUpperCase();
     if (!input) return;
     this.buscandoVehiculo = true;
-    this.masterService.getCarPorVin(input).subscribe({
+
+    this.masterService.verificarVehiculoPorPlaca(input).subscribe({
+      next: (res: any) => {
+        const d = res?.data ?? res;
+        if (d && (d.placa || d.vin || d.nroChasis)) {
+          this.buscandoVehiculo = false;
+          this.placaYaBuscada   = true;
+          this.cabecera.placa   = d.placa ?? input;
+          this.cabecera.vin     = d.vin ?? d.nroChasis ?? '';
+        } else {
+          this.buscarPlacaFactiliza(input);
+        }
+      },
+      error: () => this.buscarPlacaFactiliza(input)
+    });
+  }
+
+  private buscarPlacaFactiliza(placa: string) {
+    this.masterService.consultarFactiliza(placa).subscribe({
       next: (res: any) => {
         this.buscandoVehiculo = false;
+        this.placaYaBuscada   = true;
         const d = res?.data ?? res;
-        this.cabecera.placa = d?.placa ?? input;
-        this.cabecera.vin   = d?.vin   ?? d?.nroChasis ?? input;
-        if (!d) this.messageService.add({ severity: 'info', summary: 'Info',
-          detail: 'Placa registrada manualmente', life: 2000 });
+        this.cabecera.placa   = d?.placa ?? placa;
+        this.cabecera.vin     = d?.vin ?? d?.serie ?? '';
       },
       error: () => {
         this.buscandoVehiculo = false;
-        this.cabecera.placa = input;
+        this.placaYaBuscada   = true;
+        this.cabecera.placa   = placa;
         this.messageService.add({ severity: 'info', summary: 'Info',
           detail: 'Placa registrada manualmente', life: 2000 });
       }
     });
   }
 
-  // ── Detalle inline ────────────────────────────────────────────────────────
+  buscarProductos(event: any) {
+    const query = (event.query ?? '').trim();
+    if (query.length < 3) { this.productosSugeridos = []; return; }
+    this.buscandoProducto = true;
+    this.masterService.searchProducts(query).subscribe({
+      next: (res: any) => {
+        this.buscandoProducto   = false;
+        const data = Array.isArray(res) ? res : (res?.data ?? []);
+        this.productosSugeridos = data;
+      },
+      error: () => { this.buscandoProducto = false; this.productosSugeridos = []; }
+    });
+  }
+
+  seleccionarProducto(producto: any, fila: any) {
+    const existe = this.detalle.some(
+      f => f.idProducto && f.idProducto.trim() === (producto.idProducto ?? '').trim()
+    );
+    if (existe) {
+      this.messageService.add({ severity: 'warn', summary: 'Duplicado',
+        detail: `"${producto.nombre}" ya está en el detalle`, life: 3000 });
+      fila.inputDescripcion = '';
+      fila.descripcion      = '';
+      fila.idProducto       = '';
+      return;
+    }
+    fila.idProducto       = (producto.idProducto ?? '').trim();
+    fila.descripcion      = producto.nombre        ?? '';
+    fila.um               = (producto.idMedida     ?? 'UND').trim();
+    fila.precioUnitario   = parseFloat(producto.precioUnitario) || 0;
+    fila.descuentoPct     = parseFloat(producto.descuentoPct)   || 0;
+    fila.inputDescripcion = producto.nombre        ?? '';
+    this.recalc(fila);
+  }
+
   recalc(fila: DetalleCotizacion) {
     fila.subTotal       = +(fila.cantidad * fila.precioUnitario).toFixed(6);
     fila.descuentoMonto = +(fila.subTotal * fila.descuentoPct / 100).toFixed(6);
@@ -241,7 +332,7 @@ this.sucursales = data.map((s: any) => ({
     }
     this.recalc(this.filaActiva);
     this.filaActiva.confirmado = true;
-    this.detalle = [...this.detalle, { ...this.filaActiva }];
+    this.detalle    = [...this.detalle, { ...this.filaActiva }];
     this.filaActiva = this.filaVacia();
   }
 
@@ -260,14 +351,12 @@ this.sucursales = data.map((s: any) => ({
     this.detalle = this.detalle.filter((_, i) => i !== index);
   }
 
-  // ── Totales ───────────────────────────────────────────────────────────────
   get totalSubTotal()   { return this.detalle.reduce((s, f) => s + f.subTotal, 0); }
   get totalDescuento()  { return this.detalle.reduce((s, f) => s + f.descuentoMonto, 0); }
   get totalValorVenta() { return this.detalle.reduce((s, f) => s + f.valor, 0); }
   get totalIgv()        { return +(this.totalValorVenta * this.igvPct / 100).toFixed(2); }
   get totalGeneral()    { return +(this.totalValorVenta + this.totalIgv).toFixed(2); }
 
-  // ── Limpiar ───────────────────────────────────────────────────────────────
   limpiarCotizacion() {
     this.cabecera             = this.cabeceraVacia();
     this.cabecera.vendedor    = this.obtenerUsuarioActual();
@@ -278,21 +367,100 @@ this.sucursales = data.map((s: any) => ({
     this.filaActiva           = this.filaVacia();
     this.docCliente           = '';
     this.inputPlaca           = '';
+    this.clienteYaBuscado     = false;
+    this.placaYaBuscada       = false;
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // GENERAR PDF
-  // ══════════════════════════════════════════════════════════════════════════
+  async grabar(): Promise<void> {
+    if (!this.cabecera.idSucursal) {
+      this.messageService.add({ severity: 'warn', summary: 'Aviso',
+        detail: 'Seleccione una sucursal', life: 3000 });
+      return;
+    }
+    if (!this.cabecera.nombreCliente) {
+      this.messageService.add({ severity: 'warn', summary: 'Aviso',
+        detail: 'Ingrese el cliente', life: 3000 });
+      return;
+    }
+    if (this.detalle.length === 0) {
+      this.messageService.add({ severity: 'warn', summary: 'Aviso',
+        detail: 'Agregue al menos un producto', life: 3000 });
+      return;
+    }
+    this.guardando = true;
+    this.masterService.guardarCotizacion(this.cabecera, this.detalle).subscribe({
+      next: async () => {
+        try {
+          await this.generarCotizacionPDF();
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Listo',
+            detail: 'Cotización guardada y PDF generado',
+            life: 3000
+          });
+        } catch (e) {
+          console.error(e);
+
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Guardado',
+            detail: 'Cotización guardada pero no se pudo generar el PDF',
+            life: 4000
+          });
+        } finally {
+          this.guardando = false;
+        }
+      },
+      error: async (err: any) => {
+        console.error(err);
+
+        // Angular recibió 200 pero no pudo parsear la respuesta
+        if (err?.status === 200) {
+          try {
+            await this.generarCotizacionPDF();
+
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Listo',
+              detail: 'Cotización guardada y PDF generado',
+              life: 3000
+            });
+          } catch {
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Guardado',
+              detail: 'Cotización guardada pero no se pudo generar el PDF',
+              life: 4000
+            });
+          } finally {
+            this.guardando = false;
+          }
+
+          return;
+        }
+
+        this.guardando = false;
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: err?.error?.message ?? err?.message ?? 'No se pudo guardar la cotización',
+          life: 4000
+        });
+      }
+    });
+  }
+
   async generarCotizacionPDF(): Promise<void> {
     const pdfDoc = await PDFDocument.create();
     const page   = pdfDoc.addPage(PageSizes.A4);
     const { width: W, height: H } = page.getSize();
-
     const font     = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const mm  = (v: number) => v * 2.8346;
-    const ML  = mm(20);
-    const MR  = W - mm(20);
+    const mm   = (v: number) => v * 2.8346;
+    const ML   = mm(20);
+    const MR   = W - mm(20);
     const BLK  = rgb(0, 0, 0);
     const GRAY = rgb(0.45, 0.45, 0.45);
 
@@ -322,7 +490,6 @@ this.sucursales = data.map((s: any) => ({
     const monedaLabel = cab.moneda === 'USD' ? 'DOLARES AMERICANOS' : 'SOLES';
     const nroCot = `COV ${cab.idSucursal || '0001'} - ${String(Date.now()).slice(-7)}`;
 
-    // ── Header ────────────────────────────────────────────────────────────
     let y = H - mm(13);
     page.drawRectangle({ x: ML, y: y - mm(18), width: mm(45), height: mm(22),
       borderColor: BLK, borderWidth: 1.5, color: rgb(1,1,1) });
@@ -336,19 +503,18 @@ this.sucursales = data.map((s: any) => ({
     drawText('Cotización', W / 2, y, { size: 16, bold: true, align: 'center' });
     y -= mm(6);
     hline(y, ML, MR, 0.8);
-
-    // ── Cabecera bipartita ────────────────────────────────────────────────
     y -= mm(5);
+
     const col2 = ML + mm(32);
     const col3 = W / 2 + mm(5);
 
     const leftRows: [string, string][] = [
-      ['Cotización:',  nroCot],
-      ['Fecha Alta:',  fmtDate(now)],
+      ['Cotización:',    nroCot],
+      ['Fecha Alta:',    fmtDate(now)],
       ['Fecha Validez:', fmtDate(validezD)],
-      ['Vendedor:',    cab.vendedor],
-      ['Placa:',       cab.placa],
-      ['Ref. Cliente:', ''],
+      ['Vendedor:',      cab.vendedor],
+      ['Placa:',         cab.placa],
+      ['Ref. Cliente:',  ''],
     ];
     let yL = y;
     leftRows.forEach(([label, val]) => {
@@ -366,20 +532,20 @@ this.sucursales = data.map((s: any) => ({
       yR -= mm(4.5);
     }
     yR -= mm(1);
-    drawText('Teléfono:',         col3,          yR, { size: 8, bold: true });
-    drawText(cab.telefonoCliente, col3 + mm(18), yR, { size: 8 });
+    drawText('Teléfono:', col3, yR, { size: 8, bold: true });
+    const telDisplay = [cab.telefonoCliente, cab.telefonoCliente2].filter(t => t).join(' / ');
+    drawText(telDisplay, col3 + mm(18), yR, { size: 8 });
     yR -= mm(5);
-    drawText('Expresado en:',     col3,          yR, { size: 8, bold: true });
-    drawText(monedaLabel,         col3 + mm(22), yR, { size: 8 });
+    drawText('Expresado en:', col3,          yR, { size: 8, bold: true });
+    drawText(monedaLabel,     col3 + mm(22), yR, { size: 8 });
 
-    // ── Tabla productos ───────────────────────────────────────────────────
     let yT = Math.min(yL, yR) - mm(8);
     hline(yT, ML, MR, 0.8);
     yT -= mm(5);
 
-    const C_CANT  = ML  + mm(96);
-    const C_PVTA  = ML  + mm(116);
-    const C_PDTO  = ML  + mm(136);
+    const C_CANT = ML + mm(96);
+    const C_PVTA = ML + mm(116);
+    const C_PDTO = ML + mm(136);
 
     drawText('Descripción', ML,     yT, { size: 8, bold: true });
     drawText('Cantidad',    C_CANT, yT, { size: 8, bold: true, align: 'right' });
@@ -401,11 +567,10 @@ this.sucursales = data.map((s: any) => ({
     yT -= mm(4);
     hline(yT, ML, MR, 0.3);
 
-    // ── Totales ───────────────────────────────────────────────────────────
     yT -= mm(6);
-    const T_SUBT  = ML  + mm(70);
-    const T_IGVP  = ML  + mm(105);
-    const T_IGVM  = ML  + mm(130);
+    const T_SUBT = ML + mm(70);
+    const T_IGVP = ML + mm(105);
+    const T_IGVM = ML + mm(130);
 
     drawText('Sub Total',        T_SUBT, yT, { size: 8, bold: true, align: 'center' });
     drawText('% IGV',            T_IGVP, yT, { size: 8, bold: true, align: 'center' });
@@ -424,7 +589,6 @@ this.sucursales = data.map((s: any) => ({
     drawText(`Total cotización: ${this.totalEnLetras()} ${monedaLabel.toLowerCase()}`,
       W / 2, yT, { size: 8, bold: true, align: 'center' });
 
-    // ── Descarga ──────────────────────────────────────────────────────────
     const bytes = await pdfDoc.save();
     const blob  = new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' });
     const url   = URL.createObjectURL(blob);

@@ -15,7 +15,7 @@ export class Master {
   private secondaryApiUrlCEE = 'https://api.factiliza.com/v1/cee/info';
   private secondaryApiUrlRUC = 'https://api.factiliza.com/v1/ruc/info';
   private tokenAPI = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzODg5NyIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6ImNvbnN1bHRvciJ9.1nvg8UKFQFIc2JNZkD5lmzCZsR4-_PH7aIHiRvPhkU0';
-  
+
   constructor(
     private https: HttpClient,
     private authService: Auth
@@ -210,6 +210,86 @@ export class Master {
       }
     ).pipe(
       map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  // Buscar productos por descripción
+  searchProducts(descripcion: string): Observable<any> {
+    return this.https.get(
+      `${this.baseUrl}/Car/buscarProductos`,
+      {
+        headers: this.authService.getHeaders(),
+        params: new HttpParams().set('descripcion', descripcion)
+      }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  // Método para obtener el cliente por documento
+  getClientByDocument(nroDocumento: string): Observable<any> {
+    return this.https.get(`${this.baseUrl}/ResumeBySeller/ClientByDocument`, {
+      headers: this.authService.getHeaders(),
+      params: new HttpParams().set('nrodocumento', nroDocumento)
+    });
+  }
+
+  verificarVehiculoPorPlaca(placa: string): Observable<any> {
+    return this.https.get(`${this.baseUrl}/Appointment/ValidarPlaca`, {
+      headers: this.authService.getHeaders(),
+      params: new HttpParams().set('Placa', placa)
+    });
+  }
+
+  consultarFactiliza(placa: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzODg5NyIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6ImNvbnN1bHRvciJ9.1nvg8UKFQFIc2JNZkD5lmzCZsR4-_PH7aIHiRvPhkU0'
+    });
+
+    return this.https.get(`https://api.factiliza.com/v1/placa/info/${placa}`, { headers });
+  }
+
+  // Guardar cotización de ventas
+  guardarCotizacion(cabecera: any, detalle: any[]): Observable<any> {
+    const payload = {
+      // ── Cabecera ──────────────────────────────────────────
+      idSucursal:        cabecera.idSucursal,
+      nombreSucursal:    cabecera.nombreSucursal,
+      moneda:            cabecera.moneda,
+      rucDni:            cabecera.rucDni,
+      nombreCliente:     cabecera.nombreCliente,
+      direccionCliente:  cabecera.direccionCliente,
+      telefonoCliente:  cabecera.telefonoCliente,
+      telefonoCliente2: cabecera.telefonoCliente2,
+      vendedor:          cabecera.vendedor,
+      placa:             cabecera.placa,
+      vin:               cabecera.vin,
+      formaPago:         cabecera.formaPago,
+      validezDias:       cabecera.validezDias,
+      observaciones:     cabecera.observaciones,
+      igvPct:            18,
+      // ── Detalle ───────────────────────────────────────────
+      detalle: detalle.map(f => ({
+        idProducto:      f.idProducto,
+        descripcion:     f.descripcion,
+        um:              f.um,
+        cantidad:        f.cantidad,
+        precioUnitario:  f.precioUnitario,
+        descuentoPct:    f.descuentoPct,
+        descuentoMonto:  f.descuentoMonto,
+        subTotal:        f.subTotal,
+        valor:           f.valor
+      }))
+    };
+
+    return this.https.post<any>(
+      `${this.baseUrl}/Car/crearCotizacion`,
+      payload,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map(response => response),
       catchError(error => throwError(() => error))
     );
   }

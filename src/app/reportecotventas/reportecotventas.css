@@ -1,3 +1,5 @@
+/* reportecotventas.css */
+
 .bg-yellow-50 {
   background-color: #fefce8;
 }
@@ -24,7 +26,6 @@ tr.group .opacity-0 {
 
 /* ── FIX: Neutralizar highlight azul/celeste de PrimeNG Select ── */
 
-/* Borde y sombra del select al hacer focus */
 .p-select:not(.p-disabled).p-focus,
 .p-select:not(.p-disabled):focus-within {
   box-shadow: none !important;
@@ -32,26 +33,45 @@ tr.group .opacity-0 {
   outline: none !important;
 }
 
-/* Item seleccionado dentro del panel desplegable */
 .p-select-overlay .p-select-option.p-select-option-selected {
-  background-color: #e5e7eb !important; /* gray-200 */
+  background-color: #e5e7eb !important;
   color: #111827 !important;
 }
 
-/* Item seleccionado + con foco (cuando navegás con teclado) */
 .p-select-overlay .p-select-option.p-select-option-selected.p-focus,
 .p-select-overlay .p-select-option.p-focus {
-  background-color: #d1d5db !important; /* gray-300 */
+  background-color: #d1d5db !important;
   color: #111827 !important;
   box-shadow: none !important;
 }
 
-/* Chip / label del valor seleccionado dentro del trigger */
 .p-select .p-select-label {
   box-shadow: none !important;
 }
 
-/* Print */
+/* ── AutoComplete en tabla: asegurar ancho completo ── */
+table p-autoComplete,
+table p-autoComplete .p-autocomplete,
+table p-autoComplete .p-autocomplete-input {
+  width: 100% !important;
+}
+
+/* ── Fila nueva (verde) no pierde alineación vertical ── */
+.border-dashed td {
+  vertical-align: middle;
+}
+
+/* ── Total general destacado en tfoot ── */
+tfoot tr:last-child td {
+  font-size: 1rem;
+}
+
+/* ── Botón Grabar al final ── */
+.btn-grabar {
+  min-width: 140px;
+}
+
+/* ── Print ── */
 @media print {
   app-menu, button, p-toast { display: none !important; }
   body, .min-h-screen { background: white !important; padding: 0 !important; }
