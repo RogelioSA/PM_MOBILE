@@ -1,0 +1,79 @@
+/* reportecotventas.css */
+
+.bg-yellow-50 {
+  background-color: #fefce8;
+}
+
+/* Inputs en tabla */
+table input.p-inputtext {
+  font-size: 0.875rem !important;
+  padding: 0 0.5rem !important;
+}
+
+/* Ocultar spin buttons numéricos */
+table input[type="number"]::-webkit-inner-spin-button,
+table input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+table input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Hover acciones */
+tr.group .opacity-0 {
+  transition: opacity 150ms;
+}
+
+/* ── FIX: Neutralizar highlight azul/celeste de PrimeNG Select ── */
+
+.p-select:not(.p-disabled).p-focus,
+.p-select:not(.p-disabled):focus-within {
+  box-shadow: none !important;
+  border-color: #d1d5db !important;
+  outline: none !important;
+}
+
+.p-select-overlay .p-select-option.p-select-option-selected {
+  background-color: #e5e7eb !important;
+  color: #111827 !important;
+}
+
+.p-select-overlay .p-select-option.p-select-option-selected.p-focus,
+.p-select-overlay .p-select-option.p-focus {
+  background-color: #d1d5db !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+}
+
+.p-select .p-select-label {
+  box-shadow: none !important;
+}
+
+/* ── AutoComplete en tabla: asegurar ancho completo ── */
+table p-autoComplete,
+table p-autoComplete .p-autocomplete,
+table p-autoComplete .p-autocomplete-input {
+  width: 100% !important;
+}
+
+/* ── Fila nueva (verde) no pierde alineación vertical ── */
+.border-dashed td {
+  vertical-align: middle;
+}
+
+/* ── Total general destacado en tfoot ── */
+tfoot tr:last-child td {
+  font-size: 1rem;
+}
+
+/* ── Botón Grabar al final ── */
+.btn-grabar {
+  min-width: 140px;
+}
+
+/* ── Print ── */
+@media print {
+  app-menu, button, p-toast { display: none !important; }
+  body, .min-h-screen { background: white !important; padding: 0 !important; }
+  .shadow-lg { box-shadow: none !important; }
+}
