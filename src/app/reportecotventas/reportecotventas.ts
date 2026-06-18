@@ -452,10 +452,11 @@ export class Reportecotventas implements OnInit {
     });
   }
 
-  async generarCotizacionPDF(): Promise<void> {
+async generarCotizacionPDF(): Promise<void> {
     const pdfDoc = await PDFDocument.create();
     const page   = pdfDoc.addPage(PageSizes.A4);
     const { width: W, height: H } = page.getSize();
+
     const font     = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const mm   = (v: number) => v * 2.8346;
@@ -463,6 +464,18 @@ export class Reportecotventas implements OnInit {
     const MR   = W - mm(20);
     const BLK  = rgb(0, 0, 0);
     const GRAY = rgb(0.45, 0.45, 0.45);
+
+    // ── Helper: cargar imagen desde assets ────────────────────────────────
+    const cargarImagen = async (ruta: string): Promise<Uint8Array | null> => {
+      try {
+        const res = await fetch(ruta);
+        if (!res.ok) return null;
+        const buf = await res.arrayBuffer();
+        return new Uint8Array(buf);
+      } catch {
+        return null;
+      }
+    };
 
     const drawText = (
       text: string, x: number, y: number,
@@ -490,21 +503,77 @@ export class Reportecotventas implements OnInit {
     const monedaLabel = cab.moneda === 'USD' ? 'DOLARES AMERICANOS' : 'SOLES';
     const nroCot = `COV ${cab.idSucursal || '0001'} - ${String(Date.now()).slice(-7)}`;
 
+    // ── Header ────────────────────────────────────────────────────────────
     let y = H - mm(13);
-    page.drawRectangle({ x: ML, y: y - mm(18), width: mm(45), height: mm(22),
-      borderColor: BLK, borderWidth: 1.5, color: rgb(1,1,1) });
-    drawText('PERUMOTOR', ML + mm(22.5), y - mm(7),  { size: 13, bold: true, align: 'center' });
-    drawText('Juntos para toda la vida', ML + mm(22.5), y - mm(13),
-      { size: 7, align: 'center', color: GRAY });
-    ['Mitsubishi','FUSO','VW','Chevrolet','Audi','Hyundai'].forEach((m, i) =>
-      drawText(m, ML + mm(50) + i * mm(23), y - mm(7), { size: 7, bold: true }));
+
+    // Logo Perumotor
+    const logoBytes = await cargarImagen('/assets/perumoto.png');
+    if (logoBytes) {
+      try {
+        const logoImg = await pdfDoc.embedPng(logoBytes);
+        const logoDims = logoImg.scaleToFit(mm(40), mm(18));
+        page.drawImage(logoImg, {
+          x: ML,
+          y: y - mm(18),
+          width:  logoDims.width,
+          height: logoDims.height,
+        });
+      } catch {
+        // fallback texto si la imagen falla
+        drawText('PERUMOTOR', ML + mm(22.5), y - mm(7), { size: 13, bold: true, align: 'center' });
+        drawText('Juntos para toda la vida', ML + mm(22.5), y - mm(13),
+          { size: 7, align: 'center', color: GRAY });
+      }
+    } else {
+      drawText('PERUMOTOR', ML + mm(22.5), y - mm(7), { size: 13, bold: true, align: 'center' });
+      drawText('Juntos para toda la vida', ML + mm(22.5), y - mm(13),
+        { size: 7, align: 'center', color: GRAY });
+    }
+
+    // Logos de marcas
+    const marcas = [
+      { archivo: 'mitsubish.png',  ancho: mm(18) },
+      { archivo: 'fuso.png',        ancho: mm(14) },
+      { archivo: 'Volkswagen.png',  ancho: mm(14) },
+      { archivo: 'Chevrolet.png',   ancho: mm(16) },
+      { archivo: 'audi.png',        ancho: mm(14) },
+      { archivo: 'hyundai.png',     ancho: mm(18) },
+      { archivo: 'Volkswagen.png',  ancho: mm(14) },
+    ];
+
+    let xMarca = ML + mm(50);
+    const yMarca = y - mm(5);
+    const alturaLogo = mm(10);
+
+    for (const marca of marcas) {
+      const bytes = await cargarImagen(`/assets/${marca.archivo}`);
+      if (bytes) {
+        try {
+          const img   = await pdfDoc.embedPng(bytes);
+          const dims  = img.scaleToFit(marca.ancho, alturaLogo);
+          page.drawImage(img, {
+            x: xMarca,
+            y: yMarca - dims.height,
+            width:  dims.width,
+            height: dims.height,
+          });
+          xMarca += dims.width + mm(4);
+        } catch {
+          // si falla la imagen de la marca, la saltamos
+          xMarca += marca.ancho + mm(4);
+        }
+      } else {
+        xMarca += marca.ancho + mm(4);
+      }
+    }
 
     y -= mm(27);
     drawText('Cotización', W / 2, y, { size: 16, bold: true, align: 'center' });
     y -= mm(6);
     hline(y, ML, MR, 0.8);
-    y -= mm(5);
 
+    // ── Cabecera bipartita ────────────────────────────────────────────────
+    y -= mm(5);
     const col2 = ML + mm(32);
     const col3 = W / 2 + mm(5);
 
@@ -539,6 +608,7 @@ export class Reportecotventas implements OnInit {
     drawText('Expresado en:', col3,          yR, { size: 8, bold: true });
     drawText(monedaLabel,     col3 + mm(22), yR, { size: 8 });
 
+    // ── Tabla productos ───────────────────────────────────────────────────
     let yT = Math.min(yL, yR) - mm(8);
     hline(yT, ML, MR, 0.8);
     yT -= mm(5);
@@ -567,6 +637,7 @@ export class Reportecotventas implements OnInit {
     yT -= mm(4);
     hline(yT, ML, MR, 0.3);
 
+    // ── Totales ───────────────────────────────────────────────────────────
     yT -= mm(6);
     const T_SUBT = ML + mm(70);
     const T_IGVP = ML + mm(105);
@@ -589,10 +660,11 @@ export class Reportecotventas implements OnInit {
     drawText(`Total cotización: ${this.totalEnLetras()} ${monedaLabel.toLowerCase()}`,
       W / 2, yT, { size: 8, bold: true, align: 'center' });
 
-    const bytes = await pdfDoc.save();
-    const blob  = new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' });
-    const url   = URL.createObjectURL(blob);
-    const a     = document.createElement('a');
+    // ── Descarga ──────────────────────────────────────────────────────────
+    const bytes2 = await pdfDoc.save();
+    const blob   = new Blob([bytes2.buffer as ArrayBuffer], { type: 'application/pdf' });
+    const url    = URL.createObjectURL(blob);
+    const a      = document.createElement('a');
     a.href = url; a.download = `Cotizacion_${nroCot.replace(/\s/g,'_')}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
