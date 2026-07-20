@@ -17,6 +17,10 @@ import { Home } from './home/home';
 import { Personal } from './personal/personal';
 import { EditarPersonal } from './editarPersonal/editarPersonal';
 import { Reportecotventas } from './reportecotventas/reportecotventas';
+import { HomePersonal } from './homePersonal/homePersonal';
+import { PersonalMarcacion } from './personalMarcacion/personalMarcacion';
+import { MisJustificaciones } from './misJustificaciones/misJustificaciones';
+import { MisVacaciones } from './misVacaciones/misVacaciones';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -25,7 +29,7 @@ export const routes: Routes = [
     component: Login
   },
   {
-    path: 'actualizaciondatos20453919651',
+    path: 'miportal20453919651',
     component: LoginDocumento
   },
 
@@ -99,6 +103,26 @@ export const routes: Routes = [
   {
     path: 'personal',
     component: Personal,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'homePersonal',
+    component: HomePersonal,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'personalMarcacion',
+    component: PersonalMarcacion,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'misJustificaciones',
+    component: MisJustificaciones,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'misVacaciones',
+    component: MisVacaciones,
     canActivate: [authGuard]
   },
   {
