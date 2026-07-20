@@ -3,7 +3,8 @@
     <img src="assets/perumoto.png" alt="Logo Perú Moto" class="portal-logo" />
     <div>
       <p class="portal-eyebrow">Mi portal</p>
-      <h1>Bienvenido {{ usuario }}</h1>
+      <h1>Bienvenido {{ getNombreCompleto() }}</h1>
+      <span *ngIf="cargandoPersonal" class="portal-loading">Cargando nombre...</span>
       <p class="portal-subtitle">Elige una opción para gestionar tu información laboral.</p>
     </div>
   </div>

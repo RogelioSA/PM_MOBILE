@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Api } from '../services/api';
 
 interface MenuPersonal {
   titulo: string;
@@ -8,6 +9,12 @@ interface MenuPersonal {
   icono: string;
   ruta: string;
   color: string;
+}
+
+interface PersonalNisira {
+  nombres: string;
+  apellido_Paterno: string;
+  apellido_Materno: string;
 }
 
 @Component({
@@ -19,6 +26,8 @@ interface MenuPersonal {
 })
 export class HomePersonal implements OnInit {
   usuario = '';
+  personalSeleccionado: PersonalNisira | null = null;
+  cargandoPersonal = false;
 
   menus: MenuPersonal[] = [
     {
@@ -51,26 +60,50 @@ export class HomePersonal implements OnInit {
     }
   ];
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private apiService: Api
+  ) {}
 
   ngOnInit(): void {
-    this.usuario = this.getCookie('usuario') || 'USUARIO';
+    this.usuario = this.getCookie('usuario') || '';
+
+    if (this.usuario) {
+      this.cargarPersonalPorDocumento(this.usuario);
+    }
   }
 
   navegar(ruta: string): void {
     this.router.navigate([ruta]);
   }
 
-  private getCookie(name: string): string | null {
-    const nameEQ = `${name}=`;
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const item = cookie.trim();
-      if (item.indexOf(nameEQ) === 0) {
-        return item.substring(nameEQ.length);
-      }
-    }
+  getNombreCompleto(): string {
+    if (!this.personalSeleccionado) return 'USUARIO';
+    const p = this.personalSeleccionado;
+    return `${p.nombres ?? ''} ${p.apellido_Paterno ?? ''} ${p.apellido_Materno ?? ''}`.trim();
+  }
 
-    return null;
+  private cargarPersonalPorDocumento(documento: string): void {
+    this.cargandoPersonal = true;
+
+    this.apiService.listarPersonal(documento, '', '', 1, 1).subscribe({
+      next: (response) => {
+        this.cargandoPersonal = false;
+        this.personalSeleccionado = response?.success && response?.data?.length > 0
+          ? response.data[0]
+          : null;
+      },
+      error: () => {
+        this.cargandoPersonal = false;
+        this.personalSeleccionado = null;
+      }
+    });
+  }
+
+  private getCookie(name: string): string {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() ?? '';
+    return '';
   }
 }
