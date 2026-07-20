@@ -1,0 +1,1 @@
+<section class="simple-page"><a routerLink="/homePersonal">← Volver al portal</a><h1>Vacaciones</h1><div class="saldo"><span>Saldo disponible</span><strong>{{ saldoDias }} días</strong></div><article *ngFor="let item of solicitudes"><strong>{{ item.periodo }}</strong><span>{{ item.dias }} días · {{ item.estado }}</span></article></section>

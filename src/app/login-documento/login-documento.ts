@@ -50,7 +50,7 @@ export class LoginDocumento implements OnInit {
 
     const token = this.getCookie('token');
     if (token) {
-      this.router.navigate(['/editarDatos']);
+      this.router.navigate(['/homePersonal']);
     }
   }
 
@@ -75,7 +75,7 @@ export class LoginDocumento implements OnInit {
         if (response?.success && token) {
           document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24}`;
           document.cookie = `usuario=${documentoLimpio}; path=/; max-age=${60 * 60 * 24}`;
-          this.router.navigate(['/editarDatos']);
+          this.router.navigate(['/homePersonal']);
           return;
         }
 
