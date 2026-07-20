@@ -1,0 +1,52 @@
+<div class="attendance-page">
+  <header class="attendance-header">
+    <a routerLink="/homePersonal" class="back-link"><i class="pi pi-arrow-left"></i> Portal</a>
+    <div>
+      <p>Asistencia personal</p>
+      <h1><i class="pi pi-clock me-2"></i>Mis Marcaciones</h1>
+    </div>
+  </header>
+
+  <section class="month-nav" aria-label="Navegación de mes">
+    <button class="btn btn-outline-primary btn-sm" (click)="cambiarMes(-1)"><i class="pi pi-chevron-left"></i><span>Anterior</span></button>
+    <strong>{{ mesActual }}</strong>
+    <button class="btn btn-outline-primary btn-sm" (click)="cambiarMes(1)"><span>Siguiente</span><i class="pi pi-chevron-right"></i></button>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card total"><i class="pi pi-list-check"></i><span>Total</span><strong>{{ totalRegistros }}</strong></article>
+    <article class="stat-card entries"><i class="pi pi-sign-in"></i><span>Entradas</span><strong>{{ registrosEntrada }}</strong></article>
+    <article class="stat-card exits"><i class="pi pi-sign-out"></i><span>Salidas</span><strong>{{ registrosSalida }}</strong></article>
+    <article class="stat-card late"><i class="pi pi-exclamation-triangle"></i><span>Tardanzas</span><strong>{{ totalTardanzas }}</strong><small>{{ minutosAcumulados }} min</small></article>
+  </section>
+
+  <section class="records-card">
+    <div class="records-title"><h2>Detalle de Marcaciones</h2><span>{{ totalRegistros }} registros</span></div>
+    <div class="responsive-table">
+      <table>
+        <thead><tr><th>Fecha/Hora</th><th>Fecha Jornal</th><th>Tipo</th><th>Hora Prog.</th><th>Tardanza</th><th>Dif.</th><th>Ubicación</th><th>Mapa</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let registro of registrosFiltrados">
+            <td data-label="Fecha/Hora">{{ registro.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td data-label="Fecha Jornal">{{ registro.fechaJornal | date: 'dd/MM/yyyy' }}</td>
+            <td data-label="Tipo"><span class="badge" [ngClass]="'bg-' + obtenerColorTipoEvento(registro.tipoEvento)">{{ obtenerNombreTipoEvento(registro.tipoEvento) }}</span></td>
+            <td data-label="Hora Prog.">{{ registro.horaProgramada }}</td>
+            <td data-label="Tardanza"><span class="badge" [ngClass]="registro.esTardanza ? 'bg-warning text-dark' : 'bg-success'">{{ registro.esTardanza ? 'Sí' : 'No' }}</span></td>
+            <td data-label="Dif."><span class="badge" [ngClass]="registro.diferenciaMinutos > 0 ? 'bg-info text-dark' : 'bg-success'">{{ registro.diferenciaMinutos || 'A tiempo' }}<ng-container *ngIf="registro.diferenciaMinutos"> min</ng-container></span></td>
+            <td data-label="Ubicación">{{ registro.ubicacion }}</td>
+            <td data-label="Mapa"><button class="map-button" (click)="mostrarMapa(registro)" aria-label="Ver ubicación"><i class="pi pi-map-marker"></i></button></td>
+          </tr>
+          <tr *ngIf="!registrosFiltrados.length"><td colspan="8" class="empty-state">No hay marcaciones para este mes.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div *ngIf="mostrarModalMapa && coordenadasSeleccionadas" class="modal-backdrop" (click)="cerrarMapa()">
+    <section class="map-card" (click)="$event.stopPropagation()">
+      <header><h3><i class="pi pi-map-marker"></i> Ubicación</h3><button type="button" (click)="cerrarMapa()">×</button></header>
+      <div class="coordinates-info"><span><strong>Lat:</strong> {{ coordenadasSeleccionadas.latitud }}</span><span><strong>Lng:</strong> {{ coordenadasSeleccionadas.longitud }}</span></div>
+      <div class="mock-map"><i class="pi pi-map"></i><p>{{ coordenadasSeleccionadas.ubicacion }}</p><small>Vista de mapa mock hasta conectar API/mapas.</small></div>
+    </section>
+  </div>
+</div>

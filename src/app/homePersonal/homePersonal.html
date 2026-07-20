@@ -1,0 +1,31 @@
+<section class="portal-personal">
+  <div class="portal-hero">
+    <img src="assets/perumoto.png" alt="Logo Perú Moto" class="portal-logo" />
+    <div>
+      <p class="portal-eyebrow">Mi portal</p>
+      <h1>Bienvenido {{ getNombreCompleto() }}</h1>
+      <span *ngIf="cargandoPersonal" class="portal-loading">Cargando nombre...</span>
+      <p class="portal-subtitle">Elige una opción para gestionar tu información laboral.</p>
+    </div>
+  </div>
+
+  <div class="portal-grid" role="list">
+    <button
+      *ngFor="let menu of menus"
+      type="button"
+      class="portal-card"
+      [ngClass]="'border-' + menu.color"
+      (click)="navegar(menu.ruta)"
+      role="listitem"
+    >
+      <span class="portal-icon" [ngClass]="'text-' + menu.color">
+        <i [class]="menu.icono"></i>
+      </span>
+      <span class="portal-card-content">
+        <strong>{{ menu.titulo }}</strong>
+        <small>{{ menu.descripcion }}</small>
+      </span>
+      <i class="pi pi-chevron-right portal-arrow" aria-hidden="true"></i>
+    </button>
+  </div>
+</section>
