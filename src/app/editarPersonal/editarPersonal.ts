@@ -1225,8 +1225,7 @@ guardarBeneficiario(b: Beneficiario) {
     });
   }
   salir(): void {
-    this.authService.logout();
-    this.router.navigate(['/actualizaciondatos20453919651']);
+    this.router.navigate(['/homePersonal']);
   }
 
   onReferenciaInput(): void {

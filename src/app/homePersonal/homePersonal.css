@@ -28,3 +28,25 @@
 .portal-card-content small { color: #64748b; line-height: 1.35; }
 .portal-arrow { color: #94a3b8; }
 @media (max-width: 640px) { .portal-hero { flex-direction: column; text-align: center; } .portal-card { min-height: auto; padding: 1rem; } }
+.logout-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  margin-left: auto;
+  padding: .75rem 1rem;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  background: #fff1f2;
+  color: #be123c;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.logout-button:hover, .logout-button:focus-visible {
+  background: #ffe4e6;
+  box-shadow: 0 12px 24px rgba(190, 18, 60, 0.16);
+  transform: translateY(-2px);
+  outline: none;
+}
+@media (max-width: 640px) { .logout-button { margin-left: 0; width: 100%; } }

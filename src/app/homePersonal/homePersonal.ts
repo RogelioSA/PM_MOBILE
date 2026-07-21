@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Api } from '../services/api';
+import { Auth } from '../services/auth';
 
 interface MenuPersonal {
   titulo: string;
@@ -62,7 +63,8 @@ export class HomePersonal implements OnInit {
 
   constructor(
     private router: Router,
-    private apiService: Api
+    private apiService: Api,
+    private authService: Auth
   ) {}
 
   ngOnInit(): void {
@@ -75,6 +77,15 @@ export class HomePersonal implements OnInit {
 
   navegar(ruta: string): void {
     this.router.navigate([ruta]);
+  }
+
+  cerrarSesion(): void {
+    this.authService.logout();
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('usuario');
+    this.router.navigate(['/miportal20453919651']);
   }
 
   getNombreCompleto(): string {
