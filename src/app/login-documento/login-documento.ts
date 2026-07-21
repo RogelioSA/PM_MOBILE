@@ -70,11 +70,12 @@ export class LoginDocumento implements OnInit {
       digitoVerificador
     ).subscribe({
       next: (response) => {
-        const token = response?.data?.token ?? response?.data?.Token;
+        const token = response?.data?.token ?? response?.data?.access_token ?? response?.data?.Token;
 
         if (response?.success && token) {
-          document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24}`;
-          document.cookie = `usuario=${documentoLimpio}; path=/; max-age=${60 * 60 * 24}`;
+          const maxAge = response?.data?.expires_in ?? (60 * 60 * 24);
+          document.cookie = `token=${token}; path=/; max-age=${maxAge}`;
+          document.cookie = `usuario=${documentoLimpio}; path=/; max-age=${maxAge}`;
           this.router.navigate(['/homePersonal']);
           return;
         }

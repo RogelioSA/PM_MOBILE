@@ -767,6 +767,28 @@ export class Api {
     );
   }
 
+
+  listarReporteMarcacionesGeneral(
+    desde: string,
+    hasta: string,
+    gerencial: number,
+    nroDocumento: string
+  ): Observable<any> {
+    const params = new HttpParams()
+      .set('desde', desde)
+      .set('hasta', hasta)
+      .set('gerencial', gerencial.toString())
+      .set('nroDocumento', nroDocumento);
+
+    return this.https.get<any>(
+      `${this.baseUrl}/Personal/reporte-marcaciones-general`,
+      { headers: this.authService.getHeaders(), params }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
   editarPersonal(codigo: string, request: any): Observable<any> {
     return this.https.post<any>(
       `${this.baseUrl}/Personal/${codigo}`,

@@ -1,20 +1,30 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { Api } from '../services/api';
+import { Auth } from '../services/auth';
 
-type TipoEvento = 'entrada' | 'salida';
-
-interface RegistroAsistencia {
-  id: number;
-  fecha: Date;
-  fechaJornal: Date;
-  tipoEvento: TipoEvento;
-  horaProgramada: string;
-  esTardanza: boolean;
-  diferenciaMinutos: number;
-  latitud: number;
-  longitud: number;
-  ubicacion: string;
+interface MarcacionPersonal {
+  orden: number;
+  sucursal: string;
+  idcodigogeneral: string;
+  empleado: string;
+  fecha: string;
+  diasemana: number;
+  iProg: string;
+  ingreso: string;
+  minutosTarde: string;
+  sProg: string;
+  salida: string;
+  diferencia: number;
+  detalle: string;
+  horario: string;
+  nombreDia: string;
+  observacion: string;
+  check_out: string;
+  inicioBreak: string | null;
+  finBreak: string | null;
+  revisionMarcaciones: string;
 }
 
 @Component({
@@ -24,32 +34,108 @@ interface RegistroAsistencia {
   templateUrl: './personalMarcacion.html',
   styleUrl: './personalMarcacion.css'
 })
-export class PersonalMarcacion {
+export class PersonalMarcacion implements OnInit {
   fechaBase = new Date();
-  mostrarModalMapa = false;
-  coordenadasSeleccionadas: RegistroAsistencia | null = null;
+  cargando = false;
+  mensajeError = '';
+  mostrarModalDetalle = false;
+  registroSeleccionado: MarcacionPersonal | null = null;
+  registrosAsistencia: MarcacionPersonal[] = [];
 
-  registrosAsistencia: RegistroAsistencia[] = [
-    { id: 1, fecha: new Date(2026, 6, 20, 8, 8), fechaJornal: new Date(2026, 6, 20), tipoEvento: 'entrada', horaProgramada: '08:00', esTardanza: true, diferenciaMinutos: 8, latitud: -16.3985482, longitud: -71.5374206, ubicacion: 'Sede principal' },
-    { id: 2, fecha: new Date(2026, 6, 20, 18, 2), fechaJornal: new Date(2026, 6, 20), tipoEvento: 'salida', horaProgramada: '18:00', esTardanza: false, diferenciaMinutos: 2, latitud: -16.3985482, longitud: -71.5374206, ubicacion: 'Sede principal' },
-    { id: 3, fecha: new Date(2026, 6, 19, 7, 55), fechaJornal: new Date(2026, 6, 19), tipoEvento: 'entrada', horaProgramada: '08:00', esTardanza: false, diferenciaMinutos: 0, latitud: -16.3991, longitud: -71.5369, ubicacion: 'Taller' },
-    { id: 4, fecha: new Date(2026, 6, 19, 18, 0), fechaJornal: new Date(2026, 6, 19), tipoEvento: 'salida', horaProgramada: '18:00', esTardanza: false, diferenciaMinutos: 0, latitud: -16.3991, longitud: -71.5369, ubicacion: 'Taller' }
-  ];
+  constructor(
+    private apiService: Api,
+    private authService: Auth
+  ) {}
 
-  get mesActual(): string {
-    return new Intl.DateTimeFormat('es-PE', { month: 'long', year: 'numeric' }).format(this.fechaBase);
+  ngOnInit(): void {
+    this.cargarMarcaciones();
   }
 
-  get totalRegistros(): number { return this.registrosFiltrados.length; }
-  get registrosEntrada(): number { return this.registrosFiltrados.filter((r) => r.tipoEvento === 'entrada').length; }
-  get registrosSalida(): number { return this.registrosFiltrados.filter((r) => r.tipoEvento === 'salida').length; }
-  get totalTardanzas(): number { return this.registrosFiltrados.filter((r) => r.esTardanza).length; }
-  get minutosAcumulados(): number { return this.registrosFiltrados.reduce((total, r) => total + (r.esTardanza ? r.diferenciaMinutos : 0), 0); }
-  get registrosFiltrados(): RegistroAsistencia[] { return this.registrosAsistencia.filter((r) => r.fecha.getMonth() === this.fechaBase.getMonth() && r.fecha.getFullYear() === this.fechaBase.getFullYear()); }
+  get rangoSemanaActual(): { desde: Date; hasta: Date } {
+    const fecha = new Date(this.fechaBase);
+    const dia = fecha.getDay();
+    const distanciaLunes = dia === 0 ? -6 : 1 - dia;
+    const desde = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate() + distanciaLunes);
+    const hasta = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate() + 6);
+    return { desde, hasta };
+  }
 
-  cambiarMes(valor: number): void { this.fechaBase = new Date(this.fechaBase.getFullYear(), this.fechaBase.getMonth() + valor, 1); }
-  mostrarMapa(registro: RegistroAsistencia): void { this.coordenadasSeleccionadas = registro; this.mostrarModalMapa = true; }
-  cerrarMapa(): void { this.mostrarModalMapa = false; this.coordenadasSeleccionadas = null; }
-  obtenerNombreTipoEvento(tipo: TipoEvento): string { return tipo === 'entrada' ? 'Entrada' : 'Salida'; }
-  obtenerColorTipoEvento(tipo: TipoEvento): string { return tipo === 'entrada' ? 'success' : 'danger'; }
+  get semanaActual(): string {
+    const { desde, hasta } = this.rangoSemanaActual;
+    return `${this.formatearFechaIso(desde).replaceAll('-', '/')} al ${this.formatearFechaIso(hasta).replaceAll('-', '/')}`;
+  }
+
+  get totalRegistros(): number { return this.registrosAsistencia.length; }
+  get totalTardanzas(): number { return this.registrosAsistencia.filter((r) => this.esTardanza(r.minutosTarde)).length; }
+  get minutosAcumulados(): number {
+    return this.registrosAsistencia.reduce((total, r) => total + this.obtenerMinutosTardanza(r.minutosTarde), 0);
+  }
+
+  cambiarSemana(valor: number): void {
+    this.fechaBase = new Date(this.fechaBase.getFullYear(), this.fechaBase.getMonth(), this.fechaBase.getDate() + (valor * 7));
+    this.cargarMarcaciones();
+  }
+
+  cargarMarcaciones(): void {
+    const nroDocumento = this.authService.getUsuario();
+
+    if (!nroDocumento) {
+      this.mensajeError = 'No se encontró el documento del usuario autenticado.';
+      return;
+    }
+
+    const { desde, hasta } = this.rangoSemanaActual;
+    this.cargando = true;
+    this.mensajeError = '';
+
+    this.apiService.listarReporteMarcacionesGeneral(
+      this.formatearFechaIso(desde),
+      this.formatearFechaIso(hasta),
+      3,
+      nroDocumento
+    ).subscribe({
+      next: (response) => {
+        this.registrosAsistencia = Array.isArray(response?.data) ? response.data : [];
+        this.cargando = false;
+      },
+      error: (error) => {
+        this.mensajeError = error?.error?.message ?? 'No se pudieron cargar las marcaciones.';
+        this.registrosAsistencia = [];
+        this.cargando = false;
+      }
+    });
+  }
+
+  abrirDetalle(registro: MarcacionPersonal): void {
+    this.registroSeleccionado = registro;
+    this.mostrarModalDetalle = true;
+  }
+
+  cerrarDetalle(): void {
+    this.mostrarModalDetalle = false;
+    this.registroSeleccionado = null;
+  }
+
+  esTardanza(minutosTarde: string | null | undefined): boolean {
+    return !!minutosTarde && minutosTarde !== '00:00:00';
+  }
+
+  obtenerMinutosTardanza(minutosTarde: string | null | undefined): number {
+    if (!this.esTardanza(minutosTarde)) return 0;
+    const [horas = '0', minutos = '0', segundos = '0'] = (minutosTarde ?? '').split(':');
+    return (Number(horas) * 60) + Number(minutos) + (Number(segundos) > 0 ? 1 : 0);
+  }
+
+  formatearFechaRegistro(fecha: string): string {
+    const [fechaParte] = fecha.split(' ');
+    const [mes, dia, anio] = fechaParte.split('/');
+    return `${dia}/${mes}/${anio}`;
+  }
+
+  private formatearFechaIso(fecha: Date): string {
+    const anio = fecha.getFullYear();
+    const mes = `${fecha.getMonth() + 1}`.padStart(2, '0');
+    const dia = `${fecha.getDate()}`.padStart(2, '0');
+    return `${anio}-${mes}-${dia}`;
+  }
 }
