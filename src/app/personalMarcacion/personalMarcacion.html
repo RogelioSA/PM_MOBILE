@@ -8,9 +8,15 @@
   </header>
 
   <section class="week-nav" aria-label="Navegación de semana">
-    <button class="btn btn-outline-primary btn-sm" (click)="cambiarSemana(-1)" [disabled]="cargando"><i class="pi pi-chevron-left"></i><span>Anterior</span></button>
+    <button type="button" class="week-button" (click)="cambiarSemana(-1)" [disabled]="cargando" aria-label="Semana anterior">
+      <i class="pi pi-chevron-left"></i>
+      <span>&lt; Anterior</span>
+    </button>
     <strong>{{ semanaActual }}</strong>
-    <button class="btn btn-outline-primary btn-sm" (click)="cambiarSemana(1)" [disabled]="cargando"><span>Siguiente</span><i class="pi pi-chevron-right"></i></button>
+    <button type="button" class="week-button" (click)="cambiarSemana(1)" [disabled]="cargando" aria-label="Semana siguiente">
+      <span>Siguiente &gt;</span>
+      <i class="pi pi-chevron-right"></i>
+    </button>
   </section>
 
   <section class="stats-grid">
@@ -18,10 +24,17 @@
     <article class="stat-card late"><i class="pi pi-exclamation-triangle"></i><span>Tardanzas</span><strong>{{ totalTardanzas }}</strong><small>{{ minutosAcumulados }} min</small></article>
   </section>
 
+  <div *ngIf="cargando" class="loading-backdrop" role="status" aria-live="polite">
+    <div class="loading-card">
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+      <span>Cargando Marcaciones</span>
+    </div>
+  </div>
+
   <section class="records-card">
     <div class="records-title">
       <h2>Detalle de Marcaciones</h2>
-      <span *ngIf="cargando">Cargando...</span>
+      <span *ngIf="cargando">Cargando Marcaciones...</span>
       <span *ngIf="!cargando">{{ totalRegistros }} registros</span>
     </div>
 
@@ -44,7 +57,7 @@
             <td data-label="Fecha">{{ formatearFechaRegistro(registro.fecha) }}</td>
             <td data-label="Turno Ing.">{{ registro.iProg }}</td>
             <td data-label="Tardanza"><span class="badge" [ngClass]="esTardanza(registro.minutosTarde) ? 'bg-warning text-dark' : 'bg-success'">{{ esTardanza(registro.minutosTarde) ? 'Sí' : 'No' }}</span></td>
-            <td data-label="DIF"><span class="badge" [ngClass]="esTardanza(registro.minutosTarde) ? 'bg-info text-dark' : 'bg-success'">{{ esTardanza(registro.minutosTarde) ? registro.minutosTarde : 'A tiempo' }}</span></td>
+            <td data-label="DIF"><span class="badge" [ngClass]="esTardanza(registro.minutosTarde) ? 'bg-danger' : 'bg-success'">{{ esTardanza(registro.minutosTarde) ? registro.minutosTarde : 'A tiempo' }}</span></td>
           </tr>
           <tr *ngIf="!cargando && !registrosAsistencia.length"><td colspan="5" class="empty-state">No hay marcaciones para esta semana.</td></tr>
         </tbody>
