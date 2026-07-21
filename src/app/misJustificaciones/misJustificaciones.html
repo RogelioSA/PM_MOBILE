@@ -1,1 +1,102 @@
-<section class="simple-page"><a routerLink="/homePersonal">← Volver al portal</a><h1>Mis Justificaciones</h1><p>Datos mock hasta conectar con APIs.</p><article *ngFor="let item of justificaciones"><strong>{{ item.tipo }}</strong><span>{{ item.fecha }} · {{ item.estado }}</span><p>{{ item.detalle }}</p></article></section>
+<div class="justifications-page">
+  <header class="page-header">
+    <a routerLink="/homePersonal" class="back-link"><i class="pi pi-arrow-left"></i> Portal</a>
+    <div>
+      <p>Asistencia personal</p>
+      <h1><i class="pi pi-file-edit"></i> Mis Justificaciones</h1>
+    </div>
+  </header>
+
+  <p class="intro">Marcaciones sin ingreso registradas desde el día anterior al actual.</p>
+
+  <div *ngIf="cargando" class="loading-card" role="status" aria-live="polite">
+    <i class="pi pi-spin pi-spinner"></i>
+    <span>Cargando marcaciones pendientes...</span>
+  </div>
+
+  <p *ngIf="mensajeError" class="message error">{{ mensajeError }}</p>
+  <p *ngIf="mensajeExito" class="message success">{{ mensajeExito }}</p>
+
+  <section class="records-card">
+    <div class="records-title">
+      <h2>Marcaciones por justificar</h2>
+      <span *ngIf="!cargando">{{ justificaciones.length }} registros</span>
+    </div>
+
+    <div class="responsive-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Sucursal</th>
+            <th>Fecha</th>
+            <th>Justificación</th>
+            <th>Estado</th>
+            <th>Registro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of justificaciones">
+            <td data-label="Sucursal">{{ item.sucursal }}</td>
+            <td data-label="Fecha">{{ formatearFechaRegistro(item.fecha) }}</td>
+            <td data-label="Justificación">{{ item.justificacion }}</td>
+            <td data-label="Estado"><span class="status-badge">{{ item.estado }}</span></td>
+            <td data-label="Registro">
+              <button type="button" class="icon-button" (click)="abrirRegistro(item)" aria-label="Registrar justificación">
+                <i class="pi pi-pencil"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!cargando && !justificaciones.length">
+            <td colspan="5" class="empty-state">No hay marcaciones sin ingreso por justificar.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div *ngIf="mostrarFormulario && registroSeleccionado" class="modal-backdrop" (click)="cerrarFormulario()">
+    <form class="register-card" (click)="$event.stopPropagation()" (ngSubmit)="guardarJustificacion()">
+      <header>
+        <div>
+          <p>{{ registroSeleccionado.sucursal }}</p>
+          <h3>Registrar justificación</h3>
+        </div>
+        <button type="button" (click)="cerrarFormulario()" aria-label="Cerrar">×</button>
+      </header>
+
+      <label>
+        Motivo
+        <select name="motivo" [(ngModel)]="formulario.motivo" required>
+          <option value="" disabled>Seleccione un motivo</option>
+          <option *ngFor="let motivo of motivos" [value]="motivo">{{ motivo }}</option>
+        </select>
+      </label>
+
+      <div class="date-grid">
+        <label>
+          Fecha Desde
+          <input type="date" name="fechaDesde" [(ngModel)]="formulario.fechaDesde" readonly />
+        </label>
+        <label>
+          Fecha Hasta
+          <input type="date" name="fechaHasta" [(ngModel)]="formulario.fechaHasta" [min]="formulario.fechaDesde" required />
+        </label>
+      </div>
+
+      <label>
+        Observaciones
+        <textarea name="observaciones" rows="4" [(ngModel)]="formulario.observaciones" placeholder="Detalle el sustento de la justificación"></textarea>
+      </label>
+
+      <label>
+        Adjuntar sustentos
+        <input type="file" name="sustentos" multiple accept=".pdf,image/*,.eml,.msg" (change)="seleccionarSustentos($event)" />
+        <small>Correo de aprobación, imágenes del incidente o certificado médico.</small>
+      </label>
+
+      <button type="submit" class="save-button" [disabled]="!formulario.motivo || !formulario.fechaHasta">
+        <i class="pi pi-save"></i> Guardar
+      </button>
+    </form>
+  </div>
+</div>
