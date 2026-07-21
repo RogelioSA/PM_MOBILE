@@ -118,6 +118,18 @@ export class PersonalMarcacion implements OnInit {
     this.registroSeleccionado = null;
   }
 
+  tieneIngreso(ingreso: string | null | undefined): boolean {
+    return !!ingreso?.trim();
+  }
+
+  obtenerTardanza(registro: MarcacionPersonal): string {
+    if (!this.tieneIngreso(registro.ingreso)) {
+      return registro.detalle || '-';
+    }
+
+    return this.esTardanza(registro.minutosTarde) ? registro.minutosTarde : 'A tiempo';
+  }
+
   esTardanza(minutosTarde: string | null | undefined): boolean {
     return !!minutosTarde && minutosTarde !== '00:00:00';
   }
