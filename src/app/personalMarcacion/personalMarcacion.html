@@ -7,46 +7,64 @@
     </div>
   </header>
 
-  <section class="month-nav" aria-label="Navegación de mes">
-    <button class="btn btn-outline-primary btn-sm" (click)="cambiarMes(-1)"><i class="pi pi-chevron-left"></i><span>Anterior</span></button>
-    <strong>{{ mesActual }}</strong>
-    <button class="btn btn-outline-primary btn-sm" (click)="cambiarMes(1)"><span>Siguiente</span><i class="pi pi-chevron-right"></i></button>
+  <section class="week-nav" aria-label="Navegación de semana">
+    <button class="btn btn-outline-primary btn-sm" (click)="cambiarSemana(-1)" [disabled]="cargando"><i class="pi pi-chevron-left"></i><span>Anterior</span></button>
+    <strong>{{ semanaActual }}</strong>
+    <button class="btn btn-outline-primary btn-sm" (click)="cambiarSemana(1)" [disabled]="cargando"><span>Siguiente</span><i class="pi pi-chevron-right"></i></button>
   </section>
 
   <section class="stats-grid">
     <article class="stat-card total"><i class="pi pi-list-check"></i><span>Total</span><strong>{{ totalRegistros }}</strong></article>
-    <article class="stat-card entries"><i class="pi pi-sign-in"></i><span>Entradas</span><strong>{{ registrosEntrada }}</strong></article>
-    <article class="stat-card exits"><i class="pi pi-sign-out"></i><span>Salidas</span><strong>{{ registrosSalida }}</strong></article>
     <article class="stat-card late"><i class="pi pi-exclamation-triangle"></i><span>Tardanzas</span><strong>{{ totalTardanzas }}</strong><small>{{ minutosAcumulados }} min</small></article>
   </section>
 
   <section class="records-card">
-    <div class="records-title"><h2>Detalle de Marcaciones</h2><span>{{ totalRegistros }} registros</span></div>
+    <div class="records-title">
+      <h2>Detalle de Marcaciones</h2>
+      <span *ngIf="cargando">Cargando...</span>
+      <span *ngIf="!cargando">{{ totalRegistros }} registros</span>
+    </div>
+
+    <p *ngIf="mensajeError" class="error-message">{{ mensajeError }}</p>
+
     <div class="responsive-table">
       <table>
-        <thead><tr><th>Fecha/Hora</th><th>Fecha Jornal</th><th>Tipo</th><th>Hora Prog.</th><th>Tardanza</th><th>Dif.</th><th>Ubicación</th><th>Mapa</th></tr></thead>
-        <tbody>
-          <tr *ngFor="let registro of registrosFiltrados">
-            <td data-label="Fecha/Hora">{{ registro.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
-            <td data-label="Fecha Jornal">{{ registro.fechaJornal | date: 'dd/MM/yyyy' }}</td>
-            <td data-label="Tipo"><span class="badge" [ngClass]="'bg-' + obtenerColorTipoEvento(registro.tipoEvento)">{{ obtenerNombreTipoEvento(registro.tipoEvento) }}</span></td>
-            <td data-label="Hora Prog.">{{ registro.horaProgramada }}</td>
-            <td data-label="Tardanza"><span class="badge" [ngClass]="registro.esTardanza ? 'bg-warning text-dark' : 'bg-success'">{{ registro.esTardanza ? 'Sí' : 'No' }}</span></td>
-            <td data-label="Dif."><span class="badge" [ngClass]="registro.diferenciaMinutos > 0 ? 'bg-info text-dark' : 'bg-success'">{{ registro.diferenciaMinutos || 'A tiempo' }}<ng-container *ngIf="registro.diferenciaMinutos"> min</ng-container></span></td>
-            <td data-label="Ubicación">{{ registro.ubicacion }}</td>
-            <td data-label="Mapa"><button class="map-button" (click)="mostrarMapa(registro)" aria-label="Ver ubicación"><i class="pi pi-map-marker"></i></button></td>
+        <thead>
+          <tr>
+            <th>Sucursal</th>
+            <th>Fecha</th>
+            <th>Turno Ing.</th>
+            <th>Tardanza</th>
+            <th>DIF</th>
           </tr>
-          <tr *ngIf="!registrosFiltrados.length"><td colspan="8" class="empty-state">No hay marcaciones para este mes.</td></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let registro of registrosAsistencia" class="record-row" (click)="abrirDetalle(registro)" tabindex="0" (keyup.enter)="abrirDetalle(registro)">
+            <td data-label="Sucursal">{{ registro.sucursal }}</td>
+            <td data-label="Fecha">{{ formatearFechaRegistro(registro.fecha) }}</td>
+            <td data-label="Turno Ing.">{{ registro.iProg }}</td>
+            <td data-label="Tardanza"><span class="badge" [ngClass]="esTardanza(registro.minutosTarde) ? 'bg-warning text-dark' : 'bg-success'">{{ esTardanza(registro.minutosTarde) ? 'Sí' : 'No' }}</span></td>
+            <td data-label="DIF"><span class="badge" [ngClass]="esTardanza(registro.minutosTarde) ? 'bg-info text-dark' : 'bg-success'">{{ esTardanza(registro.minutosTarde) ? registro.minutosTarde : 'A tiempo' }}</span></td>
+          </tr>
+          <tr *ngIf="!cargando && !registrosAsistencia.length"><td colspan="5" class="empty-state">No hay marcaciones para esta semana.</td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <div *ngIf="mostrarModalMapa && coordenadasSeleccionadas" class="modal-backdrop" (click)="cerrarMapa()">
-    <section class="map-card" (click)="$event.stopPropagation()">
-      <header><h3><i class="pi pi-map-marker"></i> Ubicación</h3><button type="button" (click)="cerrarMapa()">×</button></header>
-      <div class="coordinates-info"><span><strong>Lat:</strong> {{ coordenadasSeleccionadas.latitud }}</span><span><strong>Lng:</strong> {{ coordenadasSeleccionadas.longitud }}</span></div>
-      <div class="mock-map"><i class="pi pi-map"></i><p>{{ coordenadasSeleccionadas.ubicacion }}</p><small>Vista de mapa mock hasta conectar API/mapas.</small></div>
+  <div *ngIf="mostrarModalDetalle && registroSeleccionado" class="modal-backdrop" (click)="cerrarDetalle()">
+    <section class="detail-card" (click)="$event.stopPropagation()">
+      <header>
+        <h3><i class="pi pi-info-circle"></i> Detalle de marcación</h3>
+        <button type="button" (click)="cerrarDetalle()" aria-label="Cerrar">×</button>
+      </header>
+      <div class="detail-grid">
+        <span><strong>Horario</strong>{{ registroSeleccionado.horario || '-' }}</span>
+        <span><strong>Detalle</strong>{{ registroSeleccionado.detalle || '-' }}</span>
+        <span><strong>Inicio Break</strong>{{ registroSeleccionado.inicioBreak || '-' }}</span>
+        <span><strong>Fin Break</strong>{{ registroSeleccionado.finBreak || '-' }}</span>
+        <span class="full"><strong>Revisión</strong>{{ registroSeleccionado.revisionMarcaciones || '-' }}</span>
+      </div>
     </section>
   </div>
 </div>
