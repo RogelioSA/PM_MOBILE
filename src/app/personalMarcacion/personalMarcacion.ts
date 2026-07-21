@@ -95,7 +95,9 @@ export class PersonalMarcacion implements OnInit {
       nroDocumento
     ).subscribe({
       next: (response) => {
-        this.registrosAsistencia = Array.isArray(response?.data) ? response.data : [];
+        this.registrosAsistencia = Array.isArray(response?.data)
+          ? [...response.data].sort((a, b) => this.obtenerTiempoFecha(b.fecha) - this.obtenerTiempoFecha(a.fecha))
+          : [];
         this.cargando = false;
       },
       error: (error) => {
@@ -130,6 +132,20 @@ export class PersonalMarcacion implements OnInit {
     const [fechaParte] = fecha.split(' ');
     const [mes, dia, anio] = fechaParte.split('/');
     return `${dia}/${mes}/${anio}`;
+  }
+
+  private obtenerTiempoFecha(fecha: string): number {
+    const [fechaParte, horaParte = '00:00:00'] = fecha.split(' ');
+    const [mes = '1', dia = '1', anio = '1970'] = fechaParte.split('/');
+    const [horas = 0, minutos = 0, segundos = 0] = horaParte.split(':').map(Number);
+    return new Date(
+      Number(anio),
+      Number(mes) - 1,
+      Number(dia),
+      horas,
+      minutos,
+      segundos
+    ).getTime();
   }
 
   private formatearFechaIso(fecha: Date): string {
