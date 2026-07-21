@@ -10,11 +10,11 @@
   <section class="week-nav" aria-label="Navegación de semana">
     <button type="button" class="week-button" (click)="cambiarSemana(-1)" [disabled]="cargando" aria-label="Semana anterior">
       <i class="pi pi-chevron-left"></i>
-      <span>Anterior</span>
+      <span>&lt; Anterior</span>
     </button>
     <strong>{{ semanaActual }}</strong>
     <button type="button" class="week-button" (click)="cambiarSemana(1)" [disabled]="cargando" aria-label="Semana siguiente">
-      <span>Siguiente</span>
+      <span>Siguiente &gt;</span>
       <i class="pi pi-chevron-right"></i>
     </button>
   </section>
@@ -57,7 +57,7 @@
             <td data-label="Fecha">{{ formatearFechaRegistro(registro.fecha) }}</td>
             <td data-label="Turno Ing.">{{ registro.iProg }}</td>
             <td data-label="Tardanza"><span class="badge" [ngClass]="esTardanza(registro.minutosTarde) ? 'bg-warning text-dark' : 'bg-success'">{{ esTardanza(registro.minutosTarde) ? 'Sí' : 'No' }}</span></td>
-            <td data-label="DIF"><span class="badge" [ngClass]="esTardanza(registro.minutosTarde) ? 'bg-info text-dark' : 'bg-success'">{{ esTardanza(registro.minutosTarde) ? registro.minutosTarde : 'A tiempo' }}</span></td>
+            <td data-label="DIF"><span class="badge" [ngClass]="esTardanza(registro.minutosTarde) ? 'bg-danger' : 'bg-success'">{{ esTardanza(registro.minutosTarde) ? registro.minutosTarde : 'A tiempo' }}</span></td>
           </tr>
           <tr *ngIf="!cargando && !registrosAsistencia.length"><td colspan="5" class="empty-state">No hay marcaciones para esta semana.</td></tr>
         </tbody>
