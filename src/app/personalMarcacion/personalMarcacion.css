@@ -28,5 +28,30 @@
 .modal-backdrop { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:1rem; background:rgba(15,23,42,.55); }
 .detail-card { width:min(100%, 560px); border-radius:22px; background:#fff; overflow:hidden; box-shadow:0 22px 60px rgba(0,0,0,.25); } .detail-card header { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem; border-bottom:1px solid #e2e8f0; } .detail-card h3 { margin:0; font-size:1.15rem; } .detail-card header button { border:0; background:transparent; font-size:1.8rem; cursor:pointer; }
 .detail-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.85rem; padding:1rem; } .detail-grid span { display:grid; gap:.25rem; padding:.85rem; border-radius:14px; background:#f8fafc; color:#334155; } .detail-grid strong { color:#0f172a; } .detail-grid .full { grid-column:1 / -1; }
-@media (max-width: 760px) { .attendance-header { flex-direction:column; } .stats-grid { grid-template-columns:1fr; } .week-nav { border-radius:16px; } .week-button { min-width:3rem; padding:.65rem .8rem; } .week-button span { display:none; } table, thead, tbody, tr, td { display:block; min-width:0; } thead { display:none; } tr { margin:.75rem; padding:.75rem; border:1px solid #e2e8f0; border-radius:16px; } td { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:.55rem 0; border:0; text-align:right; } td::before { content:attr(data-label); color:#64748b; font-weight:700; text-align:left; } .empty-state { display:block; text-align:center; } .empty-state::before { content:''; } .detail-grid { grid-template-columns:1fr; } }
-@media (max-width: 420px) { .attendance-page { padding:.65rem; } .records-title { align-items:flex-start; flex-direction:column; } td { flex-direction:column; align-items:flex-start; text-align:left; } }
+@media (max-width: 760px) {
+  .attendance-header { flex-direction:column; }
+  .stats-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.55rem; margin-block:.75rem; }
+  .stat-card { min-height:5.25rem; padding:.65rem .5rem; border-radius:14px; gap:.1rem; }
+  .stat-card i { font-size:1.25rem; }
+  .stat-card strong { font-size:1.3rem; }
+  .stat-card span, .stat-card small { font-size:.72rem; }
+  .week-nav { border-radius:16px; }
+  .week-button { min-width:3rem; padding:.65rem .8rem; }
+  .week-button span { display:none; }
+  table, thead, tbody, tr, td { display:block; min-width:0; }
+  thead { display:none; }
+  tr.record-row { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.65rem .75rem; margin:.75rem; padding:.8rem; border:1px solid #e2e8f0; border-radius:16px; }
+  td { padding:0; border:0; text-align:left; }
+  tr.record-row td { display:grid; gap:.22rem; align-content:start; }
+  tr.record-row td::before { content:attr(data-label); color:#64748b; font-weight:700; font-size:.72rem; text-align:left; }
+  tr.record-row .cell-branch { grid-column:1 / -1; padding-bottom:.55rem; border-bottom:1px solid #edf2f7; }
+  tr.record-row .cell-date { grid-column:1; }
+  tr.record-row .cell-shift { grid-column:2; }
+  tr.record-row .cell-late { grid-column:1; }
+  tr.record-row .cell-diff { grid-column:2; }
+  .badge { width:max-content; padding:.28rem .5rem; font-size:.74rem; }
+  .empty-state { display:block; text-align:center; }
+  .empty-state::before { content:''; }
+  .detail-grid { grid-template-columns:1fr; }
+}
+@media (max-width: 420px) { .attendance-page { padding:.65rem; } .records-title { align-items:flex-start; flex-direction:column; } }
