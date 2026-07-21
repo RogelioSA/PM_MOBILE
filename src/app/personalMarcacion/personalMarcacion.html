@@ -57,7 +57,7 @@
             <td class="cell-date" data-label="Fecha">{{ formatearFechaRegistro(registro.fecha) }}</td>
             <td class="cell-shift" data-label="Turno Ing.">{{ registro.iProg }}</td>
             <td class="cell-entry" data-label="Ingreso">{{ registro.ingreso }}</td>
-            <td class="cell-diff" data-label="Tardanza"><span class="badge" [ngClass]="esTardanza(registro.minutosTarde) ? 'bg-danger' : 'bg-success'">{{ esTardanza(registro.minutosTarde) ? registro.minutosTarde : 'A tiempo' }}</span></td>
+            <td class="cell-diff" data-label="Tardanza"><span class="badge" [ngClass]="tieneIngreso(registro.ingreso) && esTardanza(registro.minutosTarde) ? 'bg-danger' : 'bg-success'">{{ obtenerTardanza(registro) }}</span></td>
           </tr>
           <tr *ngIf="!cargando && !registrosAsistencia.length"><td colspan="5" class="empty-state">No hay marcaciones para esta semana.</td></tr>
         </tbody>
@@ -76,7 +76,7 @@
         <span><strong>Detalle</strong>{{ registroSeleccionado.detalle || '-' }}</span>
         <span><strong>Inicio Break</strong>{{ registroSeleccionado.inicioBreak || '-' }}</span>
         <span><strong>Fin Break</strong>{{ registroSeleccionado.finBreak || '-' }}</span>
-        <span class="full"><strong>Revisión</strong>{{ registroSeleccionado.revisionMarcaciones || '-' }}</span>
+        <span class="full"><strong>Observación</strong>{{ registroSeleccionado.observacion || '-' }}</span>
       </div>
     </section>
   </div>
