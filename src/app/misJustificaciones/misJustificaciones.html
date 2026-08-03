@@ -106,8 +106,49 @@
         <small>Correo de aprobación, imágenes del incidente o certificado médico.</small>
       </label>
 
-      <button type="submit" class="save-button" [disabled]="!formulario.motivo || !formulario.fechaHasta">
-        <i class="pi pi-save"></i> Guardar
+      <section class="digital-supports" aria-live="polite">
+        <h4>Sustentos digitales registrados</h4>
+
+        <p *ngIf="cargandoSustentos" class="supports-status">
+          <i class="pi pi-spin pi-spinner"></i>
+          Consultando archivos...
+        </p>
+
+        <p *ngIf="!cargandoSustentos && mensajeErrorSustentos" class="supports-error">
+          {{ mensajeErrorSustentos }}
+        </p>
+
+        <div *ngIf="!cargandoSustentos && archivosSustento.length" class="supports-list">
+          <a
+            *ngFor="let archivo of archivosSustento"
+            class="support-file"
+            [href]="archivo.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            [attr.aria-label]="'Abrir sustento ' + archivo.nombre"
+          >
+            <img *ngIf="archivo.esImagen" [src]="archivo.url" [alt]="archivo.nombre" loading="lazy" />
+            <i *ngIf="!archivo.esImagen" class="pi pi-file"></i>
+            <span>{{ archivo.nombre }}</span>
+            <i class="pi pi-external-link"></i>
+          </a>
+        </div>
+
+        <p
+          *ngIf="!cargandoSustentos && !mensajeErrorSustentos && !archivosSustento.length"
+          class="supports-empty"
+        >
+          No hay sustentos digitales registrados para esta fecha.
+        </p>
+      </section>
+
+      <button
+        type="submit"
+        class="save-button"
+        [disabled]="!formulario.motivo || !formulario.fechaHasta || subiendoSustentos"
+      >
+        <i class="pi" [ngClass]="subiendoSustentos ? 'pi-spin pi-spinner' : 'pi-save'"></i>
+        {{ subiendoSustentos ? 'Subiendo sustentos...' : 'Guardar' }}
       </button>
     </form>
   </div>

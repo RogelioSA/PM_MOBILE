@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { Api, MotivoJustificacion } from '../services/api';
 import { Auth } from '../services/auth';
 
@@ -29,6 +30,12 @@ interface JustificacionMarcacion {
   registro: MarcacionPersonal;
 }
 
+interface ArchivoSustento {
+  nombre: string;
+  url: string;
+  esImagen: boolean;
+}
+
 @Component({
   selector: 'app-mis-justificaciones',
   standalone: true,
@@ -46,12 +53,16 @@ export class MisJustificaciones implements OnInit {
   fechaBase = new Date();
   cargando = false;
   cargandoMotivos = false;
+  subiendoSustentos = false;
+  cargandoSustentos = false;
+  mensajeErrorSustentos = '';
   mensajeError = '';
   mensajeExito = '';
   mostrarFormulario = false;
   registroSeleccionado: JustificacionMarcacion | null = null;
   justificaciones: JustificacionMarcacion[] = [];
   motivos: MotivoJustificacion[] = [];
+  archivosSustento: ArchivoSustento[] = [];
   formulario = {
     motivo: '',
     fechaDesde: '',
@@ -170,11 +181,51 @@ export class MisJustificaciones implements OnInit {
       observaciones: registro.descripcionjustificacion ?? '',
       sustentos: null
     };
+    this.cargarSustentosDigitales(this.formulario.fechaDesde);
   }
 
   cerrarFormulario(): void {
     this.mostrarFormulario = false;
     this.registroSeleccionado = null;
+    this.archivosSustento = [];
+    this.cargandoSustentos = false;
+    this.mensajeErrorSustentos = '';
+  }
+
+  cargarSustentosDigitales(fechaDesde: string): void {
+    const nroDocumento = this.authService.getUsuario();
+    this.archivosSustento = [];
+    this.mensajeErrorSustentos = '';
+
+    if (!nroDocumento) {
+      this.mensajeErrorSustentos = 'No se encontró el documento del usuario para consultar los sustentos.';
+      return;
+    }
+
+    const carpetaFecha = fechaDesde.replaceAll('-', '');
+    const carpeta = `${nroDocumento}/${carpetaFecha}`;
+    this.cargandoSustentos = true;
+
+    this.apiService.listarArchivosPersonal(carpeta).subscribe({
+      next: (response) => {
+        const archivos = this.obtenerListaArchivos(response);
+        this.archivosSustento = archivos.map((archivo: any) => {
+          const nombre = archivo.nombre ?? archivo.name ?? '';
+          return {
+            nombre,
+            url: archivo.url ?? archivo.ruta ?? '',
+            esImagen: this.esImagen(nombre)
+          };
+        });
+        this.cargandoSustentos = false;
+      },
+      error: (error) => {
+        this.archivosSustento = [];
+        this.cargandoSustentos = false;
+        this.mensajeErrorSustentos = error?.error?.message
+          ?? 'No se pudieron consultar los sustentos digitales.';
+      }
+    });
   }
 
   seleccionarSustentos(event: Event): void {
@@ -183,9 +234,50 @@ export class MisJustificaciones implements OnInit {
   }
 
   guardarJustificacion(): void {
-    if (!this.registroSeleccionado || !this.formulario.motivo || !this.formulario.fechaHasta) return;
+    if (
+      !this.registroSeleccionado ||
+      !this.formulario.motivo ||
+      !this.formulario.fechaDesde ||
+      !this.formulario.fechaHasta ||
+      this.subiendoSustentos
+    ) return;
 
-    this.mensajeExito = `Justificación registrada para ${this.formatearFechaRegistro(this.registroSeleccionado.fecha)}.`;
+    const fechaRegistro = this.registroSeleccionado.fecha;
+    const sustentos = Array.from(this.formulario.sustentos ?? []);
+    if (!sustentos.length) {
+      this.finalizarRegistroJustificacion(fechaRegistro);
+      return;
+    }
+
+    const nroDocumento = this.authService.getUsuario();
+    if (!nroDocumento) {
+      this.mensajeError = 'No se encontró el documento del usuario autenticado para subir los sustentos.';
+      return;
+    }
+
+    const carpetaFecha = this.formulario.fechaDesde.replaceAll('-', '');
+    const carpeta = `${nroDocumento}/${carpetaFecha}`;
+    this.subiendoSustentos = true;
+    this.mensajeError = '';
+
+    forkJoin(
+      sustentos.map((archivo) =>
+        this.apiService.subirArchivoPersonal(carpeta, archivo, archivo.type || 'application/octet-stream')
+      )
+    ).subscribe({
+      next: () => {
+        this.subiendoSustentos = false;
+        this.finalizarRegistroJustificacion(fechaRegistro);
+      },
+      error: (error) => {
+        this.subiendoSustentos = false;
+        this.mensajeError = error?.error?.message ?? 'No se pudieron subir los sustentos de la justificación.';
+      }
+    });
+  }
+
+  private finalizarRegistroJustificacion(fechaRegistro: string): void {
+    this.mensajeExito = `Justificación registrada para ${this.formatearFechaRegistro(fechaRegistro)}.`;
     this.cerrarFormulario();
   }
 
@@ -238,5 +330,15 @@ export class MisJustificaciones implements OnInit {
     const mes = `${fecha.getMonth() + 1}`.padStart(2, '0');
     const dia = `${fecha.getDate()}`.padStart(2, '0');
     return `${anio}-${mes}-${dia}`;
+  }
+
+  private obtenerListaArchivos(response: any): any[] {
+    if (Array.isArray(response)) return response;
+    if (response?.success && Array.isArray(response.data)) return response.data;
+    return [];
+  }
+
+  private esImagen(nombre: string): boolean {
+    return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(nombre);
   }
 }
