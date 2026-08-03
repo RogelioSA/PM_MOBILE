@@ -794,13 +794,10 @@ export class Api {
     );
   }
 
-  listarMotivosJustificacion(): Observable<MotivoJustificacion[] | { data: MotivoJustificacion[] }> {
-    return this.https.get<MotivoJustificacion[] | { data: MotivoJustificacion[] }>(
+  listarMotivosJustificacion(): Observable<any> {
+    return this.https.get<any>(
       `${this.baseUrl}/Personal/motivos-justificacion`,
       { headers: this.authService.getHeaders() }
-    ).pipe(
-      map(response => response),
-      catchError(error => throwError(() => error))
     );
   }
 
