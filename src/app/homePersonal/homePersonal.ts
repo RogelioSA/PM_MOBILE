@@ -26,6 +26,8 @@ interface PersonalNisira {
   styleUrl: './homePersonal.css'
 })
 export class HomePersonal implements OnInit {
+  private readonly documentosValidadores = new Set(['42589037', '41215975', '41473228']);
+
   usuario = '';
   personalSeleccionado: PersonalNisira | null = null;
   cargandoPersonal = false;
@@ -53,10 +55,10 @@ export class HomePersonal implements OnInit {
       color: 'warning'
     },
     {
-      titulo: 'Vacaciones',
-      descripcion: 'Consulta tu saldo y solicitudes de vacaciones.',
-      icono: 'pi pi-calendar',
-      ruta: '/misVacaciones',
+      titulo: 'Validación Justificaciones',
+      descripcion: 'Revisa y valida las justificaciones registradas por el personal.',
+      icono: 'pi pi-verified',
+      ruta: '/validacionJustificaciones',
       color: 'info'
     }
   ];
@@ -77,6 +79,12 @@ export class HomePersonal implements OnInit {
 
   navegar(ruta: string): void {
     this.router.navigate([ruta]);
+  }
+
+  get menusVisibles(): MenuPersonal[] {
+    return this.menus.filter(
+      (menu) => menu.ruta !== '/validacionJustificaciones' || this.documentosValidadores.has(this.usuario)
+    );
   }
 
   cerrarSesion(): void {
