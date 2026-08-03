@@ -8,6 +8,7 @@ import { Auth } from '../services/auth';
 
 interface MarcacionPersonal {
   sucursal: string;
+  empleado: string;
   fecha: string;
   ingreso: string | null;
   detalle: string;
@@ -24,6 +25,7 @@ interface MarcacionPersonal {
 
 interface JustificacionMarcacion {
   sucursal: string;
+  empleado: string;
   fecha: string;
   justificacion: string;
   estado: string;
@@ -150,6 +152,7 @@ export class ValidacionJustificaciones implements OnInit {
               .sort((a: MarcacionPersonal, b: MarcacionPersonal) => this.obtenerTiempoFecha(b.fecha) - this.obtenerTiempoFecha(a.fecha))
               .map((registro: MarcacionPersonal) => ({
                 sucursal: registro.sucursal,
+                empleado: registro.empleado,
                 fecha: registro.fecha,
                 justificacion: registro.descripcionjustificacion || registro.detalle || registro.observacion || 'Pendiente de justificar',
                 estado: this.obtenerDescripcionEstado(
@@ -157,6 +160,7 @@ export class ValidacionJustificaciones implements OnInit {
                 ),
                 registro
               }))
+              .filter((item: JustificacionMarcacion) => item.justificacion.trim().toLowerCase() !== 'vacaciones')
           : [];
         this.cargando = false;
       },

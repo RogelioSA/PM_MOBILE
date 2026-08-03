@@ -40,6 +40,7 @@
         <thead>
           <tr>
             <th>Sucursal</th>
+            <th>Empleado</th>
             <th>Fecha</th>
             <th>Justificación</th>
             <th>Estado</th>
@@ -49,6 +50,7 @@
         <tbody>
           <tr *ngFor="let item of justificaciones">
             <td data-label="Sucursal">{{ item.sucursal }}</td>
+            <td data-label="Empleado">{{ item.empleado }}</td>
             <td data-label="Fecha">{{ formatearFechaRegistro(item.fecha) }}</td>
             <td data-label="Justificación">{{ item.justificacion }}</td>
             <td data-label="Estado" [class.approved-cell]="estaAprobada(item)">
@@ -66,7 +68,7 @@
             </td>
           </tr>
           <tr *ngIf="!cargando && !justificaciones.length">
-            <td colspan="5" class="empty-state">No hay marcaciones por justificar en esta semana.</td>
+            <td colspan="6" class="empty-state">No hay marcaciones por justificar en esta semana.</td>
           </tr>
         </tbody>
       </table>
