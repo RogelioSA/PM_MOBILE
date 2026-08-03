@@ -13,12 +13,12 @@ interface MarcacionPersonal {
   observacion: string;
   minutosTarde: string | null;
   revisionMarcaciones: string;
-  IDOTROSDOCUMENTOS?: string | null;
-  IDMOTIVOMOVIMIENTO?: string | null;
-  IDESTADO?: string | null;
-  FECHADESDEJUSTIFICACION?: string | null;
-  FECHAHASTAJUSTIFICACION?: string | null;
-  DESCRIPCIONJUSTIFICACION?: string | null;
+  idotrosdocumentos?: string | null;
+  idmotivosmovimiento?: string | null;
+  idestado?: string | null;
+  fechadesdejustificacion?: string | null;
+  fechahastajustificacion?: string | null;
+  descripcionjustificacion?: string | null;
 }
 
 interface JustificacionMarcacion {
@@ -134,8 +134,8 @@ export class MisJustificaciones implements OnInit {
               .map((registro: MarcacionPersonal) => ({
                 sucursal: registro.sucursal,
                 fecha: registro.fecha,
-                justificacion: registro.DESCRIPCIONJUSTIFICACION || registro.detalle || registro.observacion || 'Pendiente de justificar',
-                estado: registro.IDESTADO || registro.revisionMarcaciones || 'Pendiente',
+                justificacion: registro.descripcionjustificacion || registro.detalle || registro.observacion || 'Pendiente de justificar',
+                estado: registro.idestado || registro.revisionMarcaciones || 'Pendiente',
                 registro
               }))
           : [];
