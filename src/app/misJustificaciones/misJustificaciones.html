@@ -80,7 +80,7 @@
         Motivo
         <select name="motivo" [(ngModel)]="formulario.motivo" [disabled]="cargandoMotivos" required>
           <option value="" disabled>{{ cargandoMotivos ? 'Cargando motivos...' : 'Seleccione un motivo' }}</option>
-          <option *ngFor="let motivo of motivos" [value]="motivo.IDMOTIVOMOVIMIENTO">{{ motivo.DESCRIPCION }}</option>
+          <option *ngFor="let motivo of motivos" [value]="motivo.idmotivomovimiento">{{ motivo.descripcion }}</option>
         </select>
       </label>
 

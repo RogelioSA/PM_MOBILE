@@ -69,8 +69,8 @@ export interface DocumentoRecepcion {
 }
 
 export interface MotivoJustificacion {
-  IDMOTIVOMOVIMIENTO: string;
-  DESCRIPCION: string;
+  idmotivomovimiento: string;
+  descripcion: string;
 }
 
 @Injectable({
