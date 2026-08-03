@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { Api, MotivoJustificacion } from '../services/api';
 import { Auth } from '../services/auth';
 
@@ -46,6 +47,7 @@ export class MisJustificaciones implements OnInit {
   fechaBase = new Date();
   cargando = false;
   cargandoMotivos = false;
+  subiendoSustentos = false;
   mensajeError = '';
   mensajeExito = '';
   mostrarFormulario = false;
@@ -183,9 +185,50 @@ export class MisJustificaciones implements OnInit {
   }
 
   guardarJustificacion(): void {
-    if (!this.registroSeleccionado || !this.formulario.motivo || !this.formulario.fechaHasta) return;
+    if (
+      !this.registroSeleccionado ||
+      !this.formulario.motivo ||
+      !this.formulario.fechaDesde ||
+      !this.formulario.fechaHasta ||
+      this.subiendoSustentos
+    ) return;
 
-    this.mensajeExito = `Justificación registrada para ${this.formatearFechaRegistro(this.registroSeleccionado.fecha)}.`;
+    const fechaRegistro = this.registroSeleccionado.fecha;
+    const sustentos = Array.from(this.formulario.sustentos ?? []);
+    if (!sustentos.length) {
+      this.finalizarRegistroJustificacion(fechaRegistro);
+      return;
+    }
+
+    const nroDocumento = this.authService.getUsuario();
+    if (!nroDocumento) {
+      this.mensajeError = 'No se encontró el documento del usuario autenticado para subir los sustentos.';
+      return;
+    }
+
+    const carpetaFecha = this.formulario.fechaDesde.replaceAll('-', '');
+    const carpeta = `${nroDocumento}/${carpetaFecha}`;
+    this.subiendoSustentos = true;
+    this.mensajeError = '';
+
+    forkJoin(
+      sustentos.map((archivo) =>
+        this.apiService.subirArchivoPersonal(carpeta, archivo, archivo.type || 'application/octet-stream')
+      )
+    ).subscribe({
+      next: () => {
+        this.subiendoSustentos = false;
+        this.finalizarRegistroJustificacion(fechaRegistro);
+      },
+      error: (error) => {
+        this.subiendoSustentos = false;
+        this.mensajeError = error?.error?.message ?? 'No se pudieron subir los sustentos de la justificación.';
+      }
+    });
+  }
+
+  private finalizarRegistroJustificacion(fechaRegistro: string): void {
+    this.mensajeExito = `Justificación registrada para ${this.formatearFechaRegistro(fechaRegistro)}.`;
     this.cerrarFormulario();
   }
 
