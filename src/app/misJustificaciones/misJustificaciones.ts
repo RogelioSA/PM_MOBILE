@@ -15,7 +15,7 @@ interface MarcacionPersonal {
   minutosTarde: string | null;
   revisionMarcaciones: string;
   idotrosdocumentos?: string | null;
-  idmotivosmovimiento?: string | null;
+  idmotivomovimiento?: string | number | null;
   idestado?: string | null;
   fechadesdejustificacion?: string | null;
   fechahastajustificacion?: string | null;
@@ -175,7 +175,7 @@ export class MisJustificaciones implements OnInit {
     this.mostrarFormulario = true;
     this.mensajeExito = '';
     this.formulario = {
-      motivo: registro.idmotivosmovimiento ?? '',
+      motivo: this.normalizarIdMotivo(registro.idmotivomovimiento),
       fechaDesde: this.formatearFechaIsoDesdeValor(registro.fechadesdejustificacion) || fechaRegistro,
       fechaHasta: this.formatearFechaIsoDesdeValor(registro.fechahastajustificacion) || fechaRegistro,
       observaciones: registro.descripcionjustificacion ?? '',
@@ -303,6 +303,11 @@ export class MisJustificaciones implements OnInit {
   private finalizarRegistroJustificacion(fechaRegistro: string): void {
     this.mensajeExito = `Justificación registrada para ${this.formatearFechaRegistro(fechaRegistro)}.`;
     this.cerrarFormulario();
+    this.cargarMarcacionesPendientes();
+  }
+
+  private normalizarIdMotivo(idMotivo: string | number | null | undefined): string {
+    return idMotivo == null ? '' : String(idMotivo).trim();
   }
 
   tieneIngreso_Tardanzas(
