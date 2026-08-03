@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { Api, MotivoJustificacion } from '../services/api';
+import { forkJoin, Observable, switchMap } from 'rxjs';
+import { Api, MotivoJustificacion, OtrosDocumentosPayload } from '../services/api';
 import { Auth } from '../services/auth';
 
 interface MarcacionPersonal {
@@ -242,36 +242,60 @@ export class MisJustificaciones implements OnInit {
       this.subiendoSustentos
     ) return;
 
-    const fechaRegistro = this.registroSeleccionado.fecha;
-    const sustentos = Array.from(this.formulario.sustentos ?? []);
-    if (!sustentos.length) {
-      this.finalizarRegistroJustificacion(fechaRegistro);
-      return;
-    }
-
     const nroDocumento = this.authService.getUsuario();
     if (!nroDocumento) {
-      this.mensajeError = 'No se encontró el documento del usuario autenticado para subir los sustentos.';
+      this.mensajeError = 'No se encontró el documento del usuario autenticado.';
       return;
     }
 
+    if (this.formulario.fechaHasta < this.formulario.fechaDesde) {
+      this.mensajeError = 'La fecha hasta no puede ser anterior a la fecha desde.';
+      return;
+    }
+
+    const fechaRegistro = this.registroSeleccionado.fecha;
+    const registro = this.registroSeleccionado.registro;
+    const payload: OtrosDocumentosPayload = {
+      idEmpresa: '001',
+      idOtrosDocumentos: registro.idotrosdocumentos?.trim() ?? '',
+      tipo: 'OM',
+      codigoPersonal: nroDocumento,
+      idMotivo: this.formulario.motivo,
+      fechaDesde: this.formatearFechaParaApi(this.formulario.fechaDesde),
+      fechaHasta: this.formatearFechaParaApi(this.formulario.fechaHasta),
+      descripcion: this.formulario.observaciones.trim(),
+      nroCertificado: '',
+      centroMedico: '',
+      idSucursal: '001',
+      idEmisor: '001',
+      idPlanilla: ''
+    };
+    const sustentos = Array.from(this.formulario.sustentos ?? []);
     const carpetaFecha = this.formulario.fechaDesde.replaceAll('-', '');
     const carpeta = `${nroDocumento}/${carpetaFecha}`;
     this.subiendoSustentos = true;
     this.mensajeError = '';
 
-    forkJoin(
-      sustentos.map((archivo) =>
-        this.apiService.subirArchivoPersonal(carpeta, archivo, archivo.type || 'application/octet-stream')
-      )
-    ).subscribe({
+    const guardar$: Observable<any> = sustentos.length
+      ? forkJoin(
+          sustentos.map((archivo) =>
+            this.apiService.subirArchivoPersonal(
+              carpeta,
+              archivo,
+              archivo.type || 'application/octet-stream'
+            )
+          )
+        ).pipe(switchMap(() => this.apiService.guardarOtrosDocumentos(payload)))
+      : this.apiService.guardarOtrosDocumentos(payload);
+
+    guardar$.subscribe({
       next: () => {
         this.subiendoSustentos = false;
         this.finalizarRegistroJustificacion(fechaRegistro);
       },
       error: (error) => {
         this.subiendoSustentos = false;
-        this.mensajeError = error?.error?.message ?? 'No se pudieron subir los sustentos de la justificación.';
+        this.mensajeError = error?.error?.message ?? 'No se pudo guardar la justificación.';
       }
     });
   }
@@ -330,6 +354,10 @@ export class MisJustificaciones implements OnInit {
     const mes = `${fecha.getMonth() + 1}`.padStart(2, '0');
     const dia = `${fecha.getDate()}`.padStart(2, '0');
     return `${anio}-${mes}-${dia}`;
+  }
+
+  private formatearFechaParaApi(fecha: string): string {
+    return `${fecha}T00:00:00.000Z`;
   }
 
   private obtenerListaArchivos(response: any): any[] {
