@@ -236,6 +236,7 @@ export class MisJustificaciones implements OnInit {
   guardarJustificacion(): void {
     if (
       !this.registroSeleccionado ||
+      this.estaAprobada(this.registroSeleccionado) ||
       !this.formulario.motivo ||
       !this.formulario.fechaDesde ||
       !this.formulario.fechaHasta ||
@@ -308,6 +309,13 @@ export class MisJustificaciones implements OnInit {
 
   private normalizarIdentificador(id: string | number | null | undefined): string {
     return id == null ? '' : String(id).trim();
+  }
+
+  estaAprobada(item: JustificacionMarcacion | null): boolean {
+    if (!item) return false;
+
+    const estado = item.registro.idestado || item.registro.revisionMarcaciones;
+    return estado?.trim().toUpperCase() === 'AP';
   }
 
   tieneIngreso_Tardanzas(
