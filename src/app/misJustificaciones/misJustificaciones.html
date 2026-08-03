@@ -7,7 +7,7 @@
     </div>
   </header>
 
-  <p class="intro">Marcaciones distintas de "A tiempo" registradas desde el día anterior al actual.</p>
+  <p class="intro">Marcaciones sin ingreso registradas desde el día anterior al actual.</p>
 
   <div *ngIf="cargando" class="loading-card" role="status" aria-live="polite">
     <i class="pi pi-spin pi-spinner"></i>
@@ -47,7 +47,7 @@
             </td>
           </tr>
           <tr *ngIf="!cargando && !justificaciones.length">
-            <td colspan="5" class="empty-state">No hay marcaciones pendientes por justificar.</td>
+            <td colspan="5" class="empty-state">No hay marcaciones sin ingreso por justificar.</td>
           </tr>
         </tbody>
       </table>

@@ -9,7 +9,6 @@ interface MarcacionPersonal {
   sucursal: string;
   fecha: string;
   ingreso: string | null;
-  minutosTarde: string | null;
   detalle: string;
   observacion: string;
   revisionMarcaciones: string;
@@ -72,7 +71,7 @@ export class MisJustificaciones implements OnInit {
       next: (response) => {
         this.justificaciones = Array.isArray(response?.data)
           ? response.data
-              .filter((registro: MarcacionPersonal) => this.requiereJustificacion(registro))
+              .filter((registro: MarcacionPersonal) => !this.tieneIngreso(registro.ingreso))
               .sort((a: MarcacionPersonal, b: MarcacionPersonal) => this.obtenerTiempoFecha(b.fecha) - this.obtenerTiempoFecha(a.fecha))
               .map((registro: MarcacionPersonal) => ({
                 sucursal: registro.sucursal,
@@ -125,15 +124,6 @@ export class MisJustificaciones implements OnInit {
 
   tieneIngreso(ingreso: string | null | undefined): boolean {
     return !!ingreso?.trim();
-  }
-
-  requiereJustificacion(registro: MarcacionPersonal): boolean {
-    if (!this.tieneIngreso(registro.ingreso)) return true;
-
-    const minutosTarde = registro.minutosTarde?.trim();
-    return !!minutosTarde
-      && minutosTarde !== '00:00:00'
-      && minutosTarde.toLocaleLowerCase() !== 'a tiempo';
   }
 
   formatearFechaRegistro(fecha: string): string {
