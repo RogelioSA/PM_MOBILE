@@ -30,6 +30,12 @@ interface JustificacionMarcacion {
   registro: MarcacionPersonal;
 }
 
+interface ArchivoSustento {
+  nombre: string;
+  url: string;
+  esImagen: boolean;
+}
+
 @Component({
   selector: 'app-mis-justificaciones',
   standalone: true,
@@ -48,12 +54,15 @@ export class MisJustificaciones implements OnInit {
   cargando = false;
   cargandoMotivos = false;
   subiendoSustentos = false;
+  cargandoSustentos = false;
+  mensajeErrorSustentos = '';
   mensajeError = '';
   mensajeExito = '';
   mostrarFormulario = false;
   registroSeleccionado: JustificacionMarcacion | null = null;
   justificaciones: JustificacionMarcacion[] = [];
   motivos: MotivoJustificacion[] = [];
+  archivosSustento: ArchivoSustento[] = [];
   formulario = {
     motivo: '',
     fechaDesde: '',
@@ -172,11 +181,51 @@ export class MisJustificaciones implements OnInit {
       observaciones: registro.descripcionjustificacion ?? '',
       sustentos: null
     };
+    this.cargarSustentosDigitales(this.formulario.fechaDesde);
   }
 
   cerrarFormulario(): void {
     this.mostrarFormulario = false;
     this.registroSeleccionado = null;
+    this.archivosSustento = [];
+    this.cargandoSustentos = false;
+    this.mensajeErrorSustentos = '';
+  }
+
+  cargarSustentosDigitales(fechaDesde: string): void {
+    const nroDocumento = this.authService.getUsuario();
+    this.archivosSustento = [];
+    this.mensajeErrorSustentos = '';
+
+    if (!nroDocumento) {
+      this.mensajeErrorSustentos = 'No se encontró el documento del usuario para consultar los sustentos.';
+      return;
+    }
+
+    const carpetaFecha = fechaDesde.replaceAll('-', '');
+    const carpeta = `${nroDocumento}/${carpetaFecha}`;
+    this.cargandoSustentos = true;
+
+    this.apiService.listarArchivosPersonal(carpeta).subscribe({
+      next: (response) => {
+        const archivos = this.obtenerListaArchivos(response);
+        this.archivosSustento = archivos.map((archivo: any) => {
+          const nombre = archivo.nombre ?? archivo.name ?? '';
+          return {
+            nombre,
+            url: archivo.url ?? archivo.ruta ?? '',
+            esImagen: this.esImagen(nombre)
+          };
+        });
+        this.cargandoSustentos = false;
+      },
+      error: (error) => {
+        this.archivosSustento = [];
+        this.cargandoSustentos = false;
+        this.mensajeErrorSustentos = error?.error?.message
+          ?? 'No se pudieron consultar los sustentos digitales.';
+      }
+    });
   }
 
   seleccionarSustentos(event: Event): void {
@@ -281,5 +330,15 @@ export class MisJustificaciones implements OnInit {
     const mes = `${fecha.getMonth() + 1}`.padStart(2, '0');
     const dia = `${fecha.getDate()}`.padStart(2, '0');
     return `${anio}-${mes}-${dia}`;
+  }
+
+  private obtenerListaArchivos(response: any): any[] {
+    if (Array.isArray(response)) return response;
+    if (response?.success && Array.isArray(response.data)) return response.data;
+    return [];
+  }
+
+  private esImagen(nombre: string): boolean {
+    return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(nombre);
   }
 }
