@@ -68,6 +68,11 @@ export interface DocumentoRecepcion {
   numeroDocumento?: string;
 }
 
+export interface MotivoJustificacion {
+  idmotivomovimiento: string;
+  descripcion: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -786,6 +791,13 @@ export class Api {
     ).pipe(
       map(response => response),
       catchError(error => throwError(() => error))
+    );
+  }
+
+  listarMotivosJustificacion(): Observable<any> {
+    return this.https.get<any>(
+      `${this.baseUrl}/Personal/motivos-justificacion`,
+      { headers: this.authService.getHeaders() }
     );
   }
 

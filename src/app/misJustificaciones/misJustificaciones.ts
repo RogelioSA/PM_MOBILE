@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { Api } from '../services/api';
+import { Api, MotivoJustificacion } from '../services/api';
 import { Auth } from '../services/auth';
 
 interface MarcacionPersonal {
@@ -13,6 +13,12 @@ interface MarcacionPersonal {
   observacion: string;
   minutosTarde: string | null;
   revisionMarcaciones: string;
+  IDOTROSDOCUMENTOS?: string | null;
+  IDMOTIVOMOVIMIENTO?: string | null;
+  IDESTADO?: string | null;
+  FECHADESDEJUSTIFICACION?: string | null;
+  FECHAHASTAJUSTIFICACION?: string | null;
+  DESCRIPCIONJUSTIFICACION?: string | null;
 }
 
 interface JustificacionMarcacion {
@@ -31,13 +37,15 @@ interface JustificacionMarcacion {
   styleUrl: './misJustificaciones.css'
 })
 export class MisJustificaciones implements OnInit {
+  fechaBase = new Date();
   cargando = false;
+  cargandoMotivos = false;
   mensajeError = '';
   mensajeExito = '';
   mostrarFormulario = false;
   registroSeleccionado: JustificacionMarcacion | null = null;
   justificaciones: JustificacionMarcacion[] = [];
-  motivos = ['PERMISO PERSONAL', 'DESCANSO MEDICO', 'CAPACITACIONES', 'PERMISO DE SALUD'];
+  motivos: MotivoJustificacion[] = [];
   formulario = {
     motivo: '',
     fechaDesde: '',
@@ -52,7 +60,52 @@ export class MisJustificaciones implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.cargarMotivosJustificacion();
     this.cargarMarcacionesPendientes();
+  }
+
+  get rangoSemanaActual(): { desde: Date; hasta: Date } {
+    const fecha = new Date(this.fechaBase);
+    const dia = fecha.getDay();
+    const distanciaLunes = dia === 0 ? -6 : 1 - dia;
+    const desde = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate() + distanciaLunes);
+    const hasta = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate() + 6);
+    return { desde, hasta };
+  }
+
+  get semanaActual(): string {
+    const { desde, hasta } = this.rangoSemanaActual;
+    return `${this.formatearFechaIso(desde).replaceAll('-', '/')} al ${this.formatearFechaIso(hasta).replaceAll('-', '/')}`;
+  }
+
+  cambiarSemana(valor: number): void {
+    this.fechaBase = new Date(
+      this.fechaBase.getFullYear(),
+      this.fechaBase.getMonth(),
+      this.fechaBase.getDate() + (valor * 7)
+    );
+    this.cargarMarcacionesPendientes();
+  }
+
+  cargarMotivosJustificacion(): void {
+    this.cargandoMotivos = true;
+
+    this.apiService.listarMotivosJustificacion().subscribe({
+      next: (response) => {
+        const datos = Array.isArray(response)
+          ? response
+          : Array.isArray((response as { data?: MotivoJustificacion[] })?.data)
+            ? (response as { data: MotivoJustificacion[] }).data
+            : [];
+        this.motivos = datos;
+        this.cargandoMotivos = false;
+      },
+      error: (error) => {
+        this.motivos = [];
+        this.mensajeError = error?.error?.message ?? 'No se pudieron cargar los motivos de justificación.';
+        this.cargandoMotivos = false;
+      }
+    });
   }
 
   cargarMarcacionesPendientes(): void {
@@ -63,12 +116,16 @@ export class MisJustificaciones implements OnInit {
       return;
     }
 
-    const desde = this.obtenerFechaRelativa(-1);
-    const hasta = this.obtenerFechaRelativa(0);
+    const { desde, hasta } = this.rangoSemanaActual;
     this.cargando = true;
     this.mensajeError = '';
 
-    this.apiService.listarReporteMarcacionesGeneral(desde, hasta, 3, nroDocumento).subscribe({
+    this.apiService.listarReporteMarcacionesGeneral(
+      this.formatearFechaIso(desde),
+      this.formatearFechaIso(hasta),
+      3,
+      nroDocumento
+    ).subscribe({
       next: (response) => {
         this.justificaciones = Array.isArray(response?.data)
           ? response.data
@@ -77,8 +134,8 @@ export class MisJustificaciones implements OnInit {
               .map((registro: MarcacionPersonal) => ({
                 sucursal: registro.sucursal,
                 fecha: registro.fecha,
-                justificacion: registro.detalle || registro.observacion || 'Pendiente de justificar',
-                estado: registro.revisionMarcaciones || 'Pendiente',
+                justificacion: registro.DESCRIPCIONJUSTIFICACION || registro.detalle || registro.observacion || 'Pendiente de justificar',
+                estado: registro.IDESTADO || registro.revisionMarcaciones || 'Pendiente',
                 registro
               }))
           : [];
@@ -93,15 +150,16 @@ export class MisJustificaciones implements OnInit {
   }
 
   abrirRegistro(item: JustificacionMarcacion): void {
-    const fecha = this.formatearFechaIsoDesdeRegistro(item.fecha);
+    const fechaRegistro = this.formatearFechaIsoDesdeRegistro(item.fecha);
+    const registro = item.registro;
     this.registroSeleccionado = item;
     this.mostrarFormulario = true;
     this.mensajeExito = '';
     this.formulario = {
-      motivo: '',
-      fechaDesde: fecha,
-      fechaHasta: fecha,
-      observaciones: '',
+      motivo: registro.IDMOTIVOMOVIMIENTO ?? '',
+      fechaDesde: this.formatearFechaIsoDesdeValor(registro.FECHADESDEJUSTIFICACION) || fechaRegistro,
+      fechaHasta: this.formatearFechaIsoDesdeValor(registro.FECHAHASTAJUSTIFICACION) || fechaRegistro,
+      observaciones: registro.DESCRIPCIONJUSTIFICACION ?? '',
       sustentos: null
     };
   }
@@ -138,16 +196,19 @@ export class MisJustificaciones implements OnInit {
     return `${dia}/${mes}/${anio}`;
   }
 
-  private obtenerFechaRelativa(dias: number): string {
-    const fecha = new Date();
-    fecha.setDate(fecha.getDate() + dias);
-    return this.formatearFechaIso(fecha);
-  }
-
   private formatearFechaIsoDesdeRegistro(fecha: string): string {
     const [fechaParte] = fecha.split(' ');
     const [mes, dia, anio] = fechaParte.split('/');
     return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  }
+
+  private formatearFechaIsoDesdeValor(fecha: string | null | undefined): string {
+    if (!fecha) return '';
+
+    const coincidenciaIso = fecha.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (coincidenciaIso) return `${coincidenciaIso[1]}-${coincidenciaIso[2]}-${coincidenciaIso[3]}`;
+
+    return this.formatearFechaIsoDesdeRegistro(fecha);
   }
 
   private obtenerTiempoFecha(fecha: string): number {
