@@ -106,8 +106,13 @@
         <small>Correo de aprobación, imágenes del incidente o certificado médico.</small>
       </label>
 
-      <button type="submit" class="save-button" [disabled]="!formulario.motivo || !formulario.fechaHasta">
-        <i class="pi pi-save"></i> Guardar
+      <button
+        type="submit"
+        class="save-button"
+        [disabled]="!formulario.motivo || !formulario.fechaHasta || subiendoSustentos"
+      >
+        <i class="pi" [ngClass]="subiendoSustentos ? 'pi-spin pi-spinner' : 'pi-save'"></i>
+        {{ subiendoSustentos ? 'Subiendo sustentos...' : 'Guardar' }}
       </button>
     </form>
   </div>
