@@ -141,7 +141,7 @@ export class ValidacionJustificaciones implements OnInit {
       this.formatearFechaIso(desde),
       this.formatearFechaIso(hasta),
       0,
-      ''
+      '99999999'
     ).subscribe({
       next: (response) => {
         this.justificaciones = Array.isArray(response?.data)
