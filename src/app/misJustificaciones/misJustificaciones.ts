@@ -266,8 +266,8 @@ export class MisJustificaciones implements OnInit {
       descripcion: this.formulario.observaciones.trim(),
       nroCertificado: '',
       centroMedico: '',
-      idSucursal: this.registroSeleccionado.sucursal,
-      idEmisor: '',
+      idSucursal: '001',
+      idEmisor: '001',
       idPlanilla: ''
     };
     const sustentos = Array.from(this.formulario.sustentos ?? []);
