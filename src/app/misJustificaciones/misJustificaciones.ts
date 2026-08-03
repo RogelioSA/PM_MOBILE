@@ -14,8 +14,8 @@ interface MarcacionPersonal {
   observacion: string;
   minutosTarde: string | null;
   revisionMarcaciones: string;
-  idotrosdocumentos?: string | null;
-  idmotivosmovimiento?: string | null;
+  idotrosdocumentos?: string | number | null;
+  idmotivomovimiento?: string | number | null;
   idestado?: string | null;
   fechadesdejustificacion?: string | null;
   fechahastajustificacion?: string | null;
@@ -175,7 +175,7 @@ export class MisJustificaciones implements OnInit {
     this.mostrarFormulario = true;
     this.mensajeExito = '';
     this.formulario = {
-      motivo: registro.idmotivosmovimiento ?? '',
+      motivo: this.normalizarIdentificador(registro.idmotivomovimiento),
       fechaDesde: this.formatearFechaIsoDesdeValor(registro.fechadesdejustificacion) || fechaRegistro,
       fechaHasta: this.formatearFechaIsoDesdeValor(registro.fechahastajustificacion) || fechaRegistro,
       observaciones: registro.descripcionjustificacion ?? '',
@@ -236,6 +236,7 @@ export class MisJustificaciones implements OnInit {
   guardarJustificacion(): void {
     if (
       !this.registroSeleccionado ||
+      this.estaAprobada(this.registroSeleccionado) ||
       !this.formulario.motivo ||
       !this.formulario.fechaDesde ||
       !this.formulario.fechaHasta ||
@@ -257,7 +258,7 @@ export class MisJustificaciones implements OnInit {
     const registro = this.registroSeleccionado.registro;
     const payload: OtrosDocumentosPayload = {
       idEmpresa: '001',
-      idOtrosDocumentos: registro.idotrosdocumentos?.trim() ?? '',
+      idOtrosDocumentos: this.normalizarIdentificador(registro.idotrosdocumentos),
       tipo: 'OM',
       codigoPersonal: nroDocumento,
       idMotivo: this.formulario.motivo,
@@ -303,6 +304,18 @@ export class MisJustificaciones implements OnInit {
   private finalizarRegistroJustificacion(fechaRegistro: string): void {
     this.mensajeExito = `Justificación registrada para ${this.formatearFechaRegistro(fechaRegistro)}.`;
     this.cerrarFormulario();
+    this.cargarMarcacionesPendientes();
+  }
+
+  private normalizarIdentificador(id: string | number | null | undefined): string {
+    return id == null ? '' : String(id).trim();
+  }
+
+  estaAprobada(item: JustificacionMarcacion | null): boolean {
+    if (!item) return false;
+
+    const estado = item.registro.idestado || item.registro.revisionMarcaciones;
+    return estado?.trim().toUpperCase() === 'AP';
   }
 
   tieneIngreso_Tardanzas(

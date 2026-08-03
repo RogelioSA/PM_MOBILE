@@ -51,10 +51,17 @@
             <td data-label="Sucursal">{{ item.sucursal }}</td>
             <td data-label="Fecha">{{ formatearFechaRegistro(item.fecha) }}</td>
             <td data-label="Justificación">{{ item.justificacion }}</td>
-            <td data-label="Estado"><span class="status-badge">{{ item.estado }}</span></td>
+            <td data-label="Estado" [class.approved-cell]="estaAprobada(item)">
+              <span class="status-badge" [class.approved-badge]="estaAprobada(item)">{{ item.estado }}</span>
+            </td>
             <td data-label="Registro">
-              <button type="button" class="icon-button" (click)="abrirRegistro(item)" aria-label="Registrar justificación">
-                <i class="pi pi-pencil"></i>
+              <button
+                type="button"
+                class="icon-button"
+                (click)="abrirRegistro(item)"
+                [attr.aria-label]="estaAprobada(item) ? 'Visualizar justificación' : 'Registrar justificación'"
+              >
+                <i class="pi" [ngClass]="estaAprobada(item) ? 'pi-eye' : 'pi-pencil'"></i>
               </button>
             </td>
           </tr>
@@ -71,14 +78,14 @@
       <header>
         <div>
           <p>{{ registroSeleccionado.sucursal }}</p>
-          <h3>Registrar justificación</h3>
+          <h3>{{ estaAprobada(registroSeleccionado) ? 'Ver justificación' : 'Registrar justificación' }}</h3>
         </div>
         <button type="button" (click)="cerrarFormulario()" aria-label="Cerrar">×</button>
       </header>
 
       <label>
         Motivo
-        <select name="motivo" [(ngModel)]="formulario.motivo" [disabled]="cargandoMotivos" required>
+        <select name="motivo" [(ngModel)]="formulario.motivo" [disabled]="cargandoMotivos || estaAprobada(registroSeleccionado)" required>
           <option value="" disabled>{{ cargandoMotivos ? 'Cargando motivos...' : 'Seleccione un motivo' }}</option>
           <option *ngFor="let motivo of motivos" [value]="motivo.idmotivomovimiento">{{ motivo.descripcion }}</option>
         </select>
@@ -91,16 +98,16 @@
         </label>
         <label>
           Fecha Hasta
-          <input type="date" name="fechaHasta" [(ngModel)]="formulario.fechaHasta" [min]="formulario.fechaDesde" required />
+          <input type="date" name="fechaHasta" [(ngModel)]="formulario.fechaHasta" [min]="formulario.fechaDesde" [readonly]="estaAprobada(registroSeleccionado)" required />
         </label>
       </div>
 
       <label>
         Observaciones
-        <textarea name="observaciones" rows="4" [(ngModel)]="formulario.observaciones" placeholder="Detalle el sustento de la justificación"></textarea>
+        <textarea name="observaciones" rows="4" [(ngModel)]="formulario.observaciones" [readonly]="estaAprobada(registroSeleccionado)" placeholder="Detalle el sustento de la justificación"></textarea>
       </label>
 
-      <label>
+      <label *ngIf="!estaAprobada(registroSeleccionado)">
         Adjuntar sustentos
         <input type="file" name="sustentos" multiple accept=".pdf,image/*,.eml,.msg" (change)="seleccionarSustentos($event)" />
         <small>Correo de aprobación, imágenes del incidente o certificado médico.</small>
@@ -143,12 +150,21 @@
       </section>
 
       <button
+        *ngIf="!estaAprobada(registroSeleccionado)"
         type="submit"
         class="save-button"
         [disabled]="!formulario.motivo || !formulario.fechaHasta || subiendoSustentos"
       >
         <i class="pi" [ngClass]="subiendoSustentos ? 'pi-spin pi-spinner' : 'pi-save'"></i>
         {{ subiendoSustentos ? 'Subiendo sustentos...' : 'Guardar' }}
+      </button>
+      <button
+        *ngIf="estaAprobada(registroSeleccionado)"
+        type="button"
+        class="close-button"
+        (click)="cerrarFormulario()"
+      >
+        Cerrar
       </button>
     </form>
   </div>
