@@ -68,6 +68,11 @@ export interface DocumentoRecepcion {
   numeroDocumento?: string;
 }
 
+export interface MotivoJustificacion {
+  IDMOTIVOMOVIMIENTO: string;
+  DESCRIPCION: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -783,6 +788,16 @@ export class Api {
     return this.https.get<any>(
       `${this.baseUrl}/Personal/reporte-marcaciones-general`,
       { headers: this.authService.getHeaders(), params }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  listarMotivosJustificacion(): Observable<MotivoJustificacion[] | { data: MotivoJustificacion[] }> {
+    return this.https.get<MotivoJustificacion[] | { data: MotivoJustificacion[] }>(
+      `${this.baseUrl}/Personal/motivos-justificacion`,
+      { headers: this.authService.getHeaders() }
     ).pipe(
       map(response => response),
       catchError(error => throwError(() => error))
