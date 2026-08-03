@@ -156,10 +156,10 @@ export class MisJustificaciones implements OnInit {
     this.mostrarFormulario = true;
     this.mensajeExito = '';
     this.formulario = {
-      motivo: registro.IDMOTIVOMOVIMIENTO ?? '',
-      fechaDesde: this.formatearFechaIsoDesdeValor(registro.FECHADESDEJUSTIFICACION) || fechaRegistro,
-      fechaHasta: this.formatearFechaIsoDesdeValor(registro.FECHAHASTAJUSTIFICACION) || fechaRegistro,
-      observaciones: registro.DESCRIPCIONJUSTIFICACION ?? '',
+      motivo: registro.idmotivosmovimiento ?? '',
+      fechaDesde: this.formatearFechaIsoDesdeValor(registro.fechadesdejustificacion) || fechaRegistro,
+      fechaHasta: this.formatearFechaIsoDesdeValor(registro.fechahastajustificacion) || fechaRegistro,
+      observaciones: registro.descripcionjustificacion ?? '',
       sustentos: null
     };
   }
