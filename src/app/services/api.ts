@@ -818,6 +818,11 @@ export class Api {
   }
 
   guardarOtrosDocumentos(payload: OtrosDocumentosPayload): Observable<any> {
+    console.log(
+      '[POST /Personal/otros-documentos] Body:',
+      JSON.stringify(payload, null, 2)
+    );
+
     return this.https.post<any>(
       `${this.baseUrl}/Personal/otros-documentos`,
       payload,
