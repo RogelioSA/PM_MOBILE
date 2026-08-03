@@ -21,6 +21,7 @@ import { HomePersonal } from './homePersonal/homePersonal';
 import { PersonalMarcacion } from './personalMarcacion/personalMarcacion';
 import { MisJustificaciones } from './misJustificaciones/misJustificaciones';
 import { MisVacaciones } from './misVacaciones/misVacaciones';
+import { ValidacionJustificaciones } from './validacionJustificaciones/validacionJustificaciones';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -123,6 +124,11 @@ export const routes: Routes = [
   {
     path: 'misVacaciones',
     component: MisVacaciones,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'validacionJustificaciones',
+    component: ValidacionJustificaciones,
     canActivate: [authGuard]
   },
   {

@@ -1,0 +1,173 @@
+<div class="justifications-page">
+  <header class="page-header">
+    <a routerLink="/homePersonal" class="back-link"><i class="pi pi-arrow-left"></i> Portal</a>
+    <div>
+      <p>Asistencia personal</p>
+      <h1><i class="pi pi-file-edit"></i> Validación de Justificaciones</h1>
+    </div>
+  </header>
+
+  <p class="intro">Marcaciones sin ingreso o con tardanza registradas durante la semana seleccionada.</p>
+
+  <section class="week-nav" aria-label="Navegación de semana">
+    <button type="button" class="week-button" (click)="cambiarSemana(-1)" [disabled]="cargando" aria-label="Semana anterior">
+      <i class="pi pi-chevron-left"></i>
+      <span>Anterior</span>
+    </button>
+    <strong>{{ semanaActual }}</strong>
+    <button type="button" class="week-button" (click)="cambiarSemana(1)" [disabled]="cargando" aria-label="Semana siguiente">
+      <span>Siguiente</span>
+      <i class="pi pi-chevron-right"></i>
+    </button>
+  </section>
+
+  <div *ngIf="cargando" class="loading-card" role="status" aria-live="polite">
+    <i class="pi pi-spin pi-spinner"></i>
+    <span>Cargando marcaciones pendientes...</span>
+  </div>
+
+  <p *ngIf="mensajeError" class="message error">{{ mensajeError }}</p>
+  <p *ngIf="mensajeExito" class="message success">{{ mensajeExito }}</p>
+
+  <section class="records-card">
+    <div class="records-title">
+      <h2>Marcaciones por justificar</h2>
+      <span *ngIf="!cargando">{{ justificaciones.length }} registros</span>
+    </div>
+
+    <div class="responsive-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Sucursal</th>
+            <th>Empleado</th>
+            <th>Fecha</th>
+            <th>Justificación</th>
+            <th>Estado</th>
+            <th>Registro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of justificaciones">
+            <td data-label="Sucursal">{{ item.sucursal }}</td>
+            <td data-label="Empleado">{{ item.empleado }}</td>
+            <td data-label="Fecha">{{ formatearFechaRegistro(item.fecha) }}</td>
+            <td data-label="Justificación">{{ item.justificacion }}</td>
+            <td data-label="Estado" [class.approved-cell]="estaAprobada(item)">
+              <span class="status-badge" [class.approved-badge]="estaAprobada(item)">{{ item.estado }}</span>
+            </td>
+            <td data-label="Registro">
+              <button
+                type="button"
+                class="icon-button"
+                (click)="abrirRegistro(item)"
+                [attr.aria-label]="estaAprobada(item) ? 'Visualizar justificación' : 'Registrar justificación'"
+              >
+                <i class="pi" [ngClass]="estaAprobada(item) ? 'pi-eye' : 'pi-pencil'"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!cargando && !justificaciones.length">
+            <td colspan="6" class="empty-state">No hay marcaciones por justificar en esta semana.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div *ngIf="mostrarFormulario && registroSeleccionado" class="modal-backdrop" (click)="cerrarFormulario()">
+    <form class="register-card" (click)="$event.stopPropagation()" (ngSubmit)="guardarJustificacion()">
+      <header>
+        <div>
+          <p>{{ registroSeleccionado.sucursal }}</p>
+          <h3>{{ estaAprobada(registroSeleccionado) ? 'Ver justificación' : 'Registrar justificación' }}</h3>
+        </div>
+        <button type="button" (click)="cerrarFormulario()" aria-label="Cerrar">×</button>
+      </header>
+
+      <label>
+        Motivo
+        <select name="motivo" [(ngModel)]="formulario.motivo" [disabled]="cargandoMotivos || estaAprobada(registroSeleccionado)" required>
+          <option value="" disabled>{{ cargandoMotivos ? 'Cargando motivos...' : 'Seleccione un motivo' }}</option>
+          <option *ngFor="let motivo of motivos" [value]="motivo.idmotivomovimiento">{{ motivo.descripcion }}</option>
+        </select>
+      </label>
+
+      <div class="date-grid">
+        <label>
+          Fecha Desde
+          <input type="date" name="fechaDesde" [(ngModel)]="formulario.fechaDesde" readonly />
+        </label>
+        <label>
+          Fecha Hasta
+          <input type="date" name="fechaHasta" [(ngModel)]="formulario.fechaHasta" [min]="formulario.fechaDesde" [readonly]="estaAprobada(registroSeleccionado)" required />
+        </label>
+      </div>
+
+      <label>
+        Observaciones
+        <textarea name="observaciones" rows="4" [(ngModel)]="formulario.observaciones" [readonly]="estaAprobada(registroSeleccionado)" placeholder="Detalle el sustento de la justificación"></textarea>
+      </label>
+
+      <label *ngIf="!estaAprobada(registroSeleccionado)">
+        Adjuntar sustentos
+        <input type="file" name="sustentos" multiple accept=".pdf,image/*,.eml,.msg" (change)="seleccionarSustentos($event)" />
+        <small>Correo de aprobación, imágenes del incidente o certificado médico.</small>
+      </label>
+
+      <section class="digital-supports" aria-live="polite">
+        <h4>Sustentos digitales registrados</h4>
+
+        <p *ngIf="cargandoSustentos" class="supports-status">
+          <i class="pi pi-spin pi-spinner"></i>
+          Consultando archivos...
+        </p>
+
+        <p *ngIf="!cargandoSustentos && mensajeErrorSustentos" class="supports-error">
+          {{ mensajeErrorSustentos }}
+        </p>
+
+        <div *ngIf="!cargandoSustentos && archivosSustento.length" class="supports-list">
+          <a
+            *ngFor="let archivo of archivosSustento"
+            class="support-file"
+            [href]="archivo.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            [attr.aria-label]="'Abrir sustento ' + archivo.nombre"
+          >
+            <img *ngIf="archivo.esImagen" [src]="archivo.url" [alt]="archivo.nombre" loading="lazy" />
+            <i *ngIf="!archivo.esImagen" class="pi pi-file"></i>
+            <span>{{ archivo.nombre }}</span>
+            <i class="pi pi-external-link"></i>
+          </a>
+        </div>
+
+        <p
+          *ngIf="!cargandoSustentos && !mensajeErrorSustentos && !archivosSustento.length"
+          class="supports-empty"
+        >
+          No hay sustentos digitales registrados para esta fecha.
+        </p>
+      </section>
+
+      <button
+        *ngIf="!estaAprobada(registroSeleccionado)"
+        type="submit"
+        class="save-button"
+        [disabled]="!formulario.motivo || !formulario.fechaHasta || subiendoSustentos"
+      >
+        <i class="pi" [ngClass]="subiendoSustentos ? 'pi-spin pi-spinner' : 'pi-save'"></i>
+        {{ subiendoSustentos ? 'Subiendo sustentos...' : 'Guardar' }}
+      </button>
+      <button
+        *ngIf="estaAprobada(registroSeleccionado)"
+        type="button"
+        class="close-button"
+        (click)="cerrarFormulario()"
+      >
+        Cerrar
+      </button>
+    </form>
+  </div>
+</div>
