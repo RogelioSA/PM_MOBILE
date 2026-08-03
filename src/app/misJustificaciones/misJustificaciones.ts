@@ -37,6 +37,12 @@ interface JustificacionMarcacion {
   styleUrl: './misJustificaciones.css'
 })
 export class MisJustificaciones implements OnInit {
+  private readonly estadosJustificacion: Record<string, string> = {
+    RE: 'REGULARIZAR',
+    PE: 'PENDIENTE APROBACIÓN',
+    AP: 'APROBADO'
+  };
+
   fechaBase = new Date();
   cargando = false;
   cargandoMotivos = false;
@@ -135,7 +141,9 @@ export class MisJustificaciones implements OnInit {
                 sucursal: registro.sucursal,
                 fecha: registro.fecha,
                 justificacion: registro.descripcionjustificacion || registro.detalle || registro.observacion || 'Pendiente de justificar',
-                estado: registro.idestado || registro.revisionMarcaciones || 'Pendiente',
+                estado: this.obtenerDescripcionEstado(
+                  registro.idestado || registro.revisionMarcaciones
+                ),
                 registro
               }))
           : [];
@@ -194,6 +202,13 @@ export class MisJustificaciones implements OnInit {
     const [fechaParte] = fecha.split(' ');
     const [mes, dia, anio] = fechaParte.split('/');
     return `${dia}/${mes}/${anio}`;
+  }
+
+  private obtenerDescripcionEstado(estado: string | null | undefined): string {
+    if (!estado?.trim()) return 'Pendiente';
+
+    const codigo = estado.trim().toUpperCase();
+    return this.estadosJustificacion[codigo] ?? estado;
   }
 
   private formatearFechaIsoDesdeRegistro(fecha: string): string {
