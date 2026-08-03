@@ -73,6 +73,22 @@ export interface MotivoJustificacion {
   descripcion: string;
 }
 
+export interface OtrosDocumentosPayload {
+  idEmpresa: string;
+  idOtrosDocumentos: string;
+  tipo: string;
+  codigoPersonal: string;
+  idMotivo: string;
+  fechaDesde: string;
+  fechaHasta: string;
+  descripcion: string;
+  nroCertificado: string;
+  centroMedico: string;
+  idSucursal: string;
+  idEmisor: string;
+  idPlanilla: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -798,6 +814,17 @@ export class Api {
     return this.https.get<any>(
       `${this.baseUrl}/Personal/motivos-justificacion`,
       { headers: this.authService.getHeaders() }
+    );
+  }
+
+  guardarOtrosDocumentos(payload: OtrosDocumentosPayload): Observable<any> {
+    return this.https.post<any>(
+      `${this.baseUrl}/Personal/otros-documentos`,
+      payload,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map(response => response),
+      catchError(error => throwError(() => error))
     );
   }
 
