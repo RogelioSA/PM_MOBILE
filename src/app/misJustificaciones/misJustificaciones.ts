@@ -37,6 +37,7 @@ interface JustificacionMarcacion {
   styleUrl: './misJustificaciones.css'
 })
 export class MisJustificaciones implements OnInit {
+  fechaBase = new Date();
   cargando = false;
   cargandoMotivos = false;
   mensajeError = '';
@@ -60,6 +61,29 @@ export class MisJustificaciones implements OnInit {
 
   ngOnInit(): void {
     this.cargarMotivosJustificacion();
+    this.cargarMarcacionesPendientes();
+  }
+
+  get rangoSemanaActual(): { desde: Date; hasta: Date } {
+    const fecha = new Date(this.fechaBase);
+    const dia = fecha.getDay();
+    const distanciaLunes = dia === 0 ? -6 : 1 - dia;
+    const desde = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate() + distanciaLunes);
+    const hasta = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate() + 6);
+    return { desde, hasta };
+  }
+
+  get semanaActual(): string {
+    const { desde, hasta } = this.rangoSemanaActual;
+    return `${this.formatearFechaIso(desde).replaceAll('-', '/')} al ${this.formatearFechaIso(hasta).replaceAll('-', '/')}`;
+  }
+
+  cambiarSemana(valor: number): void {
+    this.fechaBase = new Date(
+      this.fechaBase.getFullYear(),
+      this.fechaBase.getMonth(),
+      this.fechaBase.getDate() + (valor * 7)
+    );
     this.cargarMarcacionesPendientes();
   }
 
@@ -92,12 +116,16 @@ export class MisJustificaciones implements OnInit {
       return;
     }
 
-    const desde = this.obtenerFechaRelativa(-1);
-    const hasta = this.obtenerFechaRelativa(0);
+    const { desde, hasta } = this.rangoSemanaActual;
     this.cargando = true;
     this.mensajeError = '';
 
-    this.apiService.listarReporteMarcacionesGeneral(desde, hasta, 3, nroDocumento).subscribe({
+    this.apiService.listarReporteMarcacionesGeneral(
+      this.formatearFechaIso(desde),
+      this.formatearFechaIso(hasta),
+      3,
+      nroDocumento
+    ).subscribe({
       next: (response) => {
         this.justificaciones = Array.isArray(response?.data)
           ? response.data
@@ -166,12 +194,6 @@ export class MisJustificaciones implements OnInit {
     const [fechaParte] = fecha.split(' ');
     const [mes, dia, anio] = fechaParte.split('/');
     return `${dia}/${mes}/${anio}`;
-  }
-
-  private obtenerFechaRelativa(dias: number): string {
-    const fecha = new Date();
-    fecha.setDate(fecha.getDate() + dias);
-    return this.formatearFechaIso(fecha);
   }
 
   private formatearFechaIsoDesdeRegistro(fecha: string): string {

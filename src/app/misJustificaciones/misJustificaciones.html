@@ -7,7 +7,19 @@
     </div>
   </header>
 
-  <p class="intro">Marcaciones sin ingreso registradas desde el día anterior al actual.</p>
+  <p class="intro">Marcaciones sin ingreso o con tardanza registradas durante la semana seleccionada.</p>
+
+  <section class="week-nav" aria-label="Navegación de semana">
+    <button type="button" class="week-button" (click)="cambiarSemana(-1)" [disabled]="cargando" aria-label="Semana anterior">
+      <i class="pi pi-chevron-left"></i>
+      <span>Anterior</span>
+    </button>
+    <strong>{{ semanaActual }}</strong>
+    <button type="button" class="week-button" (click)="cambiarSemana(1)" [disabled]="cargando" aria-label="Semana siguiente">
+      <span>Siguiente</span>
+      <i class="pi pi-chevron-right"></i>
+    </button>
+  </section>
 
   <div *ngIf="cargando" class="loading-card" role="status" aria-live="polite">
     <i class="pi pi-spin pi-spinner"></i>
@@ -47,7 +59,7 @@
             </td>
           </tr>
           <tr *ngIf="!cargando && !justificaciones.length">
-            <td colspan="5" class="empty-state">No hay marcaciones sin ingreso por justificar.</td>
+            <td colspan="5" class="empty-state">No hay marcaciones por justificar en esta semana.</td>
           </tr>
         </tbody>
       </table>
