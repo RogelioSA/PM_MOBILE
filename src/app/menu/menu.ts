@@ -118,6 +118,12 @@ export class Menu implements OnInit {
     localStorage.setItem('theme', this.isDarkMode ? 'dark' : 'light');
   }
 
+  logout() {
+    this.authService.logout();
+    this.drawerVisible = false;
+    this.router.navigate(['/'], { replaceUrl: true });
+  }
+
   // ── Drawer / navegación ───────────────────────────────────────────────────
   toggleDrawer() {
     this.drawerVisible = !this.drawerVisible;

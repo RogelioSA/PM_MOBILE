@@ -92,8 +92,31 @@ export class Auth {
 
   // Logout
   logout(): void {
-    document.cookie = 'token=; path=/; max-age=0';
-    document.cookie = 'usuario=; path=/; max-age=0';
+    const hostnameParts = window.location.hostname.split('.');
+    const domains = hostnameParts.map((_, index) => `.${hostnameParts.slice(index).join('.')}`);
+    const paths = window.location.pathname
+      .split('/')
+      .reduce<string[]>((acc, segment) => {
+        if (!segment) return acc;
+        const previousPath = acc[acc.length - 1] ?? '';
+        acc.push(`${previousPath}/${segment}`);
+        return acc;
+      }, ['/']);
+
+    document.cookie.split(';').forEach(cookie => {
+      const cookieName = cookie.split('=')[0].trim();
+      if (!cookieName) return;
+
+      paths.forEach(path => {
+        document.cookie = `${cookieName}=; path=${path}; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0`;
+        domains.forEach(domain => {
+          document.cookie = `${cookieName}=; path=${path}; domain=${domain}; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0`;
+        });
+      });
+    });
+
+    localStorage.clear();
+    sessionStorage.clear();
   }
 
   // Verificar si está autenticado
