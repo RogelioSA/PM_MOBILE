@@ -12,11 +12,20 @@
       PERUMOTOR
     </span>
 
-    <button pButton [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'"
-      (click)="toggleDarkMode()"
-      class="p-button-rounded p-button-text"
-      [pTooltip]="isDarkMode ? 'Modo claro' : 'Modo oscuro'"
-      tooltipPosition="bottom"></button>
+    <div class="flex items-center gap-1 sm:gap-2">
+      <button pButton [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'"
+        (click)="toggleDarkMode()"
+        class="p-button-rounded p-button-text"
+        [pTooltip]="isDarkMode ? 'Modo claro' : 'Modo oscuro'"
+        tooltipPosition="bottom"></button>
+
+      <button pButton
+        label="Cerrar Sesión"
+        icon="pi pi-sign-out"
+        (click)="logout()"
+        class="p-button-danger p-button-sm logout-button"
+        aria-label="Cerrar sesión"></button>
+    </div>
 
   </div>
 </div>

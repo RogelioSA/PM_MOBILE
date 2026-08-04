@@ -13,6 +13,20 @@
 }
 /* menu.css */
 
+::ng-deep .logout-button {
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  ::ng-deep .logout-button .p-button-label {
+    font-size: 0.75rem;
+  }
+
+  ::ng-deep .logout-button {
+    padding-inline: 0.5rem;
+  }
+}
+
 /* Estilos globales para el drawer */
 ::ng-deep .p-drawer {
   background: var(--surface-0);
