@@ -36,6 +36,8 @@ interface MarcacionPersonal {
 })
 export class PersonalMarcacion implements OnInit {
   fechaBase = new Date();
+  fechaDesde = '';
+  fechaHasta = '';
   cargando = false;
   mensajeError = '';
   mostrarModalDetalle = false;
@@ -48,6 +50,7 @@ export class PersonalMarcacion implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.establecerRangoSemanal();
     this.cargarMarcaciones();
   }
 
@@ -60,9 +63,9 @@ export class PersonalMarcacion implements OnInit {
     return { desde, hasta };
   }
 
-  get semanaActual(): string {
-    const { desde, hasta } = this.rangoSemanaActual;
-    return `${this.formatearFechaIso(desde).replaceAll('-', '/')} al ${this.formatearFechaIso(hasta).replaceAll('-', '/')}`;
+  get fechaHastaMaxima(): string {
+    if (!this.fechaDesde) return '';
+    return this.formatearFechaIso(this.sumarDias(this.crearFechaLocal(this.fechaDesde), 30));
   }
 
   get totalRegistros(): number { return this.registrosAsistencia.length; }
@@ -73,6 +76,31 @@ export class PersonalMarcacion implements OnInit {
 
   cambiarSemana(valor: number): void {
     this.fechaBase = new Date(this.fechaBase.getFullYear(), this.fechaBase.getMonth(), this.fechaBase.getDate() + (valor * 7));
+    this.establecerRangoSemanal();
+    this.cargarMarcaciones();
+  }
+
+  cambiarFechaDesde(event: Event): void {
+    const fechaDesde = (event.target as HTMLInputElement).value;
+    if (!fechaDesde) return;
+
+    this.fechaDesde = fechaDesde;
+    this.fechaBase = this.crearFechaLocal(fechaDesde);
+    this.fechaHasta = this.formatearFechaIso(this.sumarDias(this.fechaBase, 30));
+    this.cargarMarcaciones();
+  }
+
+  cambiarFechaHasta(event: Event): void {
+    const fechaSeleccionada = (event.target as HTMLInputElement).value;
+    if (!fechaSeleccionada || !this.fechaDesde) return;
+
+    if (fechaSeleccionada < this.fechaDesde) {
+      this.fechaHasta = this.fechaDesde;
+    } else if (fechaSeleccionada > this.fechaHastaMaxima) {
+      this.fechaHasta = this.fechaHastaMaxima;
+    } else {
+      this.fechaHasta = fechaSeleccionada;
+    }
     this.cargarMarcaciones();
   }
 
@@ -84,13 +112,12 @@ export class PersonalMarcacion implements OnInit {
       return;
     }
 
-    const { desde, hasta } = this.rangoSemanaActual;
     this.cargando = true;
     this.mensajeError = '';
 
     this.apiService.listarReporteMarcacionesGeneral(
-      this.formatearFechaIso(desde),
-      this.formatearFechaIso(hasta),
+      this.fechaDesde,
+      this.fechaHasta,
       3,
       nroDocumento
     ).subscribe({
@@ -158,6 +185,21 @@ export class PersonalMarcacion implements OnInit {
       minutos,
       segundos
     ).getTime();
+  }
+
+  private establecerRangoSemanal(): void {
+    const { desde, hasta } = this.rangoSemanaActual;
+    this.fechaDesde = this.formatearFechaIso(desde);
+    this.fechaHasta = this.formatearFechaIso(hasta);
+  }
+
+  private crearFechaLocal(fechaIso: string): Date {
+    const [anio, mes, dia] = fechaIso.split('-').map(Number);
+    return new Date(anio, mes - 1, dia);
+  }
+
+  private sumarDias(fecha: Date, dias: number): Date {
+    return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate() + dias);
   }
 
   private formatearFechaIso(fecha: Date): string {

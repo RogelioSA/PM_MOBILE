@@ -9,7 +9,12 @@
 .week-button:hover:not(:disabled), .week-button:focus-visible:not(:disabled) { transform: translateY(-1px); box-shadow: 0 14px 26px rgba(37,99,235,.28); outline: none; }
 .week-button:disabled { cursor: not-allowed; opacity: .58; box-shadow: none; }
 .week-button i { font-size: .85rem; }
-.week-nav strong { text-align: center; font-size: clamp(.95rem, 4vw, 1.1rem); }
+.date-range { display:flex; align-items:flex-end; justify-content:center; gap:.55rem; }
+.date-range label { display:grid; gap:.25rem; color:#475569; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+.date-range input { width:9rem; min-height:2.5rem; padding:.45rem .55rem; border:1px solid #cbd5e1; border-radius:10px; background:#fff; color:#0f172a; font:inherit; font-size:.85rem; font-weight:700; text-transform:none; }
+.date-range input:focus-visible { border-color:#2563eb; outline:3px solid rgba(37,99,235,.16); }
+.date-range input:disabled { cursor:not-allowed; opacity:.65; }
+.range-separator { padding-bottom:.65rem; color:#64748b; font-weight:700; }
 .stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin-block: 1rem; }
 .stat-card { display: grid; gap: .2rem; padding: 1rem; border-radius: 18px; background: #fff; box-shadow: 0 8px 26px rgba(15,23,42,.06); text-align: center; }
 .stat-card i { font-size: 1.7rem; } .stat-card span, .stat-card small { color: #64748b; } .stat-card strong { font-size: 1.7rem; }
@@ -36,6 +41,9 @@
   .stat-card strong { font-size:1.3rem; }
   .stat-card span, .stat-card small { font-size:.72rem; }
   .week-nav { border-radius:16px; }
+  .date-range { gap:.3rem; }
+  .date-range input { width:7.6rem; padding-inline:.35rem; font-size:.75rem; }
+  .range-separator { display:none; }
   .week-button { min-width:3rem; padding:.65rem .8rem; }
   .week-button span { display:none; }
   table, thead, tbody, tr, td { display:block; min-width:0; }
@@ -54,4 +62,4 @@
   .empty-state::before { content:''; }
   .detail-grid { grid-template-columns:1fr; }
 }
-@media (max-width: 420px) { .attendance-page { padding:.65rem; } .records-title { align-items:flex-start; flex-direction:column; } }
+@media (max-width: 420px) { .attendance-page { padding:.65rem; } .records-title { align-items:flex-start; flex-direction:column; } .week-nav { gap:.35rem; padding:.65rem .45rem; } .week-button { min-width:2.5rem; padding:.55rem; } .date-range { align-items:stretch; flex-direction:column; } .date-range label { gap:.1rem; } .date-range input { width:7.8rem; min-height:2rem; padding-block:.25rem; } }

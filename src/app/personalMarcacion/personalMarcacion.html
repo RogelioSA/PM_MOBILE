@@ -12,7 +12,29 @@
       <i class="pi pi-chevron-left"></i>
       <span>Anterior</span>
     </button>
-    <strong>{{ semanaActual }}</strong>
+    <div class="date-range" aria-label="Rango de marcaciones">
+      <label>
+        <span>Desde</span>
+        <input
+          type="date"
+          [value]="fechaDesde"
+          [disabled]="cargando"
+          (change)="cambiarFechaDesde($event)"
+        >
+      </label>
+      <span class="range-separator" aria-hidden="true">al</span>
+      <label>
+        <span>Hasta</span>
+        <input
+          type="date"
+          [value]="fechaHasta"
+          [disabled]="cargando"
+          [min]="fechaDesde"
+          [max]="fechaHastaMaxima"
+          (change)="cambiarFechaHasta($event)"
+        >
+      </label>
+    </div>
     <button type="button" class="week-button" (click)="cambiarSemana(1)" [disabled]="cargando" aria-label="Semana siguiente">
       <span>Siguiente </span>
       <i class="pi pi-chevron-right"></i>
@@ -59,7 +81,7 @@
             <td class="cell-entry" data-label="Ingreso">{{ registro.ingreso }}</td>
             <td class="cell-diff" data-label="Tardanza"><span class="badge" [ngClass]="tieneIngreso(registro.ingreso) && esTardanza(registro.minutosTarde) ? 'bg-danger' : 'bg-success'">{{ obtenerTardanza(registro) }}</span></td>
           </tr>
-          <tr *ngIf="!cargando && !registrosAsistencia.length"><td colspan="5" class="empty-state">No hay marcaciones para esta semana.</td></tr>
+          <tr *ngIf="!cargando && !registrosAsistencia.length"><td colspan="5" class="empty-state">No hay marcaciones para este rango.</td></tr>
         </tbody>
       </table>
     </div>
