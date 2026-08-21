@@ -19,6 +19,7 @@ interface MenuItemExtended extends MenuItem {
 // Catálogo completo de items — se filtra según permisos
 const ALL_ITEMS: MenuItemExtended[] = [
   { label: 'Recepción de Vehículos',         icon: 'pi pi-car',                    route: 'recepcionvehiculos'  },
+  { label: 'Inventario Vehículos',                     icon: 'pi pi-clipboard',              route: 'InventarioVehiculos' },
   { label: 'Traslado entre Establecimientos', icon: 'pi pi-arrow-right-arrow-left', route: 'traslado'            },
   { label: 'Salida por Orden de Trabajo',     icon: 'pi pi-sign-out',               route: 'salidaTrabajo'       },
   { label: 'Checklist PDI',                   icon: 'pi pi-check-square',           route: 'checklist'           },

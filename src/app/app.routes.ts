@@ -22,6 +22,7 @@ import { PersonalMarcacion } from './personalMarcacion/personalMarcacion';
 import { MisJustificaciones } from './misJustificaciones/misJustificaciones';
 import { MisVacaciones } from './misVacaciones/misVacaciones';
 import { ValidacionJustificaciones } from './validacionJustificaciones/validacionJustificaciones';
+import { InventarioVehiculos } from './inventario-vehiculos/inventario-vehiculos';
 
 export const routes: Routes = [
   // Ruta por defecto
@@ -51,6 +52,12 @@ export const routes: Routes = [
   {
     path: 'recepcionvehiculos',
     component: Recepcionvehiculos,
+    canActivate: [authGuard]
+  },
+
+  {
+    path: 'InventarioVehiculos',
+    component: InventarioVehiculos,
     canActivate: [authGuard]
   },
 

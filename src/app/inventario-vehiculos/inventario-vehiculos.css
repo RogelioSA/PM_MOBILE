@@ -1,0 +1,96 @@
+:host {
+  display: block;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+:host-context(.dark) .field-label {
+  color: #e2e8f0;
+}
+
+.card-label {
+  margin-bottom: 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.inventory-textarea {
+  width: 100%;
+  min-height: 5rem;
+  resize: vertical;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.7rem 0.75rem;
+  background: transparent;
+  color: inherit;
+}
+
+.inventory-textarea:focus {
+  border-color: #3b82f6;
+  outline: 2px solid rgb(59 130 246 / 15%);
+}
+
+.scanner-panel {
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: #f9fafb;
+}
+
+:host-context(.dark) .scanner-panel {
+  border-color: #475569;
+  background: #1e293b;
+}
+
+zxing-scanner {
+  display: block;
+  width: 100%;
+  min-height: 240px;
+  max-height: 55vh;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: #111827;
+}
+
+.vehicle-count {
+  min-width: 2rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+:host ::ng-deep .inventory-header-panel .p-panel-header {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.45rem;
+  background: #e2e8f0;
+  color: #334155;
+}
+
+:host ::ng-deep .inventory-header-panel .p-panel-content {
+  border: 0;
+  padding: 1rem 0 0;
+}
+
+:host-context(.dark) ::ng-deep .inventory-header-panel .p-panel-header {
+  border-color: #475569;
+  background: #334155;
+  color: #f1f5f9;
+}
+
+@media (max-width: 640px) {
+  zxing-scanner {
+    min-height: 210px;
+  }
+}

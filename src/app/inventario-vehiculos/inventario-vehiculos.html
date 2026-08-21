@@ -1,0 +1,248 @@
+<p-toast></p-toast>
+<p-confirmdialog></p-confirmdialog>
+<app-menu></app-menu>
+
+<main class="min-h-screen bg-gray-100 dark:bg-slate-900 px-3 py-5 sm:p-6 pt-20 sm:pt-24">
+  <div class="max-w-[1600px] mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+      <div>
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Inventario de vehículos</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Consulta y registra inventarios mediante VIN.</p>
+      </div>
+    </div>
+
+    <section class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 sm:p-5 mb-5">
+      <h2 class="text-base font-semibold text-gray-800 dark:text-white mb-4">Filtros de búsqueda</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div>
+          <label class="field-label">Sucursal</label>
+          <p-select [options]="sucursales" optionLabel="label" optionValue="value"
+            [(ngModel)]="sucursalFiltro" (ngModelChange)="cambiarSucursalFiltro($event)"
+            [showClear]="true" placeholder="Todas" styleClass="w-full"></p-select>
+        </div>
+        <div>
+          <label class="field-label">Almacén</label>
+          <p-select [options]="almacenesFiltro" optionLabel="label" optionValue="value"
+            [(ngModel)]="almacenFiltro" [showClear]="true" placeholder="Todos"
+            styleClass="w-full"></p-select>
+        </div>
+        <div>
+          <label class="field-label">Fecha de inventario</label>
+          <p-datepicker [(ngModel)]="fechaFiltro" dateFormat="yy-mm-dd" [showIcon]="true"
+            [showClear]="true" styleClass="w-full" inputStyleClass="w-full"></p-datepicker>
+        </div>
+        <div>
+          <label class="field-label">Observación</label>
+          <input pInputText [(ngModel)]="observacionFiltro" (keyup.enter)="buscar()"
+            class="w-full" placeholder="Buscar observación" />
+        </div>
+      </div>
+      <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-4">
+        <button pButton type="button" severity="secondary" icon="pi pi-filter-slash"
+          label="Limpiar" (click)="limpiarFiltros()"></button>
+        <button pButton type="button" icon="pi pi-search" label="Buscar"
+          [loading]="cargando" (click)="buscar()"></button>
+        <button pButton type="button" severity="success" icon="pi pi-qrcode" label="Escanear inventario"
+          [disabled]="!puedeIniciarInventario" (click)="abrirNuevo()"></button>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
+      <div class="hidden md:block overflow-x-auto">
+        <p-table [value]="inventarios" [loading]="cargando" responsiveLayout="scroll"
+          [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]"
+          [tableStyle]="{ 'min-width': '64rem' }">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Código</th><th>Fecha</th><th>Sucursal</th><th>Almacén</th>
+              <th class="text-center">Nro. Vehículos</th><th>Observación</th><th class="text-center">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td class="font-semibold">{{ item.codigo }}</td>
+              <td>{{ item.fecha | date:'dd/MM/yyyy' }}</td>
+              <td>{{ item.sucursal }}</td>
+              <td>{{ item.almacen }}</td>
+              <td class="text-center">{{ item.nroVehiculos }}</td>
+              <td class="max-w-xs truncate" [title]="item.observacion">{{ item.observacion || '-' }}</td>
+              <td class="text-center whitespace-nowrap">
+                <button pButton type="button" icon="pi pi-eye" class="p-button-sm p-button-text"
+                  pTooltip="Ver" (click)="abrirVer(item)"></button>
+                <button pButton type="button" icon="pi pi-pencil" class="p-button-sm p-button-text"
+                  pTooltip="Editar" (click)="abrirEditar(item)"></button>
+                <button pButton type="button" icon="pi pi-trash"
+                  class="p-button-sm p-button-text p-button-danger" pTooltip="Eliminar"
+                  [loading]="eliminandoId === item.idInventario"
+                  [disabled]="eliminandoId !== null"
+                  (click)="confirmarEliminar(item)"></button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td colspan="7" class="text-center py-10 text-gray-500">No se encontraron inventarios.</td></tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <div class="md:hidden p-3 space-y-3">
+        <div *ngIf="cargando" class="text-center py-10 text-gray-500">
+          <i class="pi pi-spin pi-spinner text-3xl"></i><p class="mt-2">Cargando inventarios...</p>
+        </div>
+        <div *ngIf="!cargando && inventarios.length === 0" class="text-center py-10 text-gray-500">
+          <i class="pi pi-inbox text-4xl"></i><p class="mt-2">No se encontraron inventarios.</p>
+        </div>
+        <article *ngFor="let item of inventarios"
+          class="rounded-xl border border-gray-200 dark:border-slate-600 p-4 bg-gray-50 dark:bg-slate-700">
+          <div class="flex justify-between gap-3 mb-3">
+            <div><span class="text-xs text-gray-500 dark:text-gray-400">Código</span>
+              <p class="font-bold text-gray-800 dark:text-white">{{ item.codigo }}</p></div>
+            <span class="text-sm text-gray-600 dark:text-gray-300">{{ item.fecha | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <dl class="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+            <div><dt class="card-label">Sucursal</dt><dd>{{ item.sucursal }}</dd></div>
+            <div><dt class="card-label">Almacén</dt><dd>{{ item.almacen }}</dd></div>
+            <div><dt class="card-label">Vehículos</dt><dd>{{ item.nroVehiculos }}</dd></div>
+            <div class="col-span-2"><dt class="card-label">Observación</dt><dd>{{ item.observacion || '-' }}</dd></div>
+          </dl>
+          <div class="grid grid-cols-3 gap-2 mt-4">
+            <button pButton type="button" severity="secondary" icon="pi pi-eye" label="Ver"
+              class="p-button-sm" (click)="abrirVer(item)"></button>
+            <button pButton type="button" icon="pi pi-pencil" label="Editar"
+              class="p-button-sm" (click)="abrirEditar(item)"></button>
+            <button pButton type="button" severity="danger" icon="pi pi-trash" label="Eliminar"
+              class="p-button-sm" [loading]="eliminandoId === item.idInventario"
+              [disabled]="eliminandoId !== null" (click)="confirmarEliminar(item)"></button>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+</main>
+
+<p-dialog [(visible)]="modalVisible" [modal]="true" [header]="tituloModal"
+  [style]="{ width: '96vw', maxWidth: '950px' }"
+  [breakpoints]="{ '960px': '94vw', '640px': '98vw' }"
+  [draggable]="false" [resizable]="false" (onHide)="cerrarModal()">
+  <div class="space-y-4">
+    <div *ngIf="modoFormulario === 'editar'"
+      class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-950/40">
+      <span class="block text-xs font-semibold uppercase text-blue-600 dark:text-blue-300">
+        ID Inventario
+      </span>
+      <strong class="text-lg text-gray-900 dark:text-white">{{ idInventario }}</strong>
+    </div>
+
+    <section *ngIf="!soloLectura" class="scanner-panel">
+      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
+        <h3 class="font-semibold text-gray-800 dark:text-white">Escáner de VIN</h3>
+        <button *ngIf="!scannerActivo" pButton type="button" icon="pi pi-camera" label="Activar cámara"
+          class="p-button-sm" (click)="activarScanner()"></button>
+      </div>
+      <zxing-scanner *ngIf="scannerActivo" [formats]="formatsEnabled" [enable]="scannerActivo"
+        (scanSuccess)="onScanSuccess($event)"></zxing-scanner>
+      <div class="flex flex-col sm:flex-row gap-2 mt-3">
+        <input pInputText class="w-full" placeholder="Ingresar VIN manual..."
+          [(ngModel)]="vinManual" (keyup.enter)="agregarVinManual()" />
+        <button pButton type="button" icon="pi pi-plus" label="Agregar"
+          (click)="agregarVinManual()"></button>
+      </div>
+    </section>
+
+    <section>
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="font-semibold text-gray-800 dark:text-white">Vehículos inventariados</h3>
+        <span class="vehicle-count">{{ vehiculos.length }}</span>
+      </div>
+      <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-slate-600">
+        <p-table [value]="vehiculos" [loading]="cargandoVehiculos"
+          [tableStyle]="{ 'min-width': '42rem' }">
+          <ng-template pTemplate="header">
+            <tr><th>VIN</th><th>Stock</th><th>Modelo</th><th>Color</th><th *ngIf="!soloLectura"></th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-vehiculo>
+            <tr>
+              <td class="font-medium">{{ vehiculo.vin }}</td>
+              <td>{{ vehiculo.idVehiculo || '-' }}</td>
+              <td>{{ vehiculo.marca }} {{ vehiculo.modelo }}</td>
+              <td>{{ vehiculo.color || '-' }}</td>
+              <td *ngIf="!soloLectura" class="text-center">
+                <button pButton type="button" icon="pi pi-trash" severity="danger"
+                  class="p-button-sm p-button-text" (click)="eliminarVehiculo(vehiculo.vin)"></button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td [attr.colspan]="soloLectura ? 4 : 5" class="text-center py-8 text-gray-500">No hay vehículos registrados.</td></tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </section>
+
+    <div *ngIf="modoFormulario !== 'editar'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="field-label">Sucursal *</label>
+        <p-select [options]="sucursales" optionLabel="label" optionValue="value"
+          [(ngModel)]="sucursalSeleccionada" (ngModelChange)="cambiarSucursalFormulario($event)"
+          [disabled]="soloLectura" placeholder="Seleccionar sucursal" styleClass="w-full"></p-select>
+      </div>
+      <div>
+        <label class="field-label">Almacén *</label>
+        <p-select [options]="almacenesFormulario" optionLabel="label" optionValue="value"
+          [(ngModel)]="almacenSeleccionado" (ngModelChange)="cambiarAlmacenFormulario($event)"
+          [disabled]="soloLectura" placeholder="Seleccionar almacén" styleClass="w-full"></p-select>
+      </div>
+      <div>
+        <label class="field-label">Fecha *</label>
+        <p-datepicker [(ngModel)]="fechaInventario" dateFormat="yy-mm-dd" [showIcon]="true"
+          [disabled]="soloLectura" styleClass="w-full" inputStyleClass="w-full"></p-datepicker>
+      </div>
+      <div>
+        <label class="field-label">Observación</label>
+        <textarea [(ngModel)]="observacion" [readonly]="soloLectura" rows="3"
+          class="inventory-textarea" placeholder="Ingrese una observación"></textarea>
+      </div>
+    </div>
+
+    <p-panel *ngIf="modoFormulario === 'editar'"
+      header="Datos del inventario"
+      [toggleable]="true"
+      [(collapsed)]="cabeceraColapsada"
+      styleClass="inventory-header-panel">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+        <div>
+          <label class="field-label">Sucursal *</label>
+          <p-select [options]="sucursales" optionLabel="label" optionValue="value"
+            [(ngModel)]="sucursalSeleccionada" (ngModelChange)="cambiarSucursalFormulario($event)"
+            placeholder="Seleccionar sucursal" styleClass="w-full"></p-select>
+        </div>
+        <div>
+          <label class="field-label">Almacén *</label>
+          <p-select [options]="almacenesFormulario" optionLabel="label" optionValue="value"
+            [(ngModel)]="almacenSeleccionado" (ngModelChange)="cambiarAlmacenFormulario($event)"
+            placeholder="Seleccionar almacén" styleClass="w-full"></p-select>
+        </div>
+        <div>
+          <label class="field-label">Fecha *</label>
+          <p-datepicker [(ngModel)]="fechaInventario" dateFormat="yy-mm-dd" [showIcon]="true"
+            styleClass="w-full" inputStyleClass="w-full"></p-datepicker>
+        </div>
+        <div>
+          <label class="field-label">Observación</label>
+          <textarea [(ngModel)]="observacion" rows="3"
+            class="inventory-textarea" placeholder="Ingrese una observación"></textarea>
+        </div>
+      </div>
+    </p-panel>
+
+    <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
+      <button *ngIf="!soloLectura" pButton type="button" severity="secondary"
+        icon="pi pi-refresh" label="Reiniciar" (click)="reiniciar()"></button>
+      <button *ngIf="!soloLectura" pButton type="button" severity="success"
+        icon="pi pi-camera" label="Nuevo escaneo" (click)="nuevoScaneo()"></button>
+      <button *ngIf="!soloLectura" pButton type="button" icon="pi pi-save"
+        [label]="modoFormulario === 'editar' ? 'Actualizar' : 'Guardar'"
+        [loading]="guardando" (click)="guardar()"></button>
+    </div>
+  </div>
+</p-dialog>

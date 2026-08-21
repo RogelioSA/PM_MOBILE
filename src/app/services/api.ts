@@ -68,6 +68,40 @@ export interface DocumentoRecepcion {
   numeroDocumento?: string;
 }
 
+export interface InventarioVehiculoFiltros {
+  fecha?: string;
+  sucursal?: string;
+  almacen?: string;
+  observacion?: string;
+}
+
+export interface InventarioVehiculoPayload {
+  IdEmpresa: string;
+  fecha: string;
+  sucursal: string;
+  almacen: string;
+  observacion: string;
+  vehiculos: string[];
+}
+
+export interface ActualizarInventarioVehiculoPayload extends InventarioVehiculoPayload {
+  IdInventario: number | string;
+}
+
+export interface InventarioVehiculoRegistro {
+  idInventario: number | string;
+  codigo: string;
+  fecha: string;
+  sucursal: string;
+  almacen: string;
+  idSucursal?: string;
+  idAlmacen?: string;
+  nroVehiculos: number;
+  observacion: string;
+  vehiculos: Array<string | VehiculoRecepcion>;
+  [key: string]: unknown;
+}
+
 export interface MotivoJustificacion {
   idmotivomovimiento: string;
   descripcion: string;
@@ -338,6 +372,81 @@ export class Api {
       { headers: this.authService.getHeaders() }
     ).pipe(
       map((response: DocumentoRecepcion) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  listarInventariosVehiculos(filtros: InventarioVehiculoFiltros): Observable<any> {
+    let params = new HttpParams();
+
+    if (filtros.fecha) params = params.set('fecha', filtros.fecha);
+    if (filtros.sucursal) params = params.set('sucursal', filtros.sucursal);
+    if (filtros.almacen) params = params.set('almacen', filtros.almacen);
+    if (filtros.observacion) params = params.set('observacion', filtros.observacion);
+
+    return this.https.get(`${this.baseUrl}/Vehicles/Inventario`, {
+      headers: this.authService.getHeaders(),
+      params
+    }).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  listarVehiculosInventario(
+    idInventario: number | string,
+    idEmpresa = '001'
+  ): Observable<any> {
+    const params = new HttpParams().set('idEmpresa', idEmpresa);
+
+    return this.https.get(
+      `${this.baseUrl}/Vehicles/Inventario/${encodeURIComponent(String(idInventario))}/Vehiculos`,
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  crearInventarioVehiculos(payload: InventarioVehiculoPayload): Observable<any> {
+    return this.https.post(
+      `${this.baseUrl}/Vehicles/Inventario`,
+      payload,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  actualizarInventarioVehiculos(payload: ActualizarInventarioVehiculoPayload): Observable<any> {
+    return this.https.post(
+      `${this.baseUrl}/Vehicles/Inventario`,
+      payload,
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  eliminarInventarioVehiculos(
+    idInventario: number | string,
+    idEmpresa = '001'
+  ): Observable<any> {
+    const params = new HttpParams().set('idEmpresa', idEmpresa);
+
+    return this.https.get(
+      `${this.baseUrl}/Vehicles/EliminarInventario/${encodeURIComponent(String(idInventario))}`,
+      {
+        headers: this.authService.getHeaders(),
+        params
+      }
+    ).pipe(
+      map((response: any) => response),
       catchError(error => throwError(() => error))
     );
   }
