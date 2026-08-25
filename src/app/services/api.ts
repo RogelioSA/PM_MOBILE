@@ -81,7 +81,6 @@ export interface InventarioVehiculoPayload {
   sucursal: string;
   almacen: string;
   observacion: string;
-  vehiculos: string[];
 }
 
 export interface ActualizarInventarioVehiculoPayload extends InventarioVehiculoPayload {
@@ -405,6 +404,27 @@ export class Api {
         headers: this.authService.getHeaders(),
         params
       }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  guardarDetalleInventario(idInventario: number | string, vin: string): Observable<any> {
+    return this.https.post(
+      `${this.baseUrl}/Vehicles/Inventario/Detalle`,
+      { idInventario, vin },
+      { headers: this.authService.getHeaders() }
+    ).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  eliminarDetalleInventario(idInventario: number | string, vin: string): Observable<any> {
+    return this.https.get(
+      `${this.baseUrl}/Vehicles/Inventario/EliminarDetalle/${encodeURIComponent(String(idInventario))}/${encodeURIComponent(vin)}`,
+      { headers: this.authService.getHeaders() }
     ).pipe(
       map((response: any) => response),
       catchError(error => throwError(() => error))

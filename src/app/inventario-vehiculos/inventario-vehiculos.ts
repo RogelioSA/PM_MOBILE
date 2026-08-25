@@ -75,12 +75,14 @@ export class InventarioVehiculos implements OnInit {
   almacenSeleccionado: string | null = null;
   observacion = '';
   cabeceraColapsada = true;
+  cabeceraEditando = false;
   vinManual = '';
   vehiculos: VehiculoRecepcion[] = [];
 
   cargando = false;
   cargandoVehiculos = false;
   guardando = false;
+  guardandoDetalle = false;
   eliminandoId: number | string | null = null;
   scannerActivo = false;
   formatsEnabled: BarcodeFormat[] = [BarcodeFormat.QR_CODE, BarcodeFormat.CODE_128];
@@ -182,7 +184,8 @@ export class InventarioVehiculos implements OnInit {
     this.buscar();
   }
 
-  abrirNuevo(): void {
+  async abrirNuevo(): Promise<void> {
+    if (this.guardando) return;
     if (!this.puedeIniciarInventario) {
       this.messageService.add({
         severity: 'warn',
@@ -198,11 +201,22 @@ export class InventarioVehiculos implements OnInit {
     this.fechaInventario = new Date(this.fechaFiltro!.getTime());
     this.observacion = this.observacionFiltro.trim();
     this.cabeceraColapsada = false;
+    this.cabeceraEditando = false;
     this.vinManual = '';
     this.vehiculos = [];
     this.heredarUbicacionDeFiltros();
-    this.modalVisible = true;
-    this.scannerActivo = true;
+
+    this.guardando = true;
+    try {
+      await this.guardarCabeceraNueva();
+      this.observacionFiltro = '';
+      this.modalVisible = true;
+      this.scannerActivo = true;
+    } catch (error: any) {
+      this.mostrarError(error?.error?.message || 'No se pudo crear la cabecera del inventario');
+    } finally {
+      this.guardando = false;
+    }
   }
 
   abrirEditar(item: InventarioVehiculoRegistro): void {
@@ -211,6 +225,12 @@ export class InventarioVehiculos implements OnInit {
 
   abrirVer(item: InventarioVehiculoRegistro): void {
     this.cargarFormulario(item, 'ver');
+  }
+
+  editarCabecera(): void {
+    if (this.soloLectura) return;
+    this.cabeceraEditando = true;
+    this.cabeceraColapsada = false;
   }
 
   confirmarEliminar(item: InventarioVehiculoRegistro): void {
@@ -229,14 +249,25 @@ export class InventarioVehiculos implements OnInit {
   cerrarModal(): void {
     this.scannerActivo = false;
     this.modalVisible = false;
+    this.buscar();
   }
 
   activarScanner(): void {
     if (!this.soloLectura) this.scannerActivo = true;
   }
 
-  reiniciar(): void {
+  async reiniciar(): Promise<void> {
     if (this.soloLectura) return;
+    if (this.idInventario !== null) {
+      for (const vehiculo of [...this.vehiculos]) {
+        try {
+          await firstValueFrom(this.api.eliminarDetalleInventario(this.idInventario, vehiculo.vin));
+        } catch (error: any) {
+          this.mostrarError(error?.error?.message || `No se pudo eliminar el VIN ${vehiculo.vin}`);
+          return;
+        }
+      }
+    }
     this.vehiculos = [];
     this.vinManual = '';
     this.reactivarScanner();
@@ -274,16 +305,32 @@ export class InventarioVehiculos implements OnInit {
       const response: any = await firstValueFrom(this.api.getVehiculoPorVinRecepcion(vin));
       const vehiculo = response?.data ?? response;
       if (!vehiculo || Object.keys(vehiculo).length === 0) throw new Error('VIN no encontrado');
+      if (this.idInventario === null) await this.guardarCabeceraNueva();
+      if (this.idInventario === null) throw new Error('No se obtuvo el ID del inventario');
+
+      this.guardandoDetalle = true;
+      await firstValueFrom(this.api.guardarDetalleInventario(this.idInventario, vin));
       this.vehiculos = [this.normalizarVehiculo(vehiculo), ...this.vehiculos];
       this.scannerActivo = false;
-    } catch {
-      this.mostrarError(`No se pudo reconocer el VIN ${vin} en el sistema`);
+    } catch (error: any) {
+      this.mostrarError(error?.error?.message || `No se pudo registrar el VIN ${vin}`);
+    } finally {
+      this.guardandoDetalle = false;
     }
   }
 
-  eliminarVehiculo(vin: string): void {
+  async eliminarVehiculo(vin: string): Promise<void> {
     if (this.soloLectura) return;
-    this.vehiculos = this.vehiculos.filter(item => item.vin !== vin);
+    if (this.idInventario === null) {
+      this.vehiculos = this.vehiculos.filter(item => item.vin !== vin);
+      return;
+    }
+    try {
+      await firstValueFrom(this.api.eliminarDetalleInventario(this.idInventario, vin));
+      this.vehiculos = this.vehiculos.filter(item => item.vin !== vin);
+    } catch (error: any) {
+      this.mostrarError(error?.error?.message || `No se pudo eliminar el VIN ${vin}`);
+    }
   }
 
   async guardar(): Promise<void> {
@@ -295,34 +342,28 @@ export class InventarioVehiculos implements OnInit {
       });
       return;
     }
-    if (this.vehiculos.length === 0) {
-      this.messageService.add({
-        severity: 'warn', summary: 'Sin vehículos',
-        detail: 'Escanea o ingresa al menos un VIN', life: 3000
-      });
-      return;
-    }
-
     const payload: InventarioVehiculoPayload = {
       IdEmpresa: '001',
       fecha: this.formatearFecha(this.fechaInventario),
       sucursal: this.sucursalSeleccionada,
       almacen: this.almacenSeleccionado,
-      observacion: this.observacion.trim(),
-      vehiculos: this.vehiculos.map(item => item.vin)
+      observacion: this.observacion.trim()
     };
 
     this.guardando = true;
     try {
-      if (this.modoFormulario === 'editar' && this.idInventario !== null) {
+      if (this.idInventario !== null) {
         const actualizar: ActualizarInventarioVehiculoPayload = {
           ...payload,
           IdInventario: this.idInventario
         };
         await firstValueFrom(this.api.actualizarInventarioVehiculos(actualizar));
       } else {
-        await firstValueFrom(this.api.crearInventarioVehiculos(payload));
+        const response = await firstValueFrom(this.api.crearInventarioVehiculos(payload));
+        this.idInventario = this.extraerIdInventario(response);
       }
+
+      if (this.idInventario === null) throw new Error('El servicio no devolvió el ID del inventario');
 
       this.messageService.add({
         severity: 'success', summary: 'Guardado',
@@ -332,7 +373,6 @@ export class InventarioVehiculos implements OnInit {
         life: 3000
       });
       this.cerrarModal();
-      this.buscar();
     } catch (error: any) {
       this.mostrarError(error?.error?.message || 'No se pudo guardar el inventario');
     } finally {
@@ -374,6 +414,18 @@ export class InventarioVehiculos implements OnInit {
     return 'Scanner de inventario de vehículos';
   }
 
+  get nombreSucursalSeleccionada(): string {
+    return this.sucursales.find(item => item.value === this.sucursalSeleccionada)?.label
+      ?? this.sucursalSeleccionada
+      ?? '-';
+  }
+
+  get nombreAlmacenSeleccionado(): string {
+    return this.almacenesFormulario.find(item => item.value === this.almacenSeleccionado)?.label
+      ?? this.almacenSeleccionado
+      ?? '-';
+  }
+
   private cargarFormulario(item: InventarioVehiculoRegistro, modo: ModoFormulario): void {
     this.modoFormulario = modo;
     this.idInventario = item.idInventario;
@@ -382,6 +434,7 @@ export class InventarioVehiculos implements OnInit {
     this.almacenSeleccionado = item.idAlmacen ?? item.almacen;
     this.observacion = item.observacion;
     this.cabeceraColapsada = modo === 'editar';
+    this.cabeceraEditando = false;
     this.vinManual = '';
     this.vehiculos = [];
     this.modalVisible = true;
@@ -419,6 +472,30 @@ export class InventarioVehiculos implements OnInit {
     } finally {
       this.cargandoVehiculos = false;
     }
+  }
+
+  private async guardarCabeceraNueva(): Promise<void> {
+    if (this.idInventario !== null) return;
+    if (!this.sucursalSeleccionada || !this.almacenSeleccionado || !this.fechaInventario) {
+      throw new Error('Completa los datos de cabecera del inventario');
+    }
+
+    const response = await firstValueFrom(this.api.crearInventarioVehiculos({
+      IdEmpresa: '001',
+      fecha: this.formatearFecha(this.fechaInventario),
+      sucursal: this.sucursalSeleccionada,
+      almacen: this.almacenSeleccionado,
+      observacion: this.observacion.trim()
+    }));
+    this.idInventario = this.extraerIdInventario(response);
+    if (this.idInventario === null) throw new Error('El servicio no devolvió el ID del inventario');
+  }
+
+  private extraerIdInventario(response: any): number | string | null {
+    const data = response?.data;
+    const value = data?.idInventario ?? data?.IdInventario ?? data ??
+      response?.idInventario ?? response?.IdInventario ?? null;
+    return value !== null && typeof value !== 'object' ? value : null;
   }
 
   private cargarAlmacenesFormulario(idSucursal: string, almacenPreferido?: string | null): void {

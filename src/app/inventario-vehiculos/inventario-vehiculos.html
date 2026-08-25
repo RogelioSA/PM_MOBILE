@@ -43,7 +43,8 @@
         <button pButton type="button" icon="pi pi-search" label="Buscar"
           [loading]="cargando" (click)="buscar()"></button>
         <button pButton type="button" severity="success" icon="pi pi-qrcode" label="Escanear inventario"
-          [disabled]="!puedeIniciarInventario" (click)="abrirNuevo()"></button>
+          [loading]="guardando" [disabled]="!puedeIniciarInventario || guardando"
+          (click)="abrirNuevo()"></button>
       </div>
     </section>
 
@@ -179,32 +180,30 @@
       </div>
     </section>
 
-    <div *ngIf="modoFormulario !== 'editar'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div *ngIf="!cabeceraEditando" class="inventory-readonly-header">
       <div>
-        <label class="field-label">Sucursal *</label>
-        <p-select [options]="sucursales" optionLabel="label" optionValue="value"
-          [(ngModel)]="sucursalSeleccionada" (ngModelChange)="cambiarSucursalFormulario($event)"
-          [disabled]="soloLectura" placeholder="Seleccionar sucursal" styleClass="w-full"></p-select>
+        <span class="inventory-readonly-label">Sucursal:</span>
+        <span class="inventory-readonly-value">{{ nombreSucursalSeleccionada }}</span>
       </div>
       <div>
-        <label class="field-label">Almacén *</label>
-        <p-select [options]="almacenesFormulario" optionLabel="label" optionValue="value"
-          [(ngModel)]="almacenSeleccionado" (ngModelChange)="cambiarAlmacenFormulario($event)"
-          [disabled]="soloLectura" placeholder="Seleccionar almacén" styleClass="w-full"></p-select>
+        <span class="inventory-readonly-label">Almacén:</span>
+        <span class="inventory-readonly-value">{{ nombreAlmacenSeleccionado }}</span>
       </div>
       <div>
-        <label class="field-label">Fecha *</label>
-        <p-datepicker [(ngModel)]="fechaInventario" dateFormat="yy-mm-dd" [showIcon]="true"
-          [disabled]="soloLectura" styleClass="w-full" inputStyleClass="w-full"></p-datepicker>
+        <span class="inventory-readonly-label">Fecha:</span>
+        <span class="inventory-readonly-value">{{ fechaInventario | date:'yyyy-MM-dd' }}</span>
       </div>
       <div>
-        <label class="field-label">Observación</label>
-        <textarea [(ngModel)]="observacion" [readonly]="soloLectura" rows="3"
-          class="inventory-textarea" placeholder="Ingrese una observación"></textarea>
+        <span class="inventory-readonly-label">Observación:</span>
+        <span class="inventory-readonly-value inventory-readonly-observation">{{ observacion || '-' }}</span>
+      </div>
+      <div *ngIf="!soloLectura" class="sm:col-span-2 flex justify-end">
+        <button pButton type="button" icon="pi pi-pencil" label="Editar cabecera"
+          class="p-button-sm" (click)="editarCabecera()"></button>
       </div>
     </div>
 
-    <p-panel *ngIf="modoFormulario === 'editar'"
+    <p-panel *ngIf="cabeceraEditando && !soloLectura"
       header="Datos del inventario"
       [toggleable]="true"
       [(collapsed)]="cabeceraColapsada"
@@ -240,7 +239,7 @@
         icon="pi pi-refresh" label="Reiniciar" (click)="reiniciar()"></button>
       <button *ngIf="!soloLectura" pButton type="button" severity="success"
         icon="pi pi-camera" label="Nuevo escaneo" (click)="nuevoScaneo()"></button>
-      <button *ngIf="!soloLectura" pButton type="button" icon="pi pi-save"
+      <button *ngIf="!soloLectura && cabeceraEditando" pButton type="button" icon="pi pi-save"
         [label]="modoFormulario === 'editar' ? 'Actualizar' : 'Guardar'"
         [loading]="guardando" (click)="guardar()"></button>
     </div>
