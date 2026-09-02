@@ -181,6 +181,7 @@ export class MantenimientoEstados implements OnInit {
   // Modal detalle con logs
   mostrarDetalle = false;
   solicitudSeleccionada: SolicitudMantenimiento | null = null;
+  observacionesDetalle = '';
   logs: any[] = [];
   cargandoLogs = false;
   guardandoObservaciones = false;
@@ -590,6 +591,7 @@ export class MantenimientoEstados implements OnInit {
 
   verDetalle(solicitud: SolicitudMantenimiento) {
     this.solicitudSeleccionada = solicitud;
+    this.observacionesDetalle = solicitud.observaciones || '';
     this.mostrarDetalle = true;
     this.cargarLogs(solicitud.id);
     this.cargarFotosDesdeS3(solicitud.id, 'detalle');
@@ -600,6 +602,7 @@ export class MantenimientoEstados implements OnInit {
           ? response[0]
           : (Array.isArray(response?.data) ? response.data[0] : response?.data ?? response);
         if (detalle && this.solicitudSeleccionada?.id === solicitud.id) {
+          this.observacionesDetalle = detalle.observaciones ?? detalle.Observaciones ?? '';
           this.solicitudSeleccionada = {
             ...this.solicitudSeleccionada,
             fechaInicio: detalle.fechaInicio,
@@ -619,6 +622,7 @@ export class MantenimientoEstados implements OnInit {
     if (!solicitud || this.guardandoObservaciones) return;
 
     this.guardandoObservaciones = true;
+    const observaciones = this.observacionesDetalle;
     this.apiService.editarSolicitudMantenimiento({
       id: solicitud.id,
       estado: solicitud.estadoCodigo,
@@ -630,12 +634,13 @@ export class MantenimientoEstados implements OnInit {
       tipoDocumento: '',
       serie: '',
       numero: '',
-      observaciones: solicitud.observaciones || ''
+      observaciones
     }).subscribe({
       next: () => {
         this.guardandoObservaciones = false;
         const item = this.solicitudes.find(({ id }) => id === solicitud.id);
-        if (item) item.observaciones = solicitud.observaciones;
+        solicitud.observaciones = observaciones;
+        if (item) item.observaciones = observaciones;
         this.messageService.add({ severity: 'success', summary: 'Observaciones guardadas', detail: 'Las observaciones se actualizaron correctamente', life: 3000 });
       },
       error: (error) => {
@@ -649,6 +654,7 @@ export class MantenimientoEstados implements OnInit {
   cerrarDetalle() {
     this.mostrarDetalle = false;
     this.solicitudSeleccionada = null;
+    this.observacionesDetalle = '';
     this.logs = [];
   }
 
