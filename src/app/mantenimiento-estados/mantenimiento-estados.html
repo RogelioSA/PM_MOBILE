@@ -13,7 +13,7 @@
 
         <!-- Filtros -->
         <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 mb-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
 
                 <!-- Solicitante -->
                 <div class="flex flex-col gap-2">
@@ -22,6 +22,13 @@
                     </label>
                     <input type="text" pInputText [(ngModel)]="solicitanteFiltro" placeholder="Usuario solicitante"
                         class="w-full h-11" />
+                </div>
+
+                <!-- Ubicación -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Ubicación</label>
+                    <p-select [(ngModel)]="ubicacionFiltro" [options]="sucursales" optionLabel="label"
+                        optionValue="value" placeholder="Todas" [showClear]="true" styleClass="w-full" />
                 </div>
 
                 <!-- Estado -->
@@ -111,7 +118,7 @@
                             </th>
                             <th
                                 class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
-                                Sitio
+                                Ubicación
                             </th>
                             <th
                                 class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
@@ -125,6 +132,9 @@
                                 class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
                                 Fecha
                             </th>
+                            <th class="text-left p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
+                                Observaciones
+                            </th>
                             <th
                                 class="text-center p-3 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold">
                                 Acciones
@@ -133,7 +143,8 @@
                     </ng-template>
 
                     <ng-template pTemplate="body" let-item>
-                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                            (click)="verDetalle(item)">
                             <td class="p-3 text-sm text-gray-800 dark:text-gray-200 font-medium">
                                 #{{ item.id }}
                             </td>
@@ -173,37 +184,40 @@
                             <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
                                 {{ item.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}
                             </td>
+                            <td class="p-3 text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate">
+                                {{ item.observaciones || '-' }}
+                            </td>
                             <td class="p-3 text-center">
                                 <button *ngIf="esPendiente(item)" pButton type="button" label="Solicitar Presupuesto"
-                                    icon="pi pi-dollar" (click)="solicitarPresupuesto(item)"
+                                    icon="pi pi-dollar" (click)="$event.stopPropagation(); solicitarPresupuesto(item)"
                                     class="p-button-sm p-button-warning" pTooltip="Cambiar a espera de presupuesto"
                                     tooltipPosition="left"></button>
 
                                 <button *ngIf="esEsperaPresupuesto(item)" pButton type="button"
                                     label="Escoger Proveedores" icon="pi pi-users"
-                                    (click)="abrirSeleccionProveedores(item)" class="p-button-sm p-button-success"
+                                    (click)="$event.stopPropagation(); abrirSeleccionProveedores(item)" class="p-button-sm p-button-success"
                                     pTooltip="Seleccionar proveedores" tooltipPosition="left"></button>
 
                                 <button *ngIf="esControl(item)" pButton type="button" label="Asignar"
-                                    icon="pi pi-check-circle" (click)="abrirAsignacion(item)"
+                                    icon="pi pi-check-circle" (click)="$event.stopPropagation(); abrirAsignacion(item)"
                                     class="p-button-sm p-button-info" pTooltip="Asignar proveedor"
                                     tooltipPosition="left"></button>
 
                                 <button *ngIf="esAsignado(item)" pButton type="button" label="Ejecución"
-                                    icon="pi pi-play" (click)="abrirEjecucion(item)" class="p-button-sm p-button-help"
+                                    icon="pi pi-play" (click)="$event.stopPropagation(); abrirEjecucion(item)" class="p-button-sm p-button-help"
                                     pTooltip="Poner en ejecución" tooltipPosition="left"></button>
 
                                 <button *ngIf="esEnEjecucion(item)" pButton type="button" label="Contabilidad"
-                                    icon="pi pi-calculator" (click)="abrirContabilidad(item)" class="p-button-sm"
+                                    icon="pi pi-calculator" (click)="$event.stopPropagation(); abrirContabilidad(item)" class="p-button-sm"
                                     severity="contrast" pTooltip="Enviar a contabilidad"
                                     tooltipPosition="left"></button>
 
                                 <button *ngIf="esContabilidad(item)" pButton type="button" label="Finalizar"
-                                    icon="pi pi-check" (click)="abrirFinalizacion(item)"
+                                    icon="pi pi-check" (click)="$event.stopPropagation(); abrirFinalizacion(item)"
                                     class="p-button-sm p-button-success" pTooltip="Finalizar mantenimiento"
                                     tooltipPosition="left"></button>
                                 <button *ngIf="esFinalizado(item)" pButton type="button" label="Ver Detalles"
-                                    icon="pi pi-eye" (click)="abrirVerFinalizado(item)"
+                                    icon="pi pi-eye" (click)="$event.stopPropagation(); abrirVerFinalizado(item)"
                                     class="p-button-sm p-button-success" pTooltip="Ver mantenimiento finalizado"
                                     tooltipPosition="left"></button>
                             </td>
@@ -212,7 +226,7 @@
 
                     <ng-template pTemplate="emptymessage">
                         <tr>
-                            <td colspan="9" class="text-center py-8">
+                            <td colspan="11" class="text-center py-8">
                                 <div class="text-gray-500 dark:text-gray-400">
                                     <i class="pi pi-inbox text-4xl mb-3 block opacity-50"></i>
                                     <p class="text-sm font-medium">No hay solicitudes de mantenimiento</p>
@@ -240,7 +254,8 @@
                 </div>
 
                 <div *ngFor="let item of solicitudes"
-                    class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                    class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 cursor-pointer"
+                    (click)="verDetalle(item)">
 
                     <div class="flex justify-between items-start mb-3">
                         <div>
@@ -254,11 +269,11 @@
                         </div>
 
                         <button *ngIf="esPendiente(item)" pButton type="button" icon="pi pi-dollar"
-                            (click)="solicitarPresupuesto(item)" class="p-button-sm p-button-rounded p-button-warning"
+                            (click)="$event.stopPropagation(); solicitarPresupuesto(item)" class="p-button-sm p-button-rounded p-button-warning"
                             pTooltip="Solicitar presupuesto"></button>
 
                         <button *ngIf="esEsperaPresupuesto(item)" pButton type="button" icon="pi pi-users"
-                            (click)="abrirSeleccionProveedores(item)"
+                            (click)="$event.stopPropagation(); abrirSeleccionProveedores(item)"
                             class="p-button-sm p-button-rounded p-button-success"
                             pTooltip="Escoger proveedores"></button>
                     </div>
@@ -268,8 +283,12 @@
                             {{ item.descripcion }}
                         </p>
                         <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Sitio:</span>
+                            <span class="text-gray-600 dark:text-gray-400">Ubicación:</span>
                             <span class="text-gray-800 dark:text-white">{{ item.sitioNombre }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 dark:text-gray-400">Observaciones:</span>
+                            <p class="text-gray-800 dark:text-white line-clamp-2">{{ item.observaciones || '-' }}</p>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600 dark:text-gray-400">Estado:</span>
@@ -290,6 +309,56 @@
 
     </div>
 </div>
+
+<!-- MODAL DE DETALLE Y OBSERVACIONES -->
+<p-dialog [(visible)]="mostrarDetalle" [modal]="true" [style]="{width: '95vw', maxWidth: '900px'}"
+    [header]="'Solicitud de Mantenimiento #' + (solicitudSeleccionada?.id || '')" (onHide)="cerrarDetalle()">
+    <div class="space-y-4">
+        <section class="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900 dark:border-blue-700 p-4">
+            <h3 class="font-bold text-blue-800 dark:text-blue-200 mb-3">INFORMACIÓN GENERAL</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <p><strong>Solicitante:</strong> {{ solicitudSeleccionada?.solicitante }}</p>
+                <p><strong>Ubicación:</strong> {{ solicitudSeleccionada?.sitioNombre }}</p>
+                <p><strong>Prioridad:</strong> {{ solicitudSeleccionada?.prioridadNombre }}</p>
+                <p><strong>Estado:</strong> {{ solicitudSeleccionada?.estadoNombre }}</p>
+                <p class="sm:col-span-2"><strong>Descripción:</strong> {{ solicitudSeleccionada?.descripcion }}</p>
+            </div>
+        </section>
+
+        <section class="rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+            <label for="observacionesDetalle" class="font-bold text-gray-800 dark:text-white block mb-2">OBSERVACIONES</label>
+            <textarea id="observacionesDetalle" pTextarea [(ngModel)]="solicitudSeleccionada!.observaciones"
+                rows="4" class="w-full" placeholder="Ingrese observaciones"></textarea>
+            <div class="flex justify-end mt-3">
+                <button pButton type="button" label="Guardar observaciones" icon="pi pi-save"
+                    [loading]="guardandoObservaciones" (click)="guardarObservaciones()"></button>
+            </div>
+        </section>
+
+        <section class="rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+            <h3 class="font-bold text-gray-800 dark:text-white mb-3">HISTORIAL DE CAMBIOS ({{ logs.length }})</h3>
+            <div *ngIf="cargandoLogs" class="text-center"><i class="pi pi-spin pi-spinner"></i></div>
+            <div *ngIf="!cargandoLogs && !logs.length" class="text-sm text-gray-500">No hay historial de cambios.</div>
+            <div *ngFor="let log of logs" class="border-b last:border-0 py-2 text-sm">
+                <strong>{{ obtenerNombreEstadoLog(log.estadoInicial) }} → {{ obtenerNombreEstadoLog(log.estadoFinal) }}</strong>
+                <span class="block text-gray-500">{{ log.usuario }} · {{ log.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+        </section>
+
+        <section class="rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+            <h3 class="font-bold text-gray-800 dark:text-white mb-3">FOTOS ADJUNTAS ({{ solicitudSeleccionada?.fotos?.length || 0 }})</h3>
+            <div *ngIf="solicitudSeleccionada?.cargandoFotos" class="text-center"><i class="pi pi-spin pi-spinner"></i></div>
+            <div *ngIf="!solicitudSeleccionada?.cargandoFotos && !solicitudSeleccionada?.fotos?.length" class="text-sm text-gray-500">No hay fotos adjuntas.</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <button *ngFor="let foto of solicitudSeleccionada?.fotos" type="button"
+                    class="border rounded-lg overflow-hidden" (click)="verImagen(foto, solicitudSeleccionada?.fotos || [])">
+                    <img [src]="foto.url" [alt]="foto.nombre" class="w-full h-24 object-cover" />
+                    <span class="block text-xs truncate p-2">{{ foto.nombre }}</span>
+                </button>
+            </div>
+        </section>
+    </div>
+</p-dialog>
 
 <!-- MODAL SELECCIONAR PROVEEDORES Y PRESUPUESTOS -->
 <p-dialog [(visible)]="mostrarProveedores" [modal]="true" [closable]="true" [closeOnEscape]="true"
