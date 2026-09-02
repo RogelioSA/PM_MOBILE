@@ -478,6 +478,7 @@ export class Api {
     prioridad: string;
     fechaDesde: string;
     fechaHasta: string;
+    sucursal?: string;
   }): Observable<any> {
 
     const queryParams = new HttpParams()
@@ -487,9 +488,13 @@ export class Api {
       .set('fechaDesde', params.fechaDesde)
       .set('fechaHasta', params.fechaHasta);
 
+    const paramsConSucursal = params.sucursal
+      ? queryParams.set('sucursal', params.sucursal)
+      : queryParams;
+
     return this.https.get<any>(
       `${this.baseUrl}/SolicitudMantenimiento/ListarSolicitudMantenimiento`,
-      { headers: this.authService.getHeaders(), params: queryParams }
+      { headers: this.authService.getHeaders(), params: paramsConSucursal }
     ).pipe(
       map(response => response),
       catchError(error => throwError(() => error))
@@ -532,9 +537,10 @@ export class Api {
     tipoDocumento: string;
     serie: string;
     numero: string;
+    observaciones?: string;
   }): Observable<any> {
 
-    const queryParams = new HttpParams()
+    let queryParams = new HttpParams()
       .set('id', params.id.toString())
       .set('estado', params.estado)
       .set('usuario', params.usuario)
@@ -545,6 +551,10 @@ export class Api {
       .set('tipoDocumento', params.tipoDocumento)
       .set('serie', params.serie)
       .set('numero', params.numero);
+
+    if (params.observaciones !== undefined) {
+      queryParams = queryParams.set('observaciones', params.observaciones);
+    }
 
     return this.https.get<any>(
       `${this.baseUrl}/SolicitudMantenimiento/EditarSolicitudMantenimiento`,

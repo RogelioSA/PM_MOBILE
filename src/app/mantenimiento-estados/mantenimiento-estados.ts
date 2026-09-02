@@ -41,6 +41,7 @@ interface SolicitudMantenimiento {
   proveedor?: string;
   nombreProveedor?: string;
   totalDocumentos?: number;
+  observaciones: string;
   fotos: FotoMantenimiento[];
   cargandoFotos?: boolean;
 }
@@ -122,6 +123,7 @@ export class MantenimientoEstados implements OnInit {
   fechaDesde = '';
   fechaHasta = '';
   solicitanteFiltro = '';
+  ubicacionFiltro = '';
 
   // Usuario actual
   usuarioActual = '';
@@ -179,8 +181,10 @@ export class MantenimientoEstados implements OnInit {
   // Modal detalle con logs
   mostrarDetalle = false;
   solicitudSeleccionada: SolicitudMantenimiento | null = null;
+  observacionesDetalle = '';
   logs: any[] = [];
   cargandoLogs = false;
+  guardandoObservaciones = false;
 
   // Modal seleccionar proveedores y presupuestos
   mostrarProveedores = false;
@@ -350,7 +354,8 @@ export class MantenimientoEstados implements OnInit {
       estado: this.estadoFiltro,
       prioridad: this.prioridadFiltro,
       fechaDesde: this.fechaDesde,
-      fechaHasta: this.fechaHasta
+      fechaHasta: this.fechaHasta,
+      sucursal: this.ubicacionFiltro
     };
 
     this.cargando = true;
@@ -394,6 +399,7 @@ export class MantenimientoEstados implements OnInit {
               proveedor: item.proveedor,
               nombreProveedor: item.nombreProveedor,
               totalDocumentos: item.totalDocumentos,
+              observaciones: item.observaciones ?? item.Observaciones ?? '',
               fotos: []
             };
           });
@@ -488,6 +494,7 @@ export class MantenimientoEstados implements OnInit {
     this.estadoFiltro = '';
     this.prioridadFiltro = '';
     this.solicitanteFiltro = '';
+    this.ubicacionFiltro = '';
     this.inicializarFechasMes();
     this.cargarSolicitudes();
   }
@@ -509,10 +516,11 @@ export class MantenimientoEstados implements OnInit {
       Prioridad: item.prioridadNombre,
       Tipo: item.tipoNombre,
       Descripcion: item.descripcion,
-      Sitio: item.sitioNombre,
+      Ubicacion: item.sitioNombre,
       Estado: item.estadoNombre,
       Total: item.totalDocumentos ?? 0,
       FechaCreacion: this.formatearFechaExcel(item.fechaCreacion),
+      Observaciones: item.observaciones,
       FechaInicio: this.formatearFechaExcel(item.fechaInicio),
       FechaFin: this.formatearFechaExcel(item.fechaFin),
       FechaCierre: this.formatearFechaExcel(item.fechaCierre),
@@ -583,13 +591,70 @@ export class MantenimientoEstados implements OnInit {
 
   verDetalle(solicitud: SolicitudMantenimiento) {
     this.solicitudSeleccionada = solicitud;
+    this.observacionesDetalle = solicitud.observaciones || '';
     this.mostrarDetalle = true;
     this.cargarLogs(solicitud.id);
+    this.cargarFotosDesdeS3(solicitud.id, 'detalle');
+
+    this.apiService.consultarSolicitudMantenimiento(solicitud.id).subscribe({
+      next: (response) => {
+        const detalle = Array.isArray(response)
+          ? response[0]
+          : (Array.isArray(response?.data) ? response.data[0] : response?.data ?? response);
+        if (detalle && this.solicitudSeleccionada?.id === solicitud.id) {
+          this.observacionesDetalle = detalle.observaciones ?? detalle.Observaciones ?? '';
+          this.solicitudSeleccionada = {
+            ...this.solicitudSeleccionada,
+            fechaInicio: detalle.fechaInicio,
+            fechaFin: detalle.fechaFin,
+            fechaCierre: detalle.fechaCierre,
+            proveedor: detalle.proveedor,
+            observaciones: detalle.observaciones ?? detalle.Observaciones ?? ''
+          };
+        }
+      },
+      error: (error) => console.error('Error al consultar la solicitud:', error)
+    });
+  }
+
+  guardarObservaciones() {
+    const solicitud = this.solicitudSeleccionada;
+    if (!solicitud || this.guardandoObservaciones) return;
+
+    this.guardandoObservaciones = true;
+    const observaciones = this.observacionesDetalle;
+    this.apiService.editarSolicitudMantenimiento({
+      id: solicitud.id,
+      estado: solicitud.estadoCodigo,
+      usuario: this.usuarioActual,
+      fechaInicio: solicitud.fechaInicio || '',
+      fechaFin: solicitud.fechaFin || '',
+      fechaCierre: solicitud.fechaCierre || '',
+      proveedor: solicitud.proveedor || '',
+      tipoDocumento: '',
+      serie: '',
+      numero: '',
+      observaciones
+    }).subscribe({
+      next: () => {
+        this.guardandoObservaciones = false;
+        const item = this.solicitudes.find(({ id }) => id === solicitud.id);
+        solicitud.observaciones = observaciones;
+        if (item) item.observaciones = observaciones;
+        this.messageService.add({ severity: 'success', summary: 'Observaciones guardadas', detail: 'Las observaciones se actualizaron correctamente', life: 3000 });
+      },
+      error: (error) => {
+        this.guardandoObservaciones = false;
+        console.error('Error al guardar observaciones:', error);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron guardar las observaciones', life: 3000 });
+      }
+    });
   }
 
   cerrarDetalle() {
     this.mostrarDetalle = false;
     this.solicitudSeleccionada = null;
+    this.observacionesDetalle = '';
     this.logs = [];
   }
 
@@ -1890,12 +1955,15 @@ export class MantenimientoEstados implements OnInit {
     });
   }
 
-  cargarFotosDesdeS3(idSolicitud: number, contexto: 'proveedores' | 'asignacion' | 'ejecucion' | 'contabilidad' | 'finalizacion' | 'verFinalizado') {
+  cargarFotosDesdeS3(idSolicitud: number, contexto: 'detalle' | 'proveedores' | 'asignacion' | 'ejecucion' | 'contabilidad' | 'finalizacion' | 'verFinalizado') {
     const ruta = `SM${idSolicitud}`;
 
     let solicitudActual: SolicitudMantenimiento | null = null;
 
     switch (contexto) {
+      case 'detalle':
+        solicitudActual = this.solicitudSeleccionada;
+        break;
       case 'proveedores':
         solicitudActual = this.solicitudProveedores;
         break;
