@@ -12,6 +12,7 @@ import { Auth } from '../services/auth';
 
 interface MenuItemExtended extends MenuItem {
   route?: string;
+  permission?: string;
   icon?: string;
   isActive?: boolean;
 }
@@ -29,6 +30,12 @@ const ALL_ITEMS: MenuItemExtended[] = [
   { label: 'Gestor Mantenimiento',            icon: 'pi pi-sliders-h',              route: 'mantenimientoestados'},
   { label: 'Rendición de gastos',             icon: 'pi pi-dollar',                 route: 'rendicion-gastos'    },
   { label: 'Personal',                        icon: 'pi pi-id-card',                route: 'personal'            },
+  {
+    label: 'Proformas Repuestos',
+    icon: 'pi pi-file-edit',
+    route: 'reporte_ventas',
+    permission: 'PROFORMASREPUESTOS'
+  },
 ];
 
 @Component({
@@ -82,12 +89,15 @@ export class Menu implements OnInit {
       this.cargandoPermisos = false;
 
       if (response?.success && Array.isArray(response.data)) {
-        // La API devuelve nombre en UPPERCASE, compara en lowercase
+        // La API devuelve el nombre del permiso, que no siempre coincide con la ruta.
         const rutasPermitidas: string[] = response.data
-          .map((m: any) => m.nombre.toLowerCase());
+          .map((m: any) => String(m.nombre ?? '').trim().toLowerCase());
 
         this.items = ALL_ITEMS
-          .filter(item => rutasPermitidas.includes(item.route?.toLowerCase() ?? ''))
+          .filter(item => {
+            const permiso = item.permission ?? item.route ?? '';
+            return rutasPermitidas.includes(permiso.toLowerCase());
+          })
           .map(item => ({
             ...item,
             command: () => this.navigateTo(item.route!)
