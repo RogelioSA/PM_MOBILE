@@ -587,6 +587,10 @@ export class InventarioVehiculos implements OnInit {
         ?? item.NumeroVehiculos ?? item.cantidadVehiculos ?? lista.length,
       observacion: item['observación'] ?? item.observacion ?? item.Observacion
         ?? item.observaciones ?? item.Observaciones ?? '',
+      coproductor: item.coproductor ?? item.Coproductor ?? '',
+      descripcion: item.descripcion ?? item.Descripcion ?? '',
+      unidad: item.unidad ?? item.Unidad ?? '',
+      cantidad: item.cantidad ?? item.Cantidad ?? 0,
       vehiculos: lista
     };
   }

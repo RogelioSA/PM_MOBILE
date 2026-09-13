@@ -97,6 +97,10 @@ export interface InventarioVehiculoRegistro {
   idAlmacen?: string;
   nroVehiculos: number;
   observacion: string;
+  coproductor: string;
+  descripcion: string;
+  unidad: string;
+  cantidad: number;
   vehiculos: Array<string | VehiculoRecepcion>;
   [key: string]: unknown;
 }

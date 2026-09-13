@@ -56,7 +56,9 @@
           <ng-template pTemplate="header">
             <tr>
               <th>Código</th><th>Fecha</th><th>Sucursal</th><th>Almacén</th>
-              <th class="text-center">Nro. Vehículos</th><th>Observación</th><th class="text-center">Acciones</th>
+              <th class="text-center">Nro. Vehículos</th><th>Observación</th>
+              <th>Coproductor</th><th>Descripción</th><th>Unidad</th><th class="text-center">Cantidad</th>
+              <th class="text-center">Acciones</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-item>
@@ -67,6 +69,10 @@
               <td>{{ item.almacen }}</td>
               <td class="text-center">{{ item.nroVehiculos }}</td>
               <td class="max-w-xs truncate" [title]="item.observacion">{{ item.observacion || '-' }}</td>
+              <td>{{ item.coproductor || '-' }}</td>
+              <td class="max-w-xs truncate" [title]="item.descripcion || ''">{{ item.descripcion || '-' }}</td>
+              <td>{{ item.unidad || '-' }}</td>
+              <td class="text-center">{{ item.cantidad }}</td>
               <td class="text-center whitespace-nowrap">
                 <button pButton type="button" icon="pi pi-eye" class="p-button-sm p-button-text"
                   pTooltip="Ver" (click)="abrirVer(item)"></button>
@@ -81,7 +87,7 @@
             </tr>
           </ng-template>
           <ng-template pTemplate="emptymessage">
-            <tr><td colspan="7" class="text-center py-10 text-gray-500">No se encontraron inventarios.</td></tr>
+            <tr><td colspan="11" class="text-center py-10 text-gray-500">No se encontraron inventarios.</td></tr>
           </ng-template>
         </p-table>
       </div>
@@ -104,6 +110,10 @@
             <div><dt class="card-label">Sucursal</dt><dd>{{ item.sucursal }}</dd></div>
             <div><dt class="card-label">Almacén</dt><dd>{{ item.almacen }}</dd></div>
             <div><dt class="card-label">Vehículos</dt><dd>{{ item.nroVehiculos }}</dd></div>
+            <div><dt class="card-label">Coproductor</dt><dd>{{ item.coproductor || '-' }}</dd></div>
+            <div><dt class="card-label">Descripción</dt><dd>{{ item.descripcion || '-' }}</dd></div>
+            <div><dt class="card-label">Unidad</dt><dd>{{ item.unidad || '-' }}</dd></div>
+            <div><dt class="card-label">Cantidad</dt><dd>{{ item.cantidad }}</dd></div>
             <div class="col-span-2"><dt class="card-label">Observación</dt><dd>{{ item.observacion || '-' }}</dd></div>
           </dl>
           <div class="grid grid-cols-3 gap-2 mt-4">
