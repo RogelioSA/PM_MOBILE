@@ -20,6 +20,7 @@ import {
   Api,
   InventarioVehiculoPayload,
   InventarioVehiculoRegistro,
+  SaldoAlmacenVehiculo,
   VehiculoRecepcion
 } from '../services/api';
 import { Master } from '../services/master';
@@ -57,6 +58,7 @@ type ModoFormulario = 'crear' | 'editar' | 'ver';
 })
 export class InventarioVehiculos implements OnInit {
   inventarios: InventarioVehiculoRegistro[] = [];
+  saldoAlmacen: SaldoAlmacenVehiculo[] = [];
   sucursales: Opcion[] = [];
   almacenesFiltro: Opcion[] = [];
   almacenesFormulario: Opcion[] = [];
@@ -68,6 +70,8 @@ export class InventarioVehiculos implements OnInit {
   observacionFiltro = '';
 
   modalVisible = false;
+  mostrarConfirmacionNuevo = false;
+  observacionNueva = '';
   modoFormulario: ModoFormulario = 'crear';
   idInventario: number | string | null = null;
   fechaInventario = new Date();
@@ -80,6 +84,7 @@ export class InventarioVehiculos implements OnInit {
   vehiculos: VehiculoRecepcion[] = [];
 
   cargando = false;
+  cargandoSaldo = false;
   cargandoVehiculos = false;
   guardando = false;
   guardandoDetalle = false;
@@ -130,8 +135,21 @@ export class InventarioVehiculos implements OnInit {
     this.sucursalFiltro = idSucursal;
     this.almacenFiltro = '';
     this.almacenesFiltro = [];
-    if (!idSucursal) return;
-    this.cargarAlmacenesFiltro(idSucursal);
+    if (!idSucursal) {
+      this.buscar();
+      return;
+    }
+    this.cargarAlmacenesFiltro(idSucursal, true, true);
+  }
+
+  cambiarAlmacenFiltro(idAlmacen: string): void {
+    this.almacenFiltro = idAlmacen || '';
+    this.buscar();
+  }
+
+  cambiarFechaFiltro(fecha: Date | null): void {
+    this.fechaFiltro = fecha ?? new Date();
+    this.buscar();
   }
 
   cambiarSucursalFormulario(idSucursal: string | null): void {
@@ -151,6 +169,7 @@ export class InventarioVehiculos implements OnInit {
 
   buscar(): void {
     this.cargando = true;
+    this.cargarSaldoAlmacen();
     this.api.listarInventariosVehiculos({
       fecha: this.fechaFiltro ? this.formatearFecha(this.fechaFiltro) : undefined,
       sucursal: this.sucursalFiltro || undefined,
@@ -176,15 +195,75 @@ export class InventarioVehiculos implements OnInit {
   }
 
   limpiarFiltros(): void {
-    this.fechaFiltro = null;
-    this.sucursalFiltro = '';
-    this.almacenFiltro = '';
     this.observacionFiltro = '';
-    this.almacenesFiltro = [];
-    this.buscar();
+    this.fechaFiltro = new Date();
+    if (this.sucursales.length > 0) {
+      this.sucursalFiltro = this.sucursales[0].value;
+      this.cargarAlmacenesFiltro(this.sucursalFiltro, true, true);
+    } else {
+      this.buscar();
+    }
   }
 
-  async abrirNuevo(): Promise<void> {
+  private cargarSaldoAlmacen(): void {
+    if (!this.fechaFiltro || !this.sucursalFiltro || !this.almacenFiltro) {
+      this.saldoAlmacen = [];
+      return;
+    }
+
+    this.cargandoSaldo = true;
+    this.api.listarSaldoAlmacenVehiculos(
+      this.formatearFechaSaldo(this.fechaFiltro),
+      this.sucursalFiltro,
+      this.almacenFiltro
+    ).subscribe({
+      next: response => {
+        const data = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.data) ? response.data : [];
+        this.saldoAlmacen = data.map((item: any) => ({
+          idsucursal: String(item.idsucursal ?? ''),
+          idalmacen: String(item.idalmacen ?? ''),
+          idproducto: String(item.idproducto ?? '').trim(),
+          idserie: String(item.idserie ?? '').trim(),
+          prD_DSC: String(item.prD_DSC ?? '').trim(),
+          idmedida: String(item.idmedida ?? '').trim(),
+          vin: String(item.vin ?? '').trim(),
+          cantidad: Number(item.cantidad ?? 0)
+        }));
+        this.cargandoSaldo = false;
+      },
+      error: error => {
+        this.saldoAlmacen = [];
+        this.cargandoSaldo = false;
+        this.mostrarError(error?.error?.message || 'No se pudo cargar el saldo por almacén');
+      }
+    });
+  }
+
+  abrirNuevo(): void {
+    if (!this.puedeIniciarInventario || this.guardando) return;
+    this.observacionNueva = '';
+    this.mostrarConfirmacionNuevo = true;
+  }
+
+  cancelarConfirmacionNuevo(): void {
+    this.mostrarConfirmacionNuevo = false;
+    this.observacionNueva = '';
+  }
+
+  async confirmarNuevoInventario(): Promise<void> {
+    const observacion = this.observacionNueva.trim();
+    if (!observacion) {
+      this.mostrarError('La observación es obligatoria para crear el inventario');
+      return;
+    }
+
+    this.mostrarConfirmacionNuevo = false;
+    await this.iniciarNuevoInventario(observacion);
+  }
+
+  private async iniciarNuevoInventario(observacion: string): Promise<void> {
     if (this.guardando) return;
     if (!this.puedeIniciarInventario) {
       this.messageService.add({
@@ -199,7 +278,7 @@ export class InventarioVehiculos implements OnInit {
     this.modoFormulario = 'crear';
     this.idInventario = null;
     this.fechaInventario = new Date(this.fechaFiltro!.getTime());
-    this.observacion = this.observacionFiltro.trim();
+    this.observacion = observacion;
     this.cabeceraColapsada = false;
     this.cabeceraEditando = false;
     this.vinManual = '';
@@ -426,6 +505,12 @@ export class InventarioVehiculos implements OnInit {
       ?? '-';
   }
 
+  get nombreAlmacenFiltro(): string {
+    return this.almacenesFiltro.find(item => item.value === this.almacenFiltro)?.label
+      ?? this.almacenFiltro
+      ?? '-';
+  }
+
   private cargarFormulario(item: InventarioVehiculoRegistro, modo: ModoFormulario): void {
     this.modoFormulario = modo;
     this.idInventario = item.idInventario;
@@ -587,10 +672,6 @@ export class InventarioVehiculos implements OnInit {
         ?? item.NumeroVehiculos ?? item.cantidadVehiculos ?? lista.length,
       observacion: item['observación'] ?? item.observacion ?? item.Observacion
         ?? item.observaciones ?? item.Observaciones ?? '',
-      coproductor: item.coproductor ?? item.Coproductor ?? '',
-      descripcion: item.descripcion ?? item.Descripcion ?? '',
-      unidad: item.unidad ?? item.Unidad ?? '',
-      cantidad: item.cantidad ?? item.Cantidad ?? 0,
       vehiculos: lista
     };
   }
@@ -661,6 +742,10 @@ export class InventarioVehiculos implements OnInit {
     const month = String(fecha.getMonth() + 1).padStart(2, '0');
     const day = String(fecha.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  private formatearFechaSaldo(fecha: Date): string {
+    return this.formatearFecha(fecha);
   }
 
   private parsearFecha(value: string): Date {

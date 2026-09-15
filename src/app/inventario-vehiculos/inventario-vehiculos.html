@@ -2,131 +2,69 @@
 <p-confirmdialog></p-confirmdialog>
 <app-menu></app-menu>
 
+<p-dialog [(visible)]="mostrarConfirmacionNuevo" [modal]="true"
+  header="Nuevo inventario" [style]="{ width: 'min(95vw, 520px)' }"
+  [draggable]="false" [resizable]="false" (onHide)="cancelarConfirmacionNuevo()">
+  <div class="space-y-4">
+    <p class="text-sm text-gray-700 dark:text-gray-200">
+      Está a punto de crear un nuevo inventario, indique las observaciones y confirme.
+    </p>
+    <div>
+      <label class="field-label">Observación *</label>
+      <textarea [(ngModel)]="observacionNueva" rows="4" autofocus
+        class="inventory-textarea" placeholder="Ingrese la observación del inventario"></textarea>
+      <small *ngIf="!observacionNueva.trim()" class="text-red-500">
+        La observación es obligatoria.
+      </small>
+    </div>
+    <div class="flex justify-end gap-2">
+      <button pButton type="button" severity="secondary" label="Cancelar"
+        (click)="cancelarConfirmacionNuevo()"></button>
+      <button pButton type="button" severity="success" icon="pi pi-check" label="Confirmar"
+        [disabled]="!observacionNueva.trim()" (click)="confirmarNuevoInventario()"></button>
+    </div>
+  </div>
+</p-dialog>
+
 <main class="min-h-screen bg-gray-100 dark:bg-slate-900 px-3 py-5 sm:p-6 pt-20 sm:pt-24">
   <div class="max-w-[1600px] mx-auto">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-      <div>
-        <h1 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Inventario de vehículos</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Consulta y registra inventarios mediante VIN.</p>
-      </div>
+    <div class="mb-6">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">Inventario de Vehículos</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Consulta, registro de inventarios por VIN y control de saldos por almacén.</p>
     </div>
 
-    <section class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 sm:p-5 mb-5">
-      <h2 class="text-base font-semibold text-gray-800 dark:text-white mb-4">Filtros de búsqueda</h2>
+    <section class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 sm:p-5 mb-6">
+      <h2 class="text-base font-semibold text-gray-800 dark:text-white mb-5"><i class="pi pi-filter mr-2 text-blue-500"></i>Filtros de Búsqueda</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div>
-          <label class="field-label">Sucursal</label>
-          <p-select [options]="sucursales" optionLabel="label" optionValue="value"
-            [(ngModel)]="sucursalFiltro" (ngModelChange)="cambiarSucursalFiltro($event)"
-            [showClear]="true" placeholder="Todas" styleClass="w-full"></p-select>
-        </div>
-        <div>
-          <label class="field-label">Almacén</label>
-          <p-select [options]="almacenesFiltro" optionLabel="label" optionValue="value"
-            [(ngModel)]="almacenFiltro" [showClear]="true" placeholder="Todos"
-            styleClass="w-full"></p-select>
-        </div>
-        <div>
-          <label class="field-label">Fecha de inventario</label>
-          <p-datepicker [(ngModel)]="fechaFiltro" dateFormat="yy-mm-dd" [showIcon]="true"
-            [showClear]="true" styleClass="w-full" inputStyleClass="w-full"></p-datepicker>
-        </div>
-        <div>
-          <label class="field-label">Observación</label>
-          <input pInputText [(ngModel)]="observacionFiltro" (keyup.enter)="buscar()"
-            class="w-full" placeholder="Buscar observación" />
+        <div><label class="field-label">Sucursal</label><p-select [options]="sucursales" optionLabel="label" optionValue="value"
+          [(ngModel)]="sucursalFiltro" (ngModelChange)="cambiarSucursalFiltro($event)" [showClear]="false" styleClass="w-full"></p-select></div>
+        <div><label class="field-label">Almacén</label><p-select [options]="almacenesFiltro" optionLabel="label" optionValue="value"
+          [(ngModel)]="almacenFiltro" (ngModelChange)="cambiarAlmacenFiltro($event)" [showClear]="false" styleClass="w-full"></p-select></div>
+        <div><label class="field-label">Fecha de inventario</label><p-datepicker [(ngModel)]="fechaFiltro" dateFormat="dd/mm/yy" [showIcon]="true"
+          [showClear]="false" (ngModelChange)="cambiarFechaFiltro($event)" styleClass="w-full" inputStyleClass="w-full"></p-datepicker></div>
+        <div class="flex items-end justify-end"><button pButton type="button" severity="success" icon="pi pi-qrcode" label="Escanear Inventario"
+          [loading]="guardando" [disabled]="!puedeIniciarInventario || guardando" (click)="abrirNuevo()"></button>
         </div>
       </div>
-      <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-4">
-        <button pButton type="button" severity="secondary" icon="pi pi-filter-slash"
-          label="Limpiar" (click)="limpiarFiltros()"></button>
-        <button pButton type="button" icon="pi pi-search" label="Buscar"
-          [loading]="cargando" (click)="buscar()"></button>
-        <button pButton type="button" severity="success" icon="pi pi-qrcode" label="Escanear inventario"
-          [loading]="guardando" [disabled]="!puedeIniciarInventario || guardando"
-          (click)="abrirNuevo()"></button>
+    </section>
+
+    <section class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden mb-6">
+      <div class="section-heading"><h2><i class="pi pi-clipboard text-blue-500 mr-2"></i>Inventarios Realizados</h2></div>
+      <div class="hidden md:block overflow-x-auto"><p-table [value]="inventarios" [loading]="cargando" responsiveLayout="scroll" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10,20,50]" [tableStyle]="{'min-width':'52rem'}">
+        <ng-template pTemplate="header"><tr><th>FECHA INVENTARIO</th><th class="text-center">CANTIDAD PRODUCTOS</th><th>OBSERVACIÓN</th><th class="text-center">ACCIONES</th></tr></ng-template>
+        <ng-template pTemplate="body" let-item><tr><td>{{ item.fecha | date:'dd/MM/yyyy' }}</td><td class="text-center font-semibold text-blue-600">{{ item.nroVehiculos }}</td><td>{{ item.observacion || '-' }}</td><td class="text-center whitespace-nowrap">
+          <button pButton type="button" icon="pi pi-eye" class="p-button-sm p-button-text" pTooltip="Ver" (click)="abrirVer(item)"></button><button pButton type="button" icon="pi pi-pencil" class="p-button-sm p-button-text" pTooltip="Editar" (click)="abrirEditar(item)"></button><button pButton type="button" icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" pTooltip="Eliminar" [loading]="eliminandoId === item.idInventario" [disabled]="eliminandoId !== null" (click)="confirmarEliminar(item)"></button>
+        </td></tr></ng-template><ng-template pTemplate="emptymessage"><tr><td colspan="4" class="text-center py-10 text-gray-500">No se encontraron inventarios.</td></tr></ng-template>
+      </p-table></div>
+      <div class="md:hidden p-3 space-y-3"><div *ngIf="cargando" class="text-center py-8 text-gray-500"><i class="pi pi-spin pi-spinner text-3xl"></i></div><div *ngIf="!cargando && !inventarios.length" class="text-center py-8 text-gray-500">No se encontraron inventarios.</div>
+        <article *ngFor="let item of inventarios" class="rounded-xl border border-gray-200 dark:border-slate-600 p-4 bg-gray-50 dark:bg-slate-700"><div class="flex justify-between"><strong>{{ item.fecha | date:'dd/MM/yyyy' }}</strong><strong class="text-blue-600">{{ item.nroVehiculos }}</strong></div><p class="mt-2 text-sm">{{ item.observacion || '-' }}</p><div class="flex justify-end gap-2 mt-3"><button pButton type="button" icon="pi pi-eye" class="p-button-sm p-button-text" (click)="abrirVer(item)"></button><button pButton type="button" icon="pi pi-pencil" class="p-button-sm p-button-text" (click)="abrirEditar(item)"></button><button pButton type="button" icon="pi pi-trash" severity="danger" class="p-button-sm p-button-text" (click)="confirmarEliminar(item)"></button></div></article>
       </div>
     </section>
 
     <section class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
-      <div class="hidden md:block overflow-x-auto">
-        <p-table [value]="inventarios" [loading]="cargando" responsiveLayout="scroll"
-          [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]"
-          [tableStyle]="{ 'min-width': '64rem' }">
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Código</th><th>Fecha</th><th>Sucursal</th><th>Almacén</th>
-              <th class="text-center">Nro. Vehículos</th><th>Observación</th>
-              <th>Coproductor</th><th>Descripción</th><th>Unidad</th><th class="text-center">Cantidad</th>
-              <th class="text-center">Acciones</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-item>
-            <tr>
-              <td class="font-semibold">{{ item.codigo }}</td>
-              <td>{{ item.fecha | date:'dd/MM/yyyy' }}</td>
-              <td>{{ item.sucursal }}</td>
-              <td>{{ item.almacen }}</td>
-              <td class="text-center">{{ item.nroVehiculos }}</td>
-              <td class="max-w-xs truncate" [title]="item.observacion">{{ item.observacion || '-' }}</td>
-              <td>{{ item.coproductor || '-' }}</td>
-              <td class="max-w-xs truncate" [title]="item.descripcion || ''">{{ item.descripcion || '-' }}</td>
-              <td>{{ item.unidad || '-' }}</td>
-              <td class="text-center">{{ item.cantidad }}</td>
-              <td class="text-center whitespace-nowrap">
-                <button pButton type="button" icon="pi pi-eye" class="p-button-sm p-button-text"
-                  pTooltip="Ver" (click)="abrirVer(item)"></button>
-                <button pButton type="button" icon="pi pi-pencil" class="p-button-sm p-button-text"
-                  pTooltip="Editar" (click)="abrirEditar(item)"></button>
-                <button pButton type="button" icon="pi pi-trash"
-                  class="p-button-sm p-button-text p-button-danger" pTooltip="Eliminar"
-                  [loading]="eliminandoId === item.idInventario"
-                  [disabled]="eliminandoId !== null"
-                  (click)="confirmarEliminar(item)"></button>
-              </td>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="emptymessage">
-            <tr><td colspan="11" class="text-center py-10 text-gray-500">No se encontraron inventarios.</td></tr>
-          </ng-template>
-        </p-table>
-      </div>
-
-      <div class="md:hidden p-3 space-y-3">
-        <div *ngIf="cargando" class="text-center py-10 text-gray-500">
-          <i class="pi pi-spin pi-spinner text-3xl"></i><p class="mt-2">Cargando inventarios...</p>
-        </div>
-        <div *ngIf="!cargando && inventarios.length === 0" class="text-center py-10 text-gray-500">
-          <i class="pi pi-inbox text-4xl"></i><p class="mt-2">No se encontraron inventarios.</p>
-        </div>
-        <article *ngFor="let item of inventarios"
-          class="rounded-xl border border-gray-200 dark:border-slate-600 p-4 bg-gray-50 dark:bg-slate-700">
-          <div class="flex justify-between gap-3 mb-3">
-            <div><span class="text-xs text-gray-500 dark:text-gray-400">Código</span>
-              <p class="font-bold text-gray-800 dark:text-white">{{ item.codigo }}</p></div>
-            <span class="text-sm text-gray-600 dark:text-gray-300">{{ item.fecha | date:'dd/MM/yyyy' }}</span>
-          </div>
-          <dl class="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
-            <div><dt class="card-label">Sucursal</dt><dd>{{ item.sucursal }}</dd></div>
-            <div><dt class="card-label">Almacén</dt><dd>{{ item.almacen }}</dd></div>
-            <div><dt class="card-label">Vehículos</dt><dd>{{ item.nroVehiculos }}</dd></div>
-            <div><dt class="card-label">Coproductor</dt><dd>{{ item.coproductor || '-' }}</dd></div>
-            <div><dt class="card-label">Descripción</dt><dd>{{ item.descripcion || '-' }}</dd></div>
-            <div><dt class="card-label">Unidad</dt><dd>{{ item.unidad || '-' }}</dd></div>
-            <div><dt class="card-label">Cantidad</dt><dd>{{ item.cantidad }}</dd></div>
-            <div class="col-span-2"><dt class="card-label">Observación</dt><dd>{{ item.observacion || '-' }}</dd></div>
-          </dl>
-          <div class="grid grid-cols-3 gap-2 mt-4">
-            <button pButton type="button" severity="secondary" icon="pi pi-eye" label="Ver"
-              class="p-button-sm" (click)="abrirVer(item)"></button>
-            <button pButton type="button" icon="pi pi-pencil" label="Editar"
-              class="p-button-sm" (click)="abrirEditar(item)"></button>
-            <button pButton type="button" severity="danger" icon="pi pi-trash" label="Eliminar"
-              class="p-button-sm" [loading]="eliminandoId === item.idInventario"
-              [disabled]="eliminandoId !== null" (click)="confirmarEliminar(item)"></button>
-          </div>
-        </article>
-      </div>
+      <div class="section-heading"><h2><i class="pi pi-warehouse text-emerald-500 mr-2"></i>Saldo por Almacén</h2><span class="warehouse-chip">{{ nombreAlmacenFiltro }}</span></div>
+      <div class="hidden md:block overflow-x-auto"><p-table [value]="saldoAlmacen" [loading]="cargandoSaldo" responsiveLayout="scroll" [tableStyle]="{'min-width':'48rem'}"><ng-template pTemplate="header"><tr><th>CODPROD</th><th>DESCRIPCIÓN</th><th>UNIDAD</th><th class="text-right">CANTIDAD</th></tr></ng-template><ng-template pTemplate="body" let-item><tr><td class="font-semibold">{{ item.idproducto }}</td><td>{{ item.prD_DSC }}</td><td>{{ item.idmedida }}</td><td class="text-right font-bold text-emerald-600">{{ item.cantidad | number:'1.0-3' }}</td></tr></ng-template><ng-template pTemplate="emptymessage"><tr><td colspan="4" class="text-center py-8 text-gray-500">No hay saldo para los filtros seleccionados.</td></tr></ng-template></p-table></div>
+      <div class="md:hidden p-3 space-y-3"><div *ngIf="cargandoSaldo" class="text-center py-8 text-gray-500"><i class="pi pi-spin pi-spinner text-3xl"></i></div><article *ngFor="let item of saldoAlmacen" class="rounded-lg border border-gray-200 dark:border-slate-600 p-3"><p class="font-semibold">{{ item.idproducto }}</p><p class="text-sm mt-1">{{ item.prD_DSC }}</p><div class="flex justify-between text-sm mt-2"><span>{{ item.idmedida }}</span><strong class="text-emerald-600">{{ item.cantidad | number:'1.0-3' }}</strong></div></article><div *ngIf="!cargandoSaldo && !saldoAlmacen.length" class="text-center py-8 text-gray-500">No hay saldo para los filtros seleccionados.</div></div>
     </section>
   </div>
 </main>
