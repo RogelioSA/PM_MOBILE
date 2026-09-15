@@ -97,12 +97,19 @@ export interface InventarioVehiculoRegistro {
   idAlmacen?: string;
   nroVehiculos: number;
   observacion: string;
-  coproductor: string;
-  descripcion: string;
-  unidad: string;
-  cantidad: number;
   vehiculos: Array<string | VehiculoRecepcion>;
   [key: string]: unknown;
+}
+
+export interface SaldoAlmacenVehiculo {
+  idsucursal: string;
+  idalmacen: string;
+  idproducto: string;
+  idserie: string;
+  prD_DSC: string;
+  idmedida: string;
+  vin: string;
+  cantidad: number;
 }
 
 export interface MotivoJustificacion {
@@ -388,6 +395,25 @@ export class Api {
     if (filtros.observacion) params = params.set('observacion', filtros.observacion);
 
     return this.https.get(`${this.baseUrl}/Vehicles/Inventario`, {
+      headers: this.authService.getHeaders(),
+      params
+    }).pipe(
+      map((response: any) => response),
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  listarSaldoAlmacenVehiculos(
+    fecha: string,
+    sucursal: string,
+    almacen: string
+  ): Observable<any> {
+    const params = new HttpParams()
+      .set('fecha', fecha)
+      .set('sucursal', sucursal)
+      .set('almacen', almacen);
+
+    return this.https.get(`${this.baseUrl}/Vehicles/Inventario/SaldoAlmacen`, {
       headers: this.authService.getHeaders(),
       params
     }).pipe(
