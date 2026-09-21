@@ -590,7 +590,13 @@ export class MantenimientoEstados implements OnInit {
   }
 
   verDetalle(solicitud: SolicitudMantenimiento) {
-    this.solicitudSeleccionada = solicitud;
+    // Usar una instancia propia para el diálogo evita modificar la fila de la tabla
+    // mientras se cargan sus datos relacionados.
+    this.solicitudSeleccionada = {
+      ...solicitud,
+      fotos: [],
+      cargandoFotos: true
+    };
     this.observacionesDetalle = solicitud.observaciones || '';
     this.mostrarDetalle = true;
     this.cargarLogs(solicitud.id);
@@ -603,14 +609,13 @@ export class MantenimientoEstados implements OnInit {
           : (Array.isArray(response?.data) ? response.data[0] : response?.data ?? response);
         if (detalle && this.solicitudSeleccionada?.id === solicitud.id) {
           this.observacionesDetalle = detalle.observaciones ?? detalle.Observaciones ?? '';
-          this.solicitudSeleccionada = {
-            ...this.solicitudSeleccionada,
+          Object.assign(this.solicitudSeleccionada, {
             fechaInicio: detalle.fechaInicio,
             fechaFin: detalle.fechaFin,
             fechaCierre: detalle.fechaCierre,
             proveedor: detalle.proveedor,
             observaciones: detalle.observaciones ?? detalle.Observaciones ?? ''
-          };
+          });
         }
       },
       error: (error) => console.error('Error al consultar la solicitud:', error)
@@ -1958,31 +1963,7 @@ export class MantenimientoEstados implements OnInit {
   cargarFotosDesdeS3(idSolicitud: number, contexto: 'detalle' | 'proveedores' | 'asignacion' | 'ejecucion' | 'contabilidad' | 'finalizacion' | 'verFinalizado') {
     const ruta = `SM${idSolicitud}`;
 
-    let solicitudActual: SolicitudMantenimiento | null = null;
-
-    switch (contexto) {
-      case 'detalle':
-        solicitudActual = this.solicitudSeleccionada;
-        break;
-      case 'proveedores':
-        solicitudActual = this.solicitudProveedores;
-        break;
-      case 'asignacion':
-        solicitudActual = this.solicitudAsignacion;
-        break;
-      case 'ejecucion':
-        solicitudActual = this.solicitudEjecucion;
-        break;
-      case 'contabilidad':
-        solicitudActual = this.solicitudContabilidad;
-        break;
-      case 'finalizacion':
-        solicitudActual = this.solicitudFinalizacion;
-        break;
-      case 'verFinalizado':
-        solicitudActual = this.solicitudVerFinalizado;
-        break;
-    }
+    const solicitudActual = this.obtenerSolicitudPorContexto(contexto);
 
     if (!solicitudActual) return;
 
@@ -1991,27 +1972,31 @@ export class MantenimientoEstados implements OnInit {
 
     this.apiService.listarArchivos(ruta).subscribe({
       next: (response) => {
+        // El detalle de la solicitud puede reemplazar el objeto seleccionado mientras
+        // esta petición sigue en curso. Recuperarlo otra vez evita escribir las fotos
+        // en una referencia antigua que ya no está enlazada al diálogo.
+        const solicitudDestino = this.obtenerSolicitudPorContexto(contexto);
+        if (!solicitudDestino || solicitudDestino.id !== idSolicitud) return;
 
-        if (solicitudActual) {
-          solicitudActual.cargandoFotos = false;
-
-          if (Array.isArray(response)) {
-            solicitudActual.fotos = response.map((foto: any) => ({
-              id: foto.key,
-              url: foto.url,
-              nombre: foto.name,
-              size: foto.size,
-              lastModified: foto.lastModified
-            }));
-
-          } else {
-            console.warn('⚠️ Respuesta no es un array');
-          }
+        solicitudDestino.cargandoFotos = false;
+        if (!Array.isArray(response)) {
+          solicitudDestino.fotos = [];
+          console.warn('⚠️ La respuesta de archivos no es un array');
+          return;
         }
+
+        solicitudDestino.fotos = response.map((foto: any) => ({
+          id: foto.key,
+          url: foto.url,
+          nombre: foto.name,
+          size: foto.size,
+          lastModified: foto.lastModified
+        }));
       },
       error: (error) => {
-        if (solicitudActual) {
-          solicitudActual.cargandoFotos = false;
+        const solicitudDestino = this.obtenerSolicitudPorContexto(contexto);
+        if (solicitudDestino?.id === idSolicitud) {
+          solicitudDestino.cargandoFotos = false;
         }
 
         console.error('❌ Error al cargar fotos desde S3:', error);
@@ -2026,6 +2011,22 @@ export class MantenimientoEstados implements OnInit {
         }
       }
     });
+  }
+
+  private obtenerSolicitudPorContexto(
+    contexto: 'detalle' | 'proveedores' | 'asignacion' | 'ejecucion' | 'contabilidad' | 'finalizacion' | 'verFinalizado'
+  ): SolicitudMantenimiento | null {
+    const solicitudesPorContexto = {
+      detalle: this.solicitudSeleccionada,
+      proveedores: this.solicitudProveedores,
+      asignacion: this.solicitudAsignacion,
+      ejecucion: this.solicitudEjecucion,
+      contabilidad: this.solicitudContabilidad,
+      finalizacion: this.solicitudFinalizacion,
+      verFinalizado: this.solicitudVerFinalizado
+    };
+
+    return solicitudesPorContexto[contexto];
   }
 
   formatBytes(bytes?: number): string {
