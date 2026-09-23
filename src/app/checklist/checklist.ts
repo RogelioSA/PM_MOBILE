@@ -1,17 +1,20 @@
 // checklist.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Menu } from '../menu/menu';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
-import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { TableModule } from 'primeng/table';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TextareaModule } from 'primeng/textarea';
-import { RadioButtonModule } from 'primeng/radiobutton';
+import { MessageService } from 'primeng/api';
+import { ZXingScannerModule } from '@zxing/ngx-scanner';
+import { BarcodeFormat } from '@zxing/library';
 import { Api, ChecklistPDI } from '../services/api';
 import { Master } from '../services/master';
 
@@ -23,7 +26,7 @@ interface Opcion {
 interface EquipamientoItem {
   codigo: string;
   descripcion: string;
-  valor: string | null;
+  valor: 'SI' | 'NO' | 'N/A' | null;
 }
 
 interface FotoChecklist {
@@ -45,10 +48,12 @@ interface FotoChecklist {
     SelectModule,
     ButtonModule,
     ToastModule,
+    DialogModule,
     InputTextModule,
+    TableModule,
     DatePickerModule,
-    RadioButtonModule,
-    TextareaModule
+    TextareaModule,
+    ZXingScannerModule
   ],
   providers: [MessageService],
   templateUrl: './checklist.html',
@@ -61,7 +66,7 @@ export class Checklist implements OnInit {
   vehiculoValidado: boolean = false;
   validandoVehiculo: boolean = false;
 
-  // Opciones para selects
+  // Catálogos para combos
   sucursales: Opcion[] = [];
   almacenes: Opcion[] = [];
   marcas: Opcion[] = [];
@@ -142,7 +147,8 @@ export class Checklist implements OnInit {
     private messageService: MessageService,
     private api: Api,
     private master: Master,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -273,9 +279,10 @@ export class Checklist implements OnInit {
         if (response?.success && Array.isArray(response.data)) {
           this.sucursales = response.data.map((item: any) => ({
             label: item.descripcion,
-            value: item.idSucursal
+            value: String(item.idSucursal ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Error al cargar sucursales', error);
@@ -285,6 +292,7 @@ export class Checklist implements OnInit {
           detail: 'No se pudieron cargar las sucursales',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -298,9 +306,10 @@ export class Checklist implements OnInit {
         if (Array.isArray(response)) {
           this.almacenes = response.map((item: any) => ({
             label: item.nombre,
-            value: item.id
+            value: String(item.id ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Error al cargar almacenes', error);
@@ -310,6 +319,7 @@ export class Checklist implements OnInit {
           detail: 'No se pudieron cargar los almacenes',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -320,9 +330,10 @@ export class Checklist implements OnInit {
         if (Array.isArray(response.data)) {
           this.marcas = response.data.map((item: any) => ({
             label: item.name,
-            value: item.idBrand
+            value: String(item.idBrand ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Error al cargar marcas', error);
@@ -332,6 +343,7 @@ export class Checklist implements OnInit {
           detail: 'No se pudieron cargar las marcas',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -345,9 +357,10 @@ export class Checklist implements OnInit {
         if (Array.isArray(response.data)) {
           this.modelos = response.data.map((item: any) => ({
             label: item.name,
-            value: item.idModel
+            value: String(item.idModel ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Error al cargar modelos', error);
@@ -357,6 +370,7 @@ export class Checklist implements OnInit {
           detail: 'No se pudieron cargar los modelos',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -367,9 +381,10 @@ export class Checklist implements OnInit {
         if (Array.isArray(response.data)) {
           this.colores = response.data.map((item: any) => ({
             label: item.name,
-            value: item.idColor
+            value: String(item.idColor ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Error al cargar colores', error);
@@ -379,6 +394,7 @@ export class Checklist implements OnInit {
           detail: 'No se pudieron cargar los colores',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }

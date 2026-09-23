@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { forkJoin, Observable, switchMap } from 'rxjs';
@@ -75,7 +75,8 @@ export class ValidacionJustificaciones implements OnInit {
 
   constructor(
     private apiService: Api,
-    private authService: Auth
+    private authService: Auth,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -108,6 +109,7 @@ export class ValidacionJustificaciones implements OnInit {
 
   cargarMotivosJustificacion(): void {
     this.cargandoMotivos = true;
+    this.cdr.markForCheck();
 
     this.apiService.listarMotivosJustificacion().subscribe({
       next: (response) => {
@@ -118,11 +120,13 @@ export class ValidacionJustificaciones implements OnInit {
             : [];
         this.motivos = datos;
         this.cargandoMotivos = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.motivos = [];
         this.mensajeError = error?.error?.message ?? 'No se pudieron cargar los motivos de justificación.';
         this.cargandoMotivos = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -132,12 +136,14 @@ export class ValidacionJustificaciones implements OnInit {
 
     if (!nroDocumento) {
       this.mensajeError = 'No se encontró el documento del usuario autenticado.';
+      this.cdr.markForCheck();
       return;
     }
 
     const { desde, hasta } = this.rangoSemanaActual;
     this.cargando = true;
     this.mensajeError = '';
+    this.cdr.markForCheck();
 
     this.apiService.listarReporteMarcacionesGeneral(
       this.formatearFechaIso(desde),
@@ -163,11 +169,13 @@ export class ValidacionJustificaciones implements OnInit {
               .filter((item: JustificacionMarcacion) => item.justificacion.trim().toLowerCase() !== 'vacaciones')
           : [];
         this.cargando = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.mensajeError = error?.error?.message ?? 'No se pudieron cargar las marcaciones pendientes.';
         this.justificaciones = [];
         this.cargando = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -209,6 +217,7 @@ export class ValidacionJustificaciones implements OnInit {
     const carpetaFecha = fechaDesde.replaceAll('-', '');
     const carpeta = `${nroDocumento}/${carpetaFecha}`;
     this.cargandoSustentos = true;
+    this.cdr.markForCheck();
 
     this.apiService.listarArchivosPersonal(carpeta).subscribe({
       next: (response) => {
@@ -222,12 +231,14 @@ export class ValidacionJustificaciones implements OnInit {
           };
         });
         this.cargandoSustentos = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.archivosSustento = [];
         this.cargandoSustentos = false;
         this.mensajeErrorSustentos = error?.error?.message
           ?? 'No se pudieron consultar los sustentos digitales.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -250,11 +261,13 @@ export class ValidacionJustificaciones implements OnInit {
     const nroDocumento = this.authService.getUsuario();
     if (!nroDocumento) {
       this.mensajeError = 'No se encontró el documento del usuario autenticado.';
+      this.cdr.markForCheck();
       return;
     }
 
     if (this.formulario.fechaHasta < this.formulario.fechaDesde) {
       this.mensajeError = 'La fecha hasta no puede ser anterior a la fecha desde.';
+      this.cdr.markForCheck();
       return;
     }
 
@@ -280,6 +293,7 @@ export class ValidacionJustificaciones implements OnInit {
     const carpeta = `${nroDocumento}/${carpetaFecha}`;
     this.subiendoSustentos = true;
     this.mensajeError = '';
+    this.cdr.markForCheck();
 
     const guardar$: Observable<any> = sustentos.length
       ? forkJoin(
@@ -297,10 +311,12 @@ export class ValidacionJustificaciones implements OnInit {
       next: () => {
         this.subiendoSustentos = false;
         this.finalizarRegistroJustificacion(fechaRegistro);
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.subiendoSustentos = false;
         this.mensajeError = error?.error?.message ?? 'No se pudo guardar la justificación.';
+        this.cdr.markForCheck();
       }
     });
   }

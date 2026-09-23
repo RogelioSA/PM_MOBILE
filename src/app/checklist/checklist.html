@@ -48,16 +48,15 @@
           [readonly]="vehiculoValidado"
           (keyup.enter)="validarVehiculo()" />
         
-        <button 
-          pButton 
+        <p-button 
           type="button" 
           [label]="vehiculoValidado ? 'Validado' : 'Validar'" 
           [icon]="validandoVehiculo ? 'pi pi-spin pi-spinner' : (vehiculoValidado ? 'pi pi-check' : 'pi pi-search')"
-          (click)="validarVehiculo()" 
+          (onClick)="validarVehiculo()" 
           [disabled]="validandoVehiculo || vehiculoValidado || !nroStock"
           [severity]="vehiculoValidado ? 'success' : 'primary'"
-          class="h-11 whitespace-nowrap">
-        </button>
+          styleClass="h-11 whitespace-nowrap">
+        </p-button>
       </div>
       <small *ngIf="vehiculoValidado" class="text-green-600 dark:text-green-400 flex items-center gap-1">
         <i class="pi pi-check-circle"></i>

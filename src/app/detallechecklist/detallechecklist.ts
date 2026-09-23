@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
@@ -127,7 +127,8 @@ export class Detallechecklist implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private api: Api,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -144,11 +145,13 @@ export class Detallechecklist implements OnInit {
         life: 3000
       });
       this.cargando = false;
+      this.cdr.markForCheck();
     }
   }
 
   cargarDetalle(idRecepcionVehiculo: number) {
     this.cargando = true;
+    this.cdr.markForCheck();
 
     this.api.obtenerChecklistPDI(idRecepcionVehiculo).subscribe({
       next: (response: any) => {
@@ -186,6 +189,7 @@ export class Detallechecklist implements OnInit {
         }
 
         this.cargando = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('❌ Error al cargar checklist:', error);
@@ -198,12 +202,14 @@ export class Detallechecklist implements OnInit {
         });
 
         this.cargando = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
   cargarFotos(stock: string): void {
     this.cargandoFotos = true;
+    this.cdr.markForCheck();
 
     this.api.listarArchivosChecklist(stock).subscribe({
       next: (response) => {
@@ -228,6 +234,7 @@ export class Detallechecklist implements OnInit {
         }
 
         this.cargandoFotos = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('❌ Error al cargar fotos:', error);
@@ -241,6 +248,7 @@ export class Detallechecklist implements OnInit {
 
         this.fotos = [];
         this.cargandoFotos = false;
+        this.cdr.markForCheck();
       }
     });
   }

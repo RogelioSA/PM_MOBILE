@@ -1,5 +1,4 @@
-// listarchecklist.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -145,7 +144,8 @@ export class Listarchecklist implements OnInit {
   constructor(
     private api: Api,
     private master: Master,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -168,10 +168,11 @@ export class Listarchecklist implements OnInit {
             { label: 'Todas las sucursales', value: '' },
             ...response.data.map((item: any) => ({
               label: item.descripcion,
-              value: item.idSucursal
+              value: String(item.idSucursal ?? '')
             }))
           ];
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.messageService.add({
@@ -180,6 +181,7 @@ export class Listarchecklist implements OnInit {
           detail: 'No se pudieron cargar las sucursales',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -188,6 +190,7 @@ export class Listarchecklist implements OnInit {
     if (!idSucursal) {
       this.almacenes = [{ label: 'Todos los almacenes', value: '' }];
       this.almacenSeleccionado = '';
+      this.cdr.markForCheck();
       return;
     }
 
@@ -198,11 +201,12 @@ export class Listarchecklist implements OnInit {
             { label: 'Todos los almacenes', value: '' },
             ...response.map((item: any) => ({
               label: item.nombre,
-              value: item.id
+              value: String(item.id ?? '')
             }))
           ];
           this.almacenSeleccionado = '';
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.messageService.add({
@@ -211,6 +215,7 @@ export class Listarchecklist implements OnInit {
           detail: 'No se pudieron cargar los almacenes',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -254,6 +259,7 @@ export class Listarchecklist implements OnInit {
 
         this.aplicarFiltros();
         this.cargando = false;
+        this.cdr.markForCheck();
 
         if (this.checklists.length === 0) {
           this.messageService.add({
@@ -274,6 +280,7 @@ export class Listarchecklist implements OnInit {
         this.checklists = [];
         this.checklistsFiltrados = [];
         this.cargando = false;
+        this.cdr.markForCheck();
       }
     });
   }

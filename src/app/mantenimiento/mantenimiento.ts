@@ -1,5 +1,5 @@
 // mantenimiento.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -123,6 +123,13 @@ export class Mantenimiento implements OnInit {
     { label: 'Instalación', value: '4' }
   ];
 
+  tiposForm: any[] = [
+    { label: 'Correctivo', value: '1' },
+    { label: 'Preventivo', value: '2' },
+    { label: 'Predictivo', value: '3' },
+    { label: 'Instalación', value: '4' }
+  ];
+
   sucursales: any[] = [];
 
   // Filtros
@@ -157,7 +164,8 @@ export class Mantenimiento implements OnInit {
     private messageService: MessageService,
     private apiService: Api,
     private masterService: Master,
-    private cookieService: CookieService
+    private cookieService: CookieService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -204,9 +212,10 @@ export class Mantenimiento implements OnInit {
         if (response.success && response.data) {
           this.sucursales = response.data.map((suc: any) => ({
             label: suc.descripcion,
-            value: suc.idSucursal
+            value: String(suc.idSucursal ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Error al cargar sucursales:', error);
@@ -216,6 +225,7 @@ export class Mantenimiento implements OnInit {
           detail: 'No se pudieron cargar las sucursales',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -292,6 +302,7 @@ export class Mantenimiento implements OnInit {
           console.warn('No hay datos en la respuesta');
           this.solicitudes = [];
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.cargando = false;
@@ -304,6 +315,7 @@ export class Mantenimiento implements OnInit {
           detail: 'No se pudieron cargar las solicitudes',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }

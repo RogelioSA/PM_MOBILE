@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { Api } from '../services/api';
 import { Auth } from '../services/auth';
@@ -46,7 +46,8 @@ export class PersonalMarcacion implements OnInit {
 
   constructor(
     private apiService: Api,
-    private authService: Auth
+    private authService: Auth,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -109,11 +110,13 @@ export class PersonalMarcacion implements OnInit {
 
     if (!nroDocumento) {
       this.mensajeError = 'No se encontró el documento del usuario autenticado.';
+      this.cdr.markForCheck();
       return;
     }
 
     this.cargando = true;
     this.mensajeError = '';
+    this.cdr.markForCheck();
 
     this.apiService.listarReporteMarcacionesGeneral(
       this.fechaDesde,
@@ -126,11 +129,13 @@ export class PersonalMarcacion implements OnInit {
           ? [...response.data].sort((a, b) => this.obtenerTiempoFecha(b.fecha) - this.obtenerTiempoFecha(a.fecha))
           : [];
         this.cargando = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.mensajeError = error?.error?.message ?? 'No se pudieron cargar las marcaciones.';
         this.registrosAsistencia = [];
         this.cargando = false;
+        this.cdr.markForCheck();
       }
     });
   }

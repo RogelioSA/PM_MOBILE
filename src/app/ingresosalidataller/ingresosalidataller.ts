@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Menu } from '../menu/menu';
@@ -39,7 +39,8 @@ export class Ingresosalidataller implements OnInit {
   constructor(
     private fb: FormBuilder,
     private master: Master,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -73,9 +74,10 @@ export class Ingresosalidataller implements OnInit {
         if (response?.success && Array.isArray(response.data)) {
           this.sucursales = response.data.map((item: any) => ({
             label: item.descripcion,
-            value: item.idSucursal
+            value: String(item.idSucursal ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: () => {
         this.messageService.add({
@@ -84,6 +86,7 @@ export class Ingresosalidataller implements OnInit {
           detail: 'No se pudieron cargar las sucursales',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -94,9 +97,10 @@ export class Ingresosalidataller implements OnInit {
         if (Array.isArray(response)) {
           this.almacenes = response.map((item: any) => ({
             label: item.nombre,
-            value: item.id
+            value: String(item.id ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: () => {
         this.messageService.add({
@@ -105,6 +109,7 @@ export class Ingresosalidataller implements OnInit {
           detail: 'No se pudieron cargar los almacenes',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }

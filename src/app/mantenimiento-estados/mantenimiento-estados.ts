@@ -1,9 +1,9 @@
 // mantenimiento-estados.ts
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
+import { Button, ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
@@ -18,7 +18,7 @@ import { Menu } from '../menu/menu';
 import { Api } from '../services/api';
 import { Master } from '../services/master';
 import { CookieService } from 'ngx-cookie-service';
-import { FileUploadModule } from 'primeng/fileupload';
+import { FileUpload, FileUploadModule } from 'primeng/fileupload';
 
 
 interface SolicitudMantenimiento {
@@ -58,10 +58,21 @@ interface FotoMantenimiento {
 
 interface PresupuestoProveedor {
   idclieprov: string;
-  razon_social: string;
+  razon_social?: string;
+  nombre?: string;
   monto: number;
-  editando?: boolean;
+  moneda?: string;
+  tiempoEstimado?: string;
+  observaciones?: string;
+  seleccionado?: boolean;
+  documentosRequeridos?: boolean;
+  ocSeleccionadas?: string[];
   pdfPresupuesto?: File | null;
+  nombreArchivoPDF?: string;
+  urlArchivoPDF?: string;
+  tieneAdjuntoExistente?: boolean;
+  cargandoPDF?: boolean;
+  editando?: boolean;
   urlPdfPresupuesto?: string;
   tienePdf?: boolean;
   esNuevo?: boolean;
@@ -96,6 +107,7 @@ interface DocumentoSeleccionado {
     CommonModule,
     FormsModule,
     TableModule,
+    Button,
     ButtonModule,
     InputTextModule,
     InputNumberModule,
@@ -107,6 +119,7 @@ interface DocumentoSeleccionado {
     CheckboxModule,
     DatePickerModule,
     Menu,
+    FileUpload,
     FileUploadModule,
   ],
   templateUrl: './mantenimiento-estados.html',
@@ -235,7 +248,8 @@ export class MantenimientoEstados implements OnInit {
     private messageService: MessageService,
     private apiService: Api,
     private masterService: Master,
-    private cookieService: CookieService
+    private cookieService: CookieService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -271,9 +285,10 @@ export class MantenimientoEstados implements OnInit {
         if (response.success && response.data) {
           this.sucursales = response.data.map((suc: any) => ({
             label: suc.descripcion,
-            value: suc.idSucursal
+            value: String(suc.idSucursal ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Error al cargar sucursales:', error);
@@ -283,6 +298,7 @@ export class MantenimientoEstados implements OnInit {
           detail: 'No se pudieron cargar las sucursales',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -408,6 +424,7 @@ export class MantenimientoEstados implements OnInit {
           console.warn('No hay datos en la respuesta');
           this.solicitudes = [];
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.cargando = false;
@@ -419,6 +436,7 @@ export class MantenimientoEstados implements OnInit {
           detail: 'No se pudieron cargar las solicitudes',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }

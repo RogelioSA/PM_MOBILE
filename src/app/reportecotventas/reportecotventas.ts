@@ -1,5 +1,5 @@
 // reportecotventas.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PDFDocument, StandardFonts, rgb, PageSizes } from 'pdf-lib';
@@ -12,7 +12,7 @@ import { MessageService } from 'primeng/api';
 import { Menu } from '../menu/menu';
 import { Api } from '../services/api';
 import { Master } from '../services/master';
-import { AutoCompleteModule } from 'primeng/autocomplete';
+import { AutoComplete, AutoCompleteModule } from 'primeng/autocomplete';
 
 export interface DetalleCotizacion {
   idProducto:       string;
@@ -57,6 +57,7 @@ export interface CabeceraCotizacion {
     ToastModule,
     TooltipModule,
     Menu,
+    AutoComplete,
     AutoCompleteModule
   ],
   templateUrl: './reportecotventas.html',
@@ -98,7 +99,8 @@ export class Reportecotventas implements OnInit {
   constructor(
     private messageService: MessageService,
     private apiService:     Api,
-    private masterService:  Master
+    private masterService:  Master,
+    private cdr:            ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -156,9 +158,15 @@ export class Reportecotventas implements OnInit {
           label: (s.descripcion ?? '').trim(),
           value: String(s.idSucursal ?? '')
         }));
-        this.cabecera.idSucursal = '';
+        if (this.sucursales.length > 0 && !this.cabecera.idSucursal) {
+          this.cabecera.idSucursal = this.sucursales[0].value;
+          this.cabecera.nombreSucursal = this.sucursales[0].label;
+        }
+        this.cdr.markForCheck();
       },
-      error: () => {}
+      error: () => {
+        this.cdr.markForCheck();
+      }
     });
   }
 

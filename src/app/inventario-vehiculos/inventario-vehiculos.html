@@ -187,9 +187,9 @@
         icon="pi pi-refresh" label="Reiniciar" (click)="reiniciar()"></button>
       <button *ngIf="!soloLectura" pButton type="button" severity="success"
         icon="pi pi-camera" label="Nuevo escaneo" (click)="nuevoScaneo()"></button>
-      <button *ngIf="!soloLectura && cabeceraEditando" pButton type="button" icon="pi pi-save"
+      <p-button *ngIf="!soloLectura && cabeceraEditando" type="button" icon="pi pi-save"
         [label]="modoFormulario === 'editar' ? 'Actualizar' : 'Guardar'"
-        [loading]="guardando" (click)="guardar()"></button>
+        [loading]="guardando" (onClick)="guardar()"></p-button>
     </div>
   </div>
 </p-dialog>

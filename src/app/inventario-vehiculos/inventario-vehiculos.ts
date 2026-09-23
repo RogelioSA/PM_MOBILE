@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { BarcodeFormat } from '@zxing/library';
 import { ZXingScannerModule } from '@zxing/ngx-scanner';
-import { ButtonModule } from 'primeng/button';
+import { Button, ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -41,6 +41,7 @@ type ModoFormulario = 'crear' | 'editar' | 'ver';
     FormsModule,
     Menu,
     SelectModule,
+    Button,
     ButtonModule,
     DialogModule,
     ConfirmDialogModule,
@@ -96,7 +97,8 @@ export class InventarioVehiculos implements OnInit {
     private api: Api,
     private master: Master,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -110,7 +112,7 @@ export class InventarioVehiculos implements OnInit {
         const data = response?.success && Array.isArray(response.data) ? response.data : [];
         this.sucursales = data.map((item: any) => ({
           label: item.descripcion,
-          value: item.idSucursal
+          value: String(item.idSucursal ?? '')
         }));
 
         if (this.sucursales.length > 0) {
@@ -126,8 +128,12 @@ export class InventarioVehiculos implements OnInit {
           this.sucursalSeleccionada = sucursalGuardada;
           this.cargarAlmacenesFormulario(sucursalGuardada, almacenGuardado);
         }
+        this.cdr.markForCheck();
       },
-      error: () => this.mostrarError('No se pudieron cargar las sucursales')
+      error: () => {
+        this.mostrarError('No se pudieron cargar las sucursales');
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -169,6 +175,7 @@ export class InventarioVehiculos implements OnInit {
 
   buscar(): void {
     this.cargando = true;
+    this.cdr.markForCheck();
     this.cargarSaldoAlmacen();
     this.api.listarInventariosVehiculos({
       fecha: this.fechaFiltro ? this.formatearFecha(this.fechaFiltro) : undefined,
@@ -185,11 +192,13 @@ export class InventarioVehiculos implements OnInit {
         this.inventarios = data.map((item: any) => this.normalizarInventario(item));
         await this.resolverDescripcionesInventarios();
         this.cargando = false;
+        this.cdr.markForCheck();
       },
       error: error => {
         this.inventarios = [];
         this.cargando = false;
         this.mostrarError(error?.error?.message || 'No se pudieron cargar los inventarios');
+        this.cdr.markForCheck();
       }
     });
   }
@@ -208,10 +217,13 @@ export class InventarioVehiculos implements OnInit {
   private cargarSaldoAlmacen(): void {
     if (!this.fechaFiltro || !this.sucursalFiltro || !this.almacenFiltro) {
       this.saldoAlmacen = [];
+      this.cargandoSaldo = false;
+      this.cdr.markForCheck();
       return;
     }
 
     this.cargandoSaldo = true;
+    this.cdr.markForCheck();
     this.api.listarSaldoAlmacenVehiculos(
       this.formatearFechaSaldo(this.fechaFiltro),
       this.sucursalFiltro,
@@ -232,11 +244,13 @@ export class InventarioVehiculos implements OnInit {
           cantidad: Number(item.cantidad ?? 0)
         }));
         this.cargandoSaldo = false;
+        this.cdr.markForCheck();
       },
       error: error => {
         this.saldoAlmacen = [];
         this.cargandoSaldo = false;
         this.mostrarError(error?.error?.message || 'No se pudo cargar el saldo por almacén');
+        this.cdr.markForCheck();
       }
     });
   }
@@ -476,6 +490,7 @@ export class InventarioVehiculos implements OnInit {
       this.mostrarError(error?.error?.message || 'No se pudo eliminar el inventario');
     } finally {
       this.eliminandoId = null;
+      this.cdr.markForCheck();
     }
   }
 
@@ -534,6 +549,7 @@ export class InventarioVehiculos implements OnInit {
     if (this.idInventario === null || this.idInventario === '') return;
 
     this.cargandoVehiculos = true;
+    this.cdr.markForCheck();
     try {
       const response: any = await firstValueFrom(
         this.api.listarVehiculosInventario(this.idInventario, '001')
@@ -556,6 +572,7 @@ export class InventarioVehiculos implements OnInit {
       this.mostrarError(error?.error?.message || 'No se pudieron cargar los vehículos del inventario');
     } finally {
       this.cargandoVehiculos = false;
+      this.cdr.markForCheck();
     }
   }
 
@@ -595,8 +612,12 @@ export class InventarioVehiculos implements OnInit {
           this.almacenSeleccionado = this.almacenesFormulario[0].value;
         }
         if (this.almacenSeleccionado) localStorage.setItem('cbAlmacen', this.almacenSeleccionado);
+        this.cdr.markForCheck();
       },
-      error: () => this.mostrarError('No se pudieron cargar los almacenes')
+      error: () => {
+        this.mostrarError('No se pudieron cargar los almacenes');
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -613,10 +634,12 @@ export class InventarioVehiculos implements OnInit {
           this.almacenFiltro = this.almacenesFiltro[0].value;
         }
         if (buscarAlFinal) this.buscar();
+        this.cdr.markForCheck();
       },
       error: () => {
         this.mostrarError('No se pudieron cargar los almacenes');
         if (buscarAlFinal) this.buscar();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -721,7 +744,7 @@ export class InventarioVehiculos implements OnInit {
     const data = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [];
     return data.map((item: any) => ({
       label: item.nombre ?? item.descripcion,
-      value: item.id ?? item.idAlmacen
+      value: String(item.id ?? item.idAlmacen ?? '')
     }));
   }
 

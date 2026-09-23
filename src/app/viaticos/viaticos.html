@@ -117,14 +117,14 @@
 
                     <!-- Botones -->
                     <div class="space-y-2">
-                        <button pButton type="button" 
+                        <p-button type="button" 
                             [label]="solicitud.estado === 'Borrador' ? 'Enviar solicitud' : 'Ver viático'"
                             [icon]="solicitud.estado === 'Borrador' ? 'pi pi-send' : 'pi pi-eye'"
-                            (click)="solicitud.estado === 'Borrador' ? abrirModalEnvio(solicitud) : verSolicitud(solicitud)"
-                            class="w-full h-10 text-sm"
+                            (onClick)="solicitud.estado === 'Borrador' ? abrirModalEnvio(solicitud) : verSolicitud(solicitud)"
+                            styleClass="w-full h-10 text-sm"
                             [class.bg-teal-600]="solicitud.estado === 'Borrador'"
                             [class.hover:bg-teal-700]="solicitud.estado === 'Borrador'"
-                            [class.border-teal-600]="solicitud.estado === 'Borrador'"></button>
+                            [class.border-teal-600]="solicitud.estado === 'Borrador'"></p-button>
                         
                         <button pButton type="button" label="Editar solicitud" icon="pi pi-pencil"
                             (click)="editarSolicitud(solicitud)" severity="secondary"
@@ -476,11 +476,11 @@
             <button pButton type="button" label="Volver" icon="pi pi-arrow-left" 
                 (click)="volver()" severity="secondary" class="h-11" *ngIf="pasoActual > 0"></button>
             
-            <button pButton type="button" 
+            <p-button type="button" 
                 [label]="pasoActual === 2 ? 'Crear solicitud' : 'Continuar'" 
                 [icon]="pasoActual === 2 ? '' : 'pi pi-arrow-right'" 
-                (click)="pasoActual === 2 ? crearSolicitud() : siguiente()" 
-                class="h-11 bg-teal-600 hover:bg-teal-700 border-teal-600"></button>
+                (onClick)="pasoActual === 2 ? crearSolicitud() : siguiente()" 
+                styleClass="h-11 bg-teal-600 hover:bg-teal-700 border-teal-600"></p-button>
         </div>
     </div>
 

@@ -29,18 +29,37 @@
 
 /* Estilos globales para el drawer */
 ::ng-deep .p-drawer {
-  background: var(--surface-0);
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+::ng-deep .dark .p-drawer,
+::ng-deep html.dark .p-drawer {
+  background-color: #1e293b !important; /* slate-800 */
+  color: #f8fafc !important;
 }
 
 ::ng-deep .p-drawer .p-drawer-header {
-  background: var(--surface-0);
-  border-bottom: 1px solid var(--surface-border);
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
   padding: 1.25rem;
+}
+
+::ng-deep .dark .p-drawer .p-drawer-header,
+::ng-deep html.dark .p-drawer .p-drawer-header {
+  background-color: #1e293b !important;
+  border-bottom: 1px solid #334155 !important;
 }
 
 ::ng-deep .p-drawer .p-drawer-content {
   padding: 0;
-  background: var(--surface-0);
+  background-color: #ffffff !important;
+}
+
+::ng-deep .dark .p-drawer .p-drawer-content,
+::ng-deep html.dark .p-drawer .p-drawer-content {
+  background-color: #1e293b !important;
 }
 
 /* Estilos para los botones del menú */
