@@ -55,6 +55,13 @@ export class HomePersonal implements OnInit {
       color: 'warning'
     },
     {
+      titulo: 'Solicitud de vacaciones',
+      descripcion: 'Consulta y registra tus solicitudes de vacaciones.',
+      icono: 'pi pi-sun',
+      ruta: '/misVacaciones',
+      color: 'success'
+    },
+    {
       titulo: 'Validación Justificaciones',
       descripcion: 'Revisa y valida las justificaciones registradas por el personal.',
       icono: 'pi pi-verified',

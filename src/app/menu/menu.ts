@@ -29,6 +29,7 @@ const ALL_ITEMS: MenuItemExtended[] = [
   { label: 'Gestor Mantenimiento',            icon: 'pi pi-sliders-h',              route: 'mantenimientoestados'},
   { label: 'Rendición de gastos',             icon: 'pi pi-dollar',                 route: 'rendicion-gastos'    },
   { label: 'Personal',                        icon: 'pi pi-id-card',                route: 'personal'            },
+  { label: 'Vacaciones de Personal',          icon: 'pi pi-calendar',               route: 'VacacionesPersonal', permission: '18' },
   {
     label: 'Proformas Repuestos',
     icon: 'pi pi-file-edit',
@@ -95,11 +96,13 @@ export class Menu implements OnInit {
           // La API devuelve el nombre del permiso, que no siempre coincide con la ruta.
           const rutasPermitidas: string[] = response.data
             .map((m: any) => String(m.nombre ?? '').trim().toLowerCase());
+          const modulosPermitidos: string[] = response.data
+            .map((m: any) => String(m.idModulo ?? m.id ?? m.codigo ?? '').trim());
 
           this.items = ALL_ITEMS
             .filter(item => {
               const permiso = item.permission ?? item.route ?? '';
-              return rutasPermitidas.includes(permiso.toLowerCase());
+              return rutasPermitidas.includes(permiso.toLowerCase()) || modulosPermitidos.includes(permiso);
             })
             .map(item => ({
               ...item,
