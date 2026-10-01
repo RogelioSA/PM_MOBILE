@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { forkJoin, Observable, switchMap } from 'rxjs';
@@ -8,6 +8,7 @@ import { Auth } from '../services/auth';
 
 interface MarcacionPersonal {
   sucursal: string;
+  idcodigogeneral: string;
   empleado: string;
   fecha: string;
   ingreso: string | null;
@@ -43,13 +44,13 @@ interface ArchivoSustento {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './validacionJustificaciones.html',
-  styleUrl: './validacionJustificaciones.css'
+  styleUrl: './validacionJustificaciones.css',
 })
 export class ValidacionJustificaciones implements OnInit {
   private readonly estadosJustificacion: Record<string, string> = {
     RE: 'REGULARIZAR',
     PE: 'PENDIENTE APROBACIÓN',
-    AP: 'APROBADO'
+    AP: 'APROBADO',
   };
 
   fechaBase = new Date();
@@ -65,18 +66,20 @@ export class ValidacionJustificaciones implements OnInit {
   justificaciones: JustificacionMarcacion[] = [];
   motivos: MotivoJustificacion[] = [];
   archivosSustento: ArchivoSustento[] = [];
+  busquedaGeneral = '';
+  filtroFecha = '';
+  filtroEstado = '';
   formulario = {
     motivo: '',
     fechaDesde: '',
     fechaHasta: '',
     observaciones: '',
-    sustentos: null as FileList | null
+    sustentos: null as FileList | null,
   };
 
   constructor(
     private apiService: Api,
     private authService: Auth,
-    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -98,18 +101,40 @@ export class ValidacionJustificaciones implements OnInit {
     return `${this.formatearFechaIso(desde).replaceAll('-', '/')} al ${this.formatearFechaIso(hasta).replaceAll('-', '/')}`;
   }
 
+  get justificacionesFiltradas(): JustificacionMarcacion[] {
+    const busqueda = this.normalizarTexto(this.busquedaGeneral);
+
+    return this.justificaciones.filter((item) => {
+      const coincideBusqueda =
+        !busqueda ||
+        [item.sucursal, item.empleado, item.justificacion, item.estado].some((valor) =>
+          this.normalizarTexto(valor).includes(busqueda),
+        );
+      const coincideFecha =
+        !this.filtroFecha || this.formatearFechaIsoDesdeRegistro(item.fecha) === this.filtroFecha;
+      const coincideEstado = !this.filtroEstado || item.estado === this.filtroEstado;
+
+      return coincideBusqueda && coincideFecha && coincideEstado;
+    });
+  }
+
+  get estadosDisponibles(): string[] {
+    return [...new Set(this.justificaciones.map((item) => item.estado))].sort((a, b) =>
+      a.localeCompare(b, 'es'),
+    );
+  }
+
   cambiarSemana(valor: number): void {
     this.fechaBase = new Date(
       this.fechaBase.getFullYear(),
       this.fechaBase.getMonth(),
-      this.fechaBase.getDate() + (valor * 7)
+      this.fechaBase.getDate() + valor * 7,
     );
     this.cargarMarcacionesPendientes();
   }
 
   cargarMotivosJustificacion(): void {
     this.cargandoMotivos = true;
-    this.cdr.markForCheck();
 
     this.apiService.listarMotivosJustificacion().subscribe({
       next: (response) => {
@@ -120,14 +145,13 @@ export class ValidacionJustificaciones implements OnInit {
             : [];
         this.motivos = datos;
         this.cargandoMotivos = false;
-        this.cdr.markForCheck();
       },
       error: (error) => {
         this.motivos = [];
-        this.mensajeError = error?.error?.message ?? 'No se pudieron cargar los motivos de justificación.';
+        this.mensajeError =
+          error?.error?.message ?? 'No se pudieron cargar los motivos de justificación.';
         this.cargandoMotivos = false;
-        this.cdr.markForCheck();
-      }
+      },
     });
   }
 
@@ -136,48 +160,59 @@ export class ValidacionJustificaciones implements OnInit {
 
     if (!nroDocumento) {
       this.mensajeError = 'No se encontró el documento del usuario autenticado.';
-      this.cdr.markForCheck();
       return;
     }
 
     const { desde, hasta } = this.rangoSemanaActual;
     this.cargando = true;
     this.mensajeError = '';
-    this.cdr.markForCheck();
 
-    this.apiService.listarReporteMarcacionesGeneral(
-      this.formatearFechaIso(desde),
-      this.formatearFechaIso(hasta),
-      0,
-      '99999999'
-    ).subscribe({
-      next: (response) => {
-        this.justificaciones = Array.isArray(response?.data)
-          ? response.data
-              .filter((registro: MarcacionPersonal) => this.tieneIngreso_Tardanzas(registro.ingreso, registro.minutosTarde))
-              .sort((a: MarcacionPersonal, b: MarcacionPersonal) => this.obtenerTiempoFecha(b.fecha) - this.obtenerTiempoFecha(a.fecha))
-              .map((registro: MarcacionPersonal) => ({
-                sucursal: registro.sucursal,
-                empleado: registro.empleado,
-                fecha: registro.fecha,
-                justificacion: registro.descripcionjustificacion || registro.detalle || registro.observacion || 'Pendiente de justificar',
-                estado: this.obtenerDescripcionEstado(
-                  registro.idestado || registro.revisionMarcaciones
-                ),
-                registro
-              }))
-              .filter((item: JustificacionMarcacion) => item.justificacion.trim().toLowerCase() !== 'vacaciones')
-          : [];
-        this.cargando = false;
-        this.cdr.markForCheck();
-      },
-      error: (error) => {
-        this.mensajeError = error?.error?.message ?? 'No se pudieron cargar las marcaciones pendientes.';
-        this.justificaciones = [];
-        this.cargando = false;
-        this.cdr.markForCheck();
-      }
-    });
+    this.apiService
+      .listarReporteMarcacionesGeneral(
+        this.formatearFechaIso(desde),
+        this.formatearFechaIso(hasta),
+        0,
+        '99999999',
+      )
+      .subscribe({
+        next: (response) => {
+          this.justificaciones = Array.isArray(response?.data)
+            ? response.data
+                .filter((registro: MarcacionPersonal) =>
+                  this.tieneIngreso_Tardanzas(registro.ingreso, registro.minutosTarde),
+                )
+                .sort(
+                  (a: MarcacionPersonal, b: MarcacionPersonal) =>
+                    this.obtenerTiempoFecha(b.fecha) - this.obtenerTiempoFecha(a.fecha),
+                )
+                .map((registro: MarcacionPersonal) => ({
+                  sucursal: registro.sucursal,
+                  empleado: registro.empleado,
+                  fecha: registro.fecha,
+                  justificacion:
+                    registro.descripcionjustificacion ||
+                    registro.detalle ||
+                    registro.observacion ||
+                    'Pendiente de justificar',
+                  estado: this.obtenerDescripcionEstado(
+                    registro.idestado || registro.revisionMarcaciones,
+                  ),
+                  registro,
+                }))
+                .filter(
+                  (item: JustificacionMarcacion) =>
+                    item.justificacion.trim().toLowerCase() !== 'vacaciones',
+                )
+            : [];
+          this.cargando = false;
+        },
+        error: (error) => {
+          this.mensajeError =
+            error?.error?.message ?? 'No se pudieron cargar las marcaciones pendientes.';
+          this.justificaciones = [];
+          this.cargando = false;
+        },
+      });
   }
 
   abrirRegistro(item: JustificacionMarcacion): void {
@@ -188,12 +223,17 @@ export class ValidacionJustificaciones implements OnInit {
     this.mensajeExito = '';
     this.formulario = {
       motivo: this.normalizarIdentificador(registro.idmotivomovimiento),
-      fechaDesde: this.formatearFechaIsoDesdeValor(registro.fechadesdejustificacion) || fechaRegistro,
-      fechaHasta: this.formatearFechaIsoDesdeValor(registro.fechahastajustificacion) || fechaRegistro,
+      fechaDesde:
+        this.formatearFechaIsoDesdeValor(registro.fechadesdejustificacion) || fechaRegistro,
+      fechaHasta:
+        this.formatearFechaIsoDesdeValor(registro.fechahastajustificacion) || fechaRegistro,
       observaciones: registro.descripcionjustificacion ?? '',
-      sustentos: null
+      sustentos: null,
     };
-    this.cargarSustentosDigitales(this.formulario.fechaDesde);
+    this.cargarSustentosDigitales(
+      this.formulario.fechaDesde,
+      this.normalizarIdentificador(registro.idcodigogeneral),
+    );
   }
 
   cerrarFormulario(): void {
@@ -204,20 +244,19 @@ export class ValidacionJustificaciones implements OnInit {
     this.mensajeErrorSustentos = '';
   }
 
-  cargarSustentosDigitales(fechaDesde: string): void {
-    const nroDocumento = this.authService.getUsuario();
+  cargarSustentosDigitales(fechaDesde: string, nroDocumento: string): void {
     this.archivosSustento = [];
     this.mensajeErrorSustentos = '';
 
     if (!nroDocumento) {
-      this.mensajeErrorSustentos = 'No se encontró el documento del usuario para consultar los sustentos.';
+      this.mensajeErrorSustentos =
+        'No se encontró el documento del usuario para consultar los sustentos.';
       return;
     }
 
     const carpetaFecha = fechaDesde.replaceAll('-', '');
     const carpeta = `${nroDocumento}/${carpetaFecha}`;
     this.cargandoSustentos = true;
-    this.cdr.markForCheck();
 
     this.apiService.listarArchivosPersonal(carpeta).subscribe({
       next: (response) => {
@@ -227,19 +266,17 @@ export class ValidacionJustificaciones implements OnInit {
           return {
             nombre,
             url: archivo.url ?? archivo.ruta ?? '',
-            esImagen: this.esImagen(nombre)
+            esImagen: this.esImagen(nombre),
           };
         });
         this.cargandoSustentos = false;
-        this.cdr.markForCheck();
       },
       error: (error) => {
         this.archivosSustento = [];
         this.cargandoSustentos = false;
-        this.mensajeErrorSustentos = error?.error?.message
-          ?? 'No se pudieron consultar los sustentos digitales.';
-        this.cdr.markForCheck();
-      }
+        this.mensajeErrorSustentos =
+          error?.error?.message ?? 'No se pudieron consultar los sustentos digitales.';
+      },
     });
   }
 
@@ -256,18 +293,17 @@ export class ValidacionJustificaciones implements OnInit {
       !this.formulario.fechaDesde ||
       !this.formulario.fechaHasta ||
       this.subiendoSustentos
-    ) return;
+    )
+      return;
 
     const nroDocumento = this.authService.getUsuario();
     if (!nroDocumento) {
       this.mensajeError = 'No se encontró el documento del usuario autenticado.';
-      this.cdr.markForCheck();
       return;
     }
 
     if (this.formulario.fechaHasta < this.formulario.fechaDesde) {
       this.mensajeError = 'La fecha hasta no puede ser anterior a la fecha desde.';
-      this.cdr.markForCheck();
       return;
     }
 
@@ -286,14 +322,13 @@ export class ValidacionJustificaciones implements OnInit {
       centroMedico: '',
       idSucursal: '001',
       idEmisor: '001',
-      idPlanilla: ''
+      idPlanilla: '',
     };
     const sustentos = Array.from(this.formulario.sustentos ?? []);
     const carpetaFecha = this.formulario.fechaDesde.replaceAll('-', '');
     const carpeta = `${nroDocumento}/${carpetaFecha}`;
     this.subiendoSustentos = true;
     this.mensajeError = '';
-    this.cdr.markForCheck();
 
     const guardar$: Observable<any> = sustentos.length
       ? forkJoin(
@@ -301,9 +336,9 @@ export class ValidacionJustificaciones implements OnInit {
             this.apiService.subirArchivoPersonal(
               carpeta,
               archivo,
-              archivo.type || 'application/octet-stream'
-            )
-          )
+              archivo.type || 'application/octet-stream',
+            ),
+          ),
         ).pipe(switchMap(() => this.apiService.guardarOtrosDocumentos(payload)))
       : this.apiService.guardarOtrosDocumentos(payload);
 
@@ -311,13 +346,11 @@ export class ValidacionJustificaciones implements OnInit {
       next: () => {
         this.subiendoSustentos = false;
         this.finalizarRegistroJustificacion(fechaRegistro);
-        this.cdr.markForCheck();
       },
       error: (error) => {
         this.subiendoSustentos = false;
         this.mensajeError = error?.error?.message ?? 'No se pudo guardar la justificación.';
-        this.cdr.markForCheck();
-      }
+      },
     });
   }
 
@@ -340,7 +373,7 @@ export class ValidacionJustificaciones implements OnInit {
 
   tieneIngreso_Tardanzas(
     ingreso: string | null | undefined,
-    minutosTarde: string | null | undefined
+    minutosTarde: string | null | undefined,
   ): boolean {
     const sinIngreso = !ingreso?.trim();
     const tieneTardanza = !!minutosTarde?.trim() && minutosTarde.trim() !== '00:00:00';
@@ -401,5 +434,13 @@ export class ValidacionJustificaciones implements OnInit {
 
   private esImagen(nombre: string): boolean {
     return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(nombre);
+  }
+
+  private normalizarTexto(valor: string): string {
+    return valor
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
   }
 }
