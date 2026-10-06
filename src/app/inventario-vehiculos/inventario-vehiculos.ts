@@ -89,6 +89,7 @@ export class InventarioVehiculos implements OnInit {
   cargandoVehiculos = false;
   guardando = false;
   guardandoDetalle = false;
+  private vinsEnRegistro = new Set<string>();
   eliminandoId: number | string | null = null;
   scannerActivo = false;
   formatsEnabled: BarcodeFormat[] = [BarcodeFormat.QR_CODE, BarcodeFormat.CODE_128];
@@ -394,21 +395,33 @@ export class InventarioVehiculos implements OnInit {
       return;
     }
 
+    const vinNormalizado = vin.toUpperCase();
+    if (this.vehiculos.some(item => item.vin.toUpperCase() === vinNormalizado) || this.vinsEnRegistro.has(vinNormalizado)) {
+      this.messageService.add({ severity: 'warn', summary: 'VIN duplicado', detail: `El VIN ${vin} ya está en la lista`, life: 3000 });
+      return;
+    }
+    this.vinsEnRegistro.add(vinNormalizado);
+    this.vehiculos = [this.normalizarVehiculo({ vin }), ...this.vehiculos];
+    this.cdr.markForCheck();
     try {
-      const response: any = await firstValueFrom(this.api.getVehiculoPorVinRecepcion(vin));
-      const vehiculo = response?.data ?? response;
-      if (!vehiculo || Object.keys(vehiculo).length === 0) throw new Error('VIN no encontrado');
       if (this.idInventario === null) await this.guardarCabeceraNueva();
       if (this.idInventario === null) throw new Error('No se obtuvo el ID del inventario');
-
       this.guardandoDetalle = true;
-      await firstValueFrom(this.api.guardarDetalleInventario(this.idInventario, vin));
-      this.vehiculos = [this.normalizarVehiculo(vehiculo), ...this.vehiculos];
+      const [respuestaVehiculo] = await Promise.all([
+        firstValueFrom(this.api.getVehiculoPorVinRecepcion(vin)),
+        firstValueFrom(this.api.guardarDetalleInventario(this.idInventario, vin))
+      ]);
+      const vehiculo = (respuestaVehiculo as any)?.data ?? respuestaVehiculo;
+      if (!vehiculo || Object.keys(vehiculo).length === 0) throw new Error('VIN no encontrado');
+      this.vehiculos = this.vehiculos.map(item => item.vin.toUpperCase() === vinNormalizado ? this.normalizarVehiculo(vehiculo) : item);
       this.scannerActivo = false;
     } catch (error: any) {
+      this.vehiculos = this.vehiculos.filter(item => item.vin.toUpperCase() !== vinNormalizado);
       this.mostrarError(error?.error?.message || `No se pudo registrar el VIN ${vin}`);
     } finally {
+      this.vinsEnRegistro.delete(vinNormalizado);
       this.guardandoDetalle = false;
+      this.cdr.markForCheck();
     }
   }
 
