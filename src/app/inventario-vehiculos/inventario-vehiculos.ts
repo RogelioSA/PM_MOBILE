@@ -91,6 +91,7 @@ export class InventarioVehiculos implements OnInit {
   guardandoDetalle = false;
   private vinsEnRegistro = new Set<string>();
   eliminandoId: number | string | null = null;
+  descargandoId: number | string | null = null;
   scannerActivo = false;
   formatsEnabled: BarcodeFormat[] = [BarcodeFormat.QR_CODE, BarcodeFormat.CODE_128];
 
@@ -319,6 +320,88 @@ export class InventarioVehiculos implements OnInit {
 
   abrirVer(item: InventarioVehiculoRegistro): void {
     this.cargarFormulario(item, 'ver');
+  }
+
+  async descargarDetalle(item: InventarioVehiculoRegistro): Promise<void> {
+    if (this.descargandoId !== null) return;
+
+    this.descargandoId = item.idInventario;
+    this.cdr.markForCheck();
+    try {
+      const response = await firstValueFrom(
+        this.api.listarVehiculosInventario(item.idInventario, '001')
+      );
+      if (response?.success === false) {
+        throw new Error(response.message || 'No se pudo cargar el detalle del inventario');
+      }
+      const data = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : response?.data?.vehiculos;
+      if (!Array.isArray(data)) {
+        throw new Error('El servicio no devolvió un detalle de inventario válido');
+      }
+
+      const { default: ExcelJS } = await import('exceljs');
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Detalle inventario');
+      sheet.columns = [{ width: 25 }, { width: 22 }, { width: 50 }, { width: 25 }];
+      const fecha = item.fecha?.substring(0, 10) || '';
+      const fechaVisible = /^\d{4}-\d{2}-\d{2}$/.test(fecha)
+        ? fecha.split('-').reverse().join('/')
+        : fecha;
+      sheet.addRow(['Fecha inventario', fechaVisible]);
+      sheet.addRow(['Observación', item.observacion || '']);
+      sheet.mergeCells('B2:D2');
+      sheet.getCell('B2').alignment = { wrapText: true, vertical: 'top' };
+      sheet.getRow(2).height = Math.max(30,
+        (item.observacion || '').split(/\r?\n/).reduce(
+          (lineas, linea) => lineas + Math.max(1, Math.ceil(linea.length / 90)), 0
+        ) * 15
+      );
+      sheet.getCell('A1').font = { bold: true };
+      sheet.getCell('A2').font = { bold: true };
+      sheet.addRow([]);
+      const encabezado = sheet.addRow(['VIN', 'Stock', 'Modelo', 'Color']);
+      encabezado.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      encabezado.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+
+      for (const registro of data) {
+        const vehiculo = this.normalizarVehiculo(
+          typeof registro === 'string' ? { vin: registro } : registro
+        );
+        sheet.addRow([
+          vehiculo.vin,
+          vehiculo.idVehiculo,
+          [vehiculo.marca, vehiculo.modelo].filter(Boolean).join(' '),
+          vehiculo.color
+        ]);
+      }
+      sheet.views = [{ state: 'frozen', ySplit: 4 }];
+      sheet.autoFilter = 'A4:D4';
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([new Uint8Array(buffer)], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      const idArchivo = String(item.idInventario).replace(/[^a-zA-Z0-9_-]/g, '_');
+      enlace.download = 'Inventario_' + idArchivo + '_' + fecha.replace(/[^0-9-]/g, '') + '.xlsx';
+      document.body.appendChild(enlace);
+      try {
+        enlace.click();
+      } finally {
+        enlace.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+    } catch (error: any) {
+      this.mostrarError(error?.error?.message || error?.message || 'No se pudo descargar el detalle del inventario');
+    } finally {
+      this.descargandoId = null;
+      this.cdr.markForCheck();
+    }
   }
 
   editarCabecera(): void {
