@@ -33,7 +33,7 @@ const ALL_ITEMS: MenuItemExtended[] = [
   {
     label: 'Proformas Repuestos',
     icon: 'pi pi-file-edit',
-    route: 'reporte_ventas',
+    route: 'cotizacionesmostrador',
     permission: 'PROFORMASREPUESTOS'
   },
 ];
