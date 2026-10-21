@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Menu } from '../menu/menu';
@@ -67,12 +67,13 @@ export class Recepcionvehiculos implements OnInit {
   constructor(
     private api: Api,
     private master: Master,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.cargarSucursales();
     this.cargarSeleccionesGuardadas();
+    this.cargarSucursales();
   }
 
   cargarSeleccionesGuardadas() {
@@ -86,13 +87,16 @@ export class Recepcionvehiculos implements OnInit {
         if (response?.success && Array.isArray(response.data)) {
           this.sucursales = response.data.map((item: any) => ({
             label: item.descripcion,
-            value: item.idSucursal
+            value: String(item.idSucursal ?? '')
           }));
         }
 
         if (this.sucursalSeleccionada) {
           this.cambiarSucursal(this.sucursalSeleccionada, false);
+        } else if (this.sucursales.length > 0) {
+          this.cambiarSucursal(this.sucursales[0].value, false);
         }
+        this.cdr.markForCheck();
       },
       error: () => {
         this.messageService.add({
@@ -101,19 +105,21 @@ export class Recepcionvehiculos implements OnInit {
           detail: 'No se pudieron cargar las sucursales',
           life: 4000
         });
+        this.cdr.markForCheck();
       }
     });
   }
 
   cambiarSucursal(idSucursal: string | null, limpiarAlmacen = true) {
-    this.sucursalSeleccionada = idSucursal;
+    this.sucursalSeleccionada = idSucursal ? String(idSucursal) : null;
     if (!idSucursal) {
       this.almacenes = [];
       this.almacenSeleccionado = null;
+      this.cdr.markForCheck();
       return;
     }
 
-    localStorage.setItem('cbSucursal', idSucursal);
+    localStorage.setItem('cbSucursal', String(idSucursal));
     if (limpiarAlmacen) {
       this.almacenSeleccionado = null;
       localStorage.removeItem('cbAlmacen');
@@ -124,11 +130,12 @@ export class Recepcionvehiculos implements OnInit {
         if (Array.isArray(response)) {
           this.almacenes = response.map((item: any) => ({
             label: item.nombre,
-            value: item.id
+            value: String(item.id ?? '')
           }));
         }
 
         if (this.almacenSeleccionado && this.almacenes.some(x => x.value === this.almacenSeleccionado)) {
+          this.cdr.markForCheck();
           return;
         }
 
@@ -136,6 +143,7 @@ export class Recepcionvehiculos implements OnInit {
           this.almacenSeleccionado = this.almacenes[0].value;
           localStorage.setItem('cbAlmacen', this.almacenSeleccionado);
         }
+        this.cdr.markForCheck();
       },
       error: () => {
         this.messageService.add({
@@ -144,6 +152,7 @@ export class Recepcionvehiculos implements OnInit {
           detail: 'No se pudieron cargar los almacenes',
           life: 4000
         });
+        this.cdr.markForCheck();
       }
     });
   }

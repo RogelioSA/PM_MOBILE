@@ -4,34 +4,36 @@
 <div class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 shadow-md h-16 flex items-center px-4">
   <div class="flex items-center justify-between w-full">
 
-    <button pButton icon="pi pi-bars"
-      (click)="toggleDrawer()"
-      class="p-button-text p-button-rounded"></button>
+    <p-button icon="pi pi-bars"
+      (onClick)="toggleDrawer()"
+      styleClass="p-button-text p-button-rounded"></p-button>
 
     <span class="text-xl font-bold absolute left-1/2 transform -translate-x-1/2 text-gray-800 dark:text-white">
       PERUMOTOR
     </span>
 
     <div class="flex items-center gap-1 sm:gap-2">
-      <button pButton [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'"
-        (click)="toggleDarkMode()"
-        class="p-button-rounded p-button-text"
+      <p-button [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'"
+        (onClick)="toggleDarkMode()"
+        styleClass="p-button-rounded p-button-text"
         [pTooltip]="isDarkMode ? 'Modo claro' : 'Modo oscuro'"
-        tooltipPosition="bottom"></button>
+        tooltipPosition="bottom"></p-button>
 
-      <button pButton
+      <p-button
         label="Cerrar Sesión"
         icon="pi pi-sign-out"
-        (click)="logout()"
-        class="p-button-danger p-button-sm logout-button"
-        aria-label="Cerrar sesión"></button>
+        (onClick)="logout()"
+        severity="danger"
+        size="small"
+        styleClass="logout-button"
+        aria-label="Cerrar sesión"></p-button>
     </div>
 
   </div>
 </div>
 
 <!-- Drawer -->
-<p-drawer [(visible)]="drawerVisible" position="left" [style]="{'width': '280px'}">
+<p-drawer [(visible)]="drawerVisible" position="left" [style]="{'width': '280px'}" styleClass="!bg-white dark:!bg-slate-800 shadow-2xl">
 
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
@@ -50,13 +52,12 @@
     <!-- Items filtrados por permisos -->
     <ng-container *ngIf="!cargandoPermisos">
 
-      <button *ngFor="let item of items"
-        pButton
+      <p-button *ngFor="let item of items"
         [label]="item.label || ''"
         [icon]="item.icon || ''"
-        (click)="executeCommand(item)"
-        [class]="getButtonClass(item)">
-      </button>
+        (onClick)="executeCommand(item)"
+        [styleClass]="getButtonClass(item)">
+      </p-button>
 
       <!-- Sin accesos -->
       <div *ngIf="items.length === 0"

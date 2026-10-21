@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Api } from '../services/api';
@@ -55,6 +55,13 @@ export class HomePersonal implements OnInit {
       color: 'warning'
     },
     {
+      titulo: 'Solicitud de vacaciones',
+      descripcion: 'Consulta y registra tus solicitudes de vacaciones.',
+      icono: 'pi pi-sun',
+      ruta: '/misVacaciones',
+      color: 'success'
+    },
+    {
       titulo: 'Validación Justificaciones',
       descripcion: 'Revisa y valida las justificaciones registradas por el personal.',
       icono: 'pi pi-verified',
@@ -66,7 +73,8 @@ export class HomePersonal implements OnInit {
   constructor(
     private router: Router,
     private apiService: Api,
-    private authService: Auth
+    private authService: Auth,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -104,6 +112,7 @@ export class HomePersonal implements OnInit {
 
   private cargarPersonalPorDocumento(documento: string): void {
     this.cargandoPersonal = true;
+    this.cdr.markForCheck();
 
     this.apiService.listarPersonal(documento, '', '', 1, 1).subscribe({
       next: (response) => {
@@ -111,10 +120,12 @@ export class HomePersonal implements OnInit {
         this.personalSeleccionado = response?.success && response?.data?.length > 0
           ? response.data[0]
           : null;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.cargandoPersonal = false;
         this.personalSeleccionado = null;
+        this.cdr.markForCheck();
       }
     });
   }

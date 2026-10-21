@@ -1,9 +1,8 @@
-// menu.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DrawerModule } from 'primeng/drawer';
 import { MenuItem } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
+import { Button, ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -30,6 +29,7 @@ const ALL_ITEMS: MenuItemExtended[] = [
   { label: 'Gestor Mantenimiento',            icon: 'pi pi-sliders-h',              route: 'mantenimientoestados'},
   { label: 'Rendición de gastos',             icon: 'pi pi-dollar',                 route: 'rendicion-gastos'    },
   { label: 'Personal',                        icon: 'pi pi-id-card',                route: 'personal'            },
+  { label: 'Vacaciones de Personal',          icon: 'pi pi-calendar',               route: 'VacacionesPersonal', permission: '18' },
   {
     label: 'Proformas Repuestos',
     icon: 'pi pi-file-edit',
@@ -41,7 +41,7 @@ const ALL_ITEMS: MenuItemExtended[] = [
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [CommonModule, DrawerModule, ButtonModule, TooltipModule],
+  imports: [CommonModule, DrawerModule, Button, ButtonModule, TooltipModule],
   templateUrl: './menu.html',
   styleUrl: './menu.css'
 })
@@ -55,13 +55,15 @@ export class Menu implements OnInit {
   constructor(
     private router: Router,
     private apiService: Api,
-     private authService: Auth
+    private authService: Auth,
+    private cdr: ChangeDetectorRef
   ) {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         this.currentRoute = event.url.replace('/', '');
         this.updateActiveItem();
+        this.cdr.markForCheck();
       });
   }
 
@@ -73,71 +75,81 @@ export class Menu implements OnInit {
 
   // ── Permisos ──────────────────────────────────────────────────────────────
   cargarPermisos() {
-  this.cargandoPermisos = true;
+    this.cargandoPermisos = true;
+    this.cdr.markForCheck();
 
-  // Obtén el idUsuario desde cookies — ajusta según tu authService
-  const idUsuario = this.authService.getUsuario();
-  if (!idUsuario) {
-    this.cargandoPermisos = false;
-    this.items = [];
-    return;
-  }
-  const idAplicacion = 'MOB';
-
-  this.apiService.obtenerPermisosUsuario(idUsuario, idAplicacion).subscribe({
-    next: (response) => {
+    // Obtén el idUsuario desde cookies — ajusta según tu authService
+    const idUsuario = this.authService.getUsuario();
+    if (!idUsuario) {
       this.cargandoPermisos = false;
-
-      if (response?.success && Array.isArray(response.data)) {
-        // La API devuelve el nombre del permiso, que no siempre coincide con la ruta.
-        const rutasPermitidas: string[] = response.data
-          .map((m: any) => String(m.nombre ?? '').trim().toLowerCase());
-
-        this.items = ALL_ITEMS
-          .filter(item => {
-            const permiso = item.permission ?? item.route ?? '';
-            return rutasPermitidas.includes(permiso.toLowerCase());
-          })
-          .map(item => ({
-            ...item,
-            command: () => this.navigateTo(item.route!)
-          }));
-      } else {
-        this.items = [];
-      }
-
-      this.updateActiveItem();
-    },
-    error: () => {
-      this.cargandoPermisos = false;
-      this.items = [];       // en error, menú vacío (más seguro que mostrar todo)
-      this.updateActiveItem();
+      this.items = [];
+      this.cdr.markForCheck();
+      return;
     }
-  });
-}
+    const idAplicacion = 'MOB';
+
+    this.apiService.obtenerPermisosUsuario(idUsuario, idAplicacion).subscribe({
+      next: (response) => {
+        this.cargandoPermisos = false;
+
+        if (response?.success && Array.isArray(response.data)) {
+          // La API devuelve el nombre del permiso, que no siempre coincide con la ruta.
+          const rutasPermitidas: string[] = response.data
+            .map((m: any) => String(m.nombre ?? '').trim().toLowerCase());
+          const modulosPermitidos: string[] = response.data
+            .map((m: any) => String(m.idModulo ?? m.id ?? m.codigo ?? '').trim());
+
+          this.items = ALL_ITEMS
+            .filter(item => {
+              const permiso = item.permission ?? item.route ?? '';
+              return rutasPermitidas.includes(permiso.toLowerCase()) || modulosPermitidos.includes(permiso);
+            })
+            .map(item => ({
+              ...item,
+              command: () => this.navigateTo(item.route!)
+            }));
+        } else {
+          this.items = [];
+        }
+
+        this.updateActiveItem();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.cargandoPermisos = false;
+        this.items = [];       // en error, menú vacío (más seguro que mostrar todo)
+        this.updateActiveItem();
+        this.cdr.markForCheck();
+      }
+    });
+  }
 
   // ── Tema ──────────────────────────────────────────────────────────────────
   loadTheme() {
     const savedTheme = localStorage.getItem('theme');
     this.isDarkMode = savedTheme === 'dark';
     document.documentElement.classList.toggle('dark', this.isDarkMode);
+    this.cdr.markForCheck();
   }
 
   toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
     document.documentElement.classList.toggle('dark', this.isDarkMode);
     localStorage.setItem('theme', this.isDarkMode ? 'dark' : 'light');
+    this.cdr.markForCheck();
   }
 
   logout() {
     this.authService.logout();
     this.drawerVisible = false;
+    this.cdr.markForCheck();
     this.router.navigate(['/'], { replaceUrl: true });
   }
 
   // ── Drawer / navegación ───────────────────────────────────────────────────
   toggleDrawer() {
     this.drawerVisible = !this.drawerVisible;
+    this.cdr.markForCheck();
   }
 
   executeCommand(item: MenuItemExtended) {

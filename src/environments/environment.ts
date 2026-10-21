@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://apis.perumotor.com.pe/api'
-  //apiUrl: 'https://localhost:8085/api'
+  // En desarrollo, Angular reenvía /api al backend local mediante proxy.conf.json.
+  apiUrl: '/api'
 };

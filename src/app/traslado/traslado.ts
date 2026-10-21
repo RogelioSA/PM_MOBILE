@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, Renderer2 } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, Renderer2, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Menu } from '../menu/menu';
@@ -95,7 +95,8 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
     private messageService: MessageService,
     private api: Api,
     private master: Master,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -346,9 +347,10 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
         if (response?.success && Array.isArray(response.data)) {
           this.sucursales = response.data.map((item: any) => ({
             label: item.descripcion,
-            value: item.idSucursal
+            value: String(item.idSucursal ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: () => {
         this.messageService.add({
@@ -357,6 +359,7 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
           detail: 'No se pudieron cargar las sucursales',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -370,9 +373,10 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
         if (Array.isArray(response)) {
           this.almacenesOrigen = response.map((item: any) => ({
             label: item.nombre,
-            value: item.id
+            value: String(item.id ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: () => {
         this.messageService.add({
@@ -381,6 +385,7 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
           detail: 'No se pudieron cargar los almacenes de origen',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -394,9 +399,10 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
         if (Array.isArray(response)) {
           this.almacenesDestino = response.map((item: any) => ({
             label: item.nombre,
-            value: item.id
+            value: String(item.id ?? '')
           }));
         }
+        this.cdr.markForCheck();
       },
       error: () => {
         this.messageService.add({
@@ -405,6 +411,7 @@ export class Traslado implements OnInit, AfterViewInit, OnDestroy {
           detail: 'No se pudieron cargar los almacenes de destino',
           life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }

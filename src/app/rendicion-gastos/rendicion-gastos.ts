@@ -1,5 +1,4 @@
-// rendicion-gastos.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -193,7 +192,8 @@ export class RendicionGastos implements OnInit {
     private messageService: MessageService,
     private masterService: Master,
     private apiService: Api,
-    private cookieService: CookieService
+    private cookieService: CookieService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -207,6 +207,7 @@ export class RendicionGastos implements OnInit {
 
   cargarRendiciones() {
     this.cargando = true;
+    this.cdr.markForCheck();
     const usuario = this.cookieService.get('usuario') || '';
 
     this.apiService.listarGastoSimple(
@@ -239,10 +240,12 @@ export class RendicionGastos implements OnInit {
           this.rendiciones = [];
         }
         this.cargando = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Error cargando rendiciones:', err);
         this.cargando = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -315,8 +318,12 @@ export class RendicionGastos implements OnInit {
             value: s.idSucursal
           }));
         }
+        this.cdr.markForCheck();
       },
-      error: (err) => console.error('Error cargando sucursales:', err)
+      error: (err) => {
+        console.error('Error cargando sucursales:', err);
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -328,8 +335,14 @@ export class RendicionGastos implements OnInit {
         debounceTime(300),
         distinctUntilChanged(),
         switchMap((filtro: string) => {
-          if (filtro.length < 3) { this.proveedoresOT = []; this.buscandoProveedoresOT = false; return []; }
+          if (filtro.length < 3) {
+            this.proveedoresOT = [];
+            this.buscandoProveedoresOT = false;
+            this.cdr.markForCheck();
+            return [];
+          }
           this.buscandoProveedoresOT = true;
+          this.cdr.markForCheck();
           return this.masterService.buscarProveedores(filtro);
         })
       )
@@ -338,8 +351,12 @@ export class RendicionGastos implements OnInit {
           const lista = Array.isArray(res) ? res : (res?.data || []);
           this.proveedoresOT = lista.map((p: any) => ({ label: p.name, value: p.idCliente, data: p }));
           this.buscandoProveedoresOT = false;
+          this.cdr.markForCheck();
         },
-        error: () => { this.buscandoProveedoresOT = false; }
+        error: () => {
+          this.buscandoProveedoresOT = false;
+          this.cdr.markForCheck();
+        }
       });
 
     this.busquedaFactura$
@@ -347,8 +364,14 @@ export class RendicionGastos implements OnInit {
         debounceTime(300),
         distinctUntilChanged(),
         switchMap((filtro: string) => {
-          if (filtro.length < 3) { this.proveedoresFactura = []; this.buscandoProveedoresFactura = false; return []; }
+          if (filtro.length < 3) {
+            this.proveedoresFactura = [];
+            this.buscandoProveedoresFactura = false;
+            this.cdr.markForCheck();
+            return [];
+          }
           this.buscandoProveedoresFactura = true;
+          this.cdr.markForCheck();
           return this.masterService.buscarProveedores(filtro);
         })
       )
@@ -357,8 +380,12 @@ export class RendicionGastos implements OnInit {
           const lista = Array.isArray(res) ? res : (res?.data || []);
           this.proveedoresFactura = lista.map((p: any) => ({ label: p.name, value: p.idCliente, data: p }));
           this.buscandoProveedoresFactura = false;
+          this.cdr.markForCheck();
         },
-        error: () => { this.buscandoProveedoresFactura = false; }
+        error: () => {
+          this.buscandoProveedoresFactura = false;
+          this.cdr.markForCheck();
+        }
       });
   }
 

@@ -1,5 +1,4 @@
-// personal.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
@@ -165,7 +164,8 @@ export class Personal implements OnInit {
   constructor(
     private messageService: MessageService,
     private apiService: Api,
-    private masterService: Master
+    private masterService: Master,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -196,14 +196,18 @@ export class Personal implements OnInit {
             value: b.iddocumento?.trim()
           }));
         }
+        this.cdr.markForCheck();
       },
-      error: () => {}
+      error: () => {
+        this.cdr.markForCheck();
+      }
     });
   }
 
   // ── Listado ───────────────────────────────────────────────────────────────
   cargarPersonal() {
     this.cargando = true;
+    this.cdr.markForCheck();
     this.apiService.listarPersonal(
       this.filtroDni, this.filtroNombres, this.filtroApellidos,
       this.pagina, this.tamanio
@@ -217,6 +221,7 @@ export class Personal implements OnInit {
           this.personal = [];
           this.totalRegistros = 0;
         }
+        this.cdr.markForCheck();
       },
       error: () => {
         this.cargando = false;
@@ -224,6 +229,7 @@ export class Personal implements OnInit {
           severity: 'error', summary: 'Error',
           detail: 'No se pudo cargar el listado de personal', life: 3000
         });
+        this.cdr.markForCheck();
       }
     });
   }

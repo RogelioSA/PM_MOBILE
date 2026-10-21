@@ -14,7 +14,6 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideAnimationsAsync(),
-    provideAnimations(),
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
