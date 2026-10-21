@@ -311,25 +311,34 @@ export class Cotizacionesmostrador implements OnInit, OnDestroy {
     this.consultaProductos?.unsubscribe();
     this.buscandoProducto = false;
     const query = (event.query ?? '').trim();
-    if (query.length < 3) { this.productosSugeridos = []; return; }
+    if (query.length < 3) { this.actualizarProductosSugeridos([]); return; }
     const usuario = this.obtenerUsuarioActual().trim();
     if (!this.cabecera.idSucursal || !usuario) {
-      this.productosSugeridos = [];
+      this.actualizarProductosSugeridos([]);
       this.messageService.add({ severity: 'warn', summary: 'Consulta de productos',
         detail: 'Seleccione una sucursal e inicie sesión para consultar productos.' });
       return;
     }
     this.buscandoProducto = true;
+    this.cdr.markForCheck();
     this.consultaProductos = this.masterService.searchProducts(
       query, this.cabecera.moneda === 'USD' ? '02' : '01', this.cabecera.idSucursal, usuario
     ).subscribe({
       next: (res: any) => {
-        this.buscandoProducto   = false;
-        const data = Array.isArray(res) ? res : (res?.data ?? []);
-        this.productosSugeridos = data;
+        const data = Array.isArray(res) ? res : res?.data;
+        this.actualizarProductosSugeridos(Array.isArray(data) ? data : []);
       },
-      error: () => { this.buscandoProducto = false; this.productosSugeridos = []; }
+      error: () => this.actualizarProductosSugeridos([])
     });
+  }
+
+  private actualizarProductosSugeridos(productos: any[]) {
+    this.buscandoProducto = false;
+    // PrimeNG stops its internal spinner when the suggestions input changes.
+    // A fresh reference also handles repeated/cached results and empty responses.
+    this.productosSugeridos = [...productos];
+    // Notify Angular 22 explicitly, including callbacks outside NgZone and zoneless mode.
+    this.cdr.markForCheck();
   }
 
   seleccionarProducto(producto: any, fila: any) {
