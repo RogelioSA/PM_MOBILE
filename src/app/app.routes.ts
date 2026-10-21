@@ -16,7 +16,7 @@ import { RendicionGastos } from './rendicion-gastos/rendicion-gastos';
 import { Home } from './home/home';
 import { Personal } from './personal/personal';
 import { EditarPersonal } from './editarPersonal/editarPersonal';
-import { Reportecotventas } from './reportecotventas/reportecotventas';
+import { Cotizacionesmostrador } from './cotizacionesmostrador/cotizacionesmostrador';
 import { HomePersonal } from './homePersonal/homePersonal';
 import { PersonalMarcacion } from './personalMarcacion/personalMarcacion';
 import { MisJustificaciones } from './misJustificaciones/misJustificaciones';
@@ -150,8 +150,8 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'reporte_ventas',
-    component: Reportecotventas,
+    path: 'cotizacionesmostrador',
+    component: Cotizacionesmostrador,
     canActivate: [authGuard]
   },
   // Cualquier ruta no válida vuelve al login

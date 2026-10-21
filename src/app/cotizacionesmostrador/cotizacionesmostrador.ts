@@ -1,8 +1,10 @@
-// reportecotventas.ts
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+// cotizacionesmostrador.ts
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PDFDocument, StandardFonts, rgb, PageSizes } from 'pdf-lib';
+import { DialogModule } from 'primeng/dialog';
+import { Subscription } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -21,6 +23,7 @@ export interface DetalleCotizacion {
   cantidad:         number;
   precioUnitario:   number;
   descuentoPct:     number;
+  descuentoMaximo:  number;
   subTotal:         number;
   descuentoMonto:   number;
   valor:            number;
@@ -46,10 +49,11 @@ export interface CabeceraCotizacion {
 }
 
 @Component({
-  selector: 'app-reportecotventas',
+  selector: 'app-cotizacionesmostrador',
   standalone: true,
   imports: [
     CommonModule,
+    DialogModule,
     FormsModule,
     ButtonModule,
     InputTextModule,
@@ -60,11 +64,11 @@ export interface CabeceraCotizacion {
     AutoComplete,
     AutoCompleteModule
   ],
-  templateUrl: './reportecotventas.html',
-  styleUrls: ['./reportecotventas.css'],
+  templateUrl: './cotizacionesmostrador.html',
+  styleUrls: ['./cotizacionesmostrador.css'],
   providers: [MessageService]
 })
-export class Reportecotventas implements OnInit {
+export class Cotizacionesmostrador implements OnInit, OnDestroy {
 
   cabecera: CabeceraCotizacion = this.cabeceraVacia();
   sucursales: any[] = [];
@@ -95,6 +99,13 @@ export class Reportecotventas implements OnInit {
   buscandoProducto    = false;
   igvPct              = 18;
   guardando           = false;
+  disponibilidadVisible = false;
+  cargandoDisponibilidad = false;
+  errorDisponibilidad = '';
+  productoDisponibilidad = '';
+  stockAlmacenes: { sucursal: string; almacen: string; stock: number }[] = [];
+  private consultaStock?: Subscription;
+  private consultaProductos?: Subscription;
 
   constructor(
     private messageService: MessageService,
@@ -111,6 +122,11 @@ export class Reportecotventas implements OnInit {
     this.cabecera.formaPago   = 'CONTADO';
   }
 
+  ngOnDestroy() {
+    this.consultaProductos?.unsubscribe();
+    this.consultaStock?.unsubscribe();
+  }
+
   cabeceraVacia(): CabeceraCotizacion {
     return {
       idSucursal: '', nombreSucursal: '',
@@ -123,7 +139,7 @@ export class Reportecotventas implements OnInit {
   filaVacia(): DetalleCotizacion {
     return {
       idProducto: '', descripcion: '', um: 'UND',
-      cantidad: 1, precioUnitario: 0, descuentoPct: 0,
+      cantidad: 1, precioUnitario: 0, descuentoPct: 0, descuentoMaximo: 0,
       subTotal: 0, descuentoMonto: 0, valor: 0, confirmado: false,
       inputDescripcion: ''
     };
@@ -292,10 +308,21 @@ export class Reportecotventas implements OnInit {
   }
 
   buscarProductos(event: any) {
+    this.consultaProductos?.unsubscribe();
+    this.buscandoProducto = false;
     const query = (event.query ?? '').trim();
     if (query.length < 3) { this.productosSugeridos = []; return; }
+    const usuario = this.obtenerUsuarioActual().trim();
+    if (!this.cabecera.idSucursal || !usuario) {
+      this.productosSugeridos = [];
+      this.messageService.add({ severity: 'warn', summary: 'Consulta de productos',
+        detail: 'Seleccione una sucursal e inicie sesión para consultar productos.' });
+      return;
+    }
     this.buscandoProducto = true;
-    this.masterService.searchProducts(query).subscribe({
+    this.consultaProductos = this.masterService.searchProducts(
+      query, this.cabecera.moneda === 'USD' ? '02' : '01', this.cabecera.idSucursal, usuario
+    ).subscribe({
       next: (res: any) => {
         this.buscandoProducto   = false;
         const data = Array.isArray(res) ? res : (res?.data ?? []);
@@ -307,7 +334,7 @@ export class Reportecotventas implements OnInit {
 
   seleccionarProducto(producto: any, fila: any) {
     const existe = this.detalle.some(
-      f => f.idProducto && f.idProducto.trim() === (producto.idProducto ?? '').trim()
+      f => f !== fila && f.idProducto && f.idProducto.trim() === (producto.idProducto ?? '').trim()
     );
     if (existe) {
       this.messageService.add({ severity: 'warn', summary: 'Duplicado',
@@ -321,12 +348,37 @@ export class Reportecotventas implements OnInit {
     fila.descripcion      = producto.nombre        ?? '';
     fila.um               = (producto.idMedida     ?? 'UND').trim();
     fila.precioUnitario   = parseFloat(producto.precioUnitario) || 0;
-    fila.descuentoPct     = parseFloat(producto.descuentoPct)   || 0;
+    fila.descuentoMaximo  = Math.min(100, Math.max(0, parseFloat(producto.descuentoPct) || 0));
+    fila.descuentoPct     = 0;
     fila.inputDescripcion = producto.nombre        ?? '';
     this.recalc(fila);
   }
 
+  verDisponibilidad(fila: DetalleCotizacion) {
+    if (!fila.idProducto.trim()) return;
+    this.consultaStock?.unsubscribe();
+    this.productoDisponibilidad = `${fila.idProducto.trim()} — ${fila.descripcion}`;
+    this.stockAlmacenes = [];
+    this.errorDisponibilidad = '';
+    this.disponibilidadVisible = true;
+    this.cargandoDisponibilidad = true;
+    this.consultaStock = this.masterService.saldoAlmacenProducto(fila.idProducto).subscribe({
+      next: (res: any) => {
+        this.stockAlmacenes = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+        this.cargandoDisponibilidad = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.errorDisponibilidad = 'No se pudo consultar la disponibilidad. Intente nuevamente.';
+        this.cargandoDisponibilidad = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   recalc(fila: DetalleCotizacion) {
+    const descuento = Number(fila.descuentoPct);
+    fila.descuentoPct = Math.min(fila.descuentoMaximo, Math.max(0, Number.isFinite(descuento) ? descuento : 0));
     fila.subTotal       = +(fila.cantidad * fila.precioUnitario).toFixed(6);
     fila.descuentoMonto = +(fila.subTotal * fila.descuentoPct / 100).toFixed(6);
     fila.valor          = +(fila.subTotal - fila.descuentoMonto).toFixed(6);
@@ -395,6 +447,7 @@ export class Reportecotventas implements OnInit {
         detail: 'Agregue al menos un producto', life: 3000 });
       return;
     }
+    this.detalle.forEach(fila => this.recalc(fila));
     this.guardando = true;
     this.masterService.guardarCotizacion(this.cabecera, this.detalle).subscribe({
       next: async () => {

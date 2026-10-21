@@ -215,17 +215,25 @@ export class Master {
   }
 
   // Buscar productos por descripción
-  searchProducts(descripcion: string): Observable<any> {
+  searchProducts(descripcion: string, idmoneda: string, idsucursal: string, usuario: string): Observable<any> {
     return this.https.get(
       `${this.baseUrl}/Car/buscarProductos`,
       {
         headers: this.authService.getHeaders(),
         params: new HttpParams().set('descripcion', descripcion)
+          .set('idmoneda', idmoneda).set('idsucursal', idsucursal).set('usuario', usuario)
       }
     ).pipe(
       map((response: any) => response),
       catchError(error => throwError(() => error))
     );
+  }
+
+  saldoAlmacenProducto(idProducto: string): Observable<any> {
+    return this.https.get(`${this.baseUrl}/Car/saldoAlmacenProducto`, {
+      headers: this.authService.getHeaders(),
+      params: new HttpParams().set('idProducto', idProducto.trim())
+    });
   }
 
   // Método para obtener el cliente por documento
