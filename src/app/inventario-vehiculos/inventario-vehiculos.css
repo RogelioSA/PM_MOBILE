@@ -26,6 +26,7 @@
   font-weight: 700;
 }
 
+/* Segunda etapa: Saldo por Almacén (desactivado).
 .warehouse-chip {
   border-radius: 999px;
   background: #d1fae5;
@@ -34,6 +35,7 @@
   font-size: 0.75rem;
   white-space: nowrap;
 }
+*/
 
 :host-context(.dark) .section-heading {
   border-color: #334155;

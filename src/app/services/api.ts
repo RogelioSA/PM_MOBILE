@@ -101,16 +101,18 @@ export interface InventarioVehiculoRegistro {
   [key: string]: unknown;
 }
 
-export interface SaldoAlmacenVehiculo {
-  idsucursal: string;
-  idalmacen: string;
-  idproducto: string;
-  idserie: string;
-  prD_DSC: string;
-  idmedida: string;
-  vin: string;
-  cantidad: number;
-}
+  // Segunda etapa: Saldo por Almacén (desactivado).
+// export interface SaldoAlmacenVehiculo {
+//   idsucursal: string;
+//   idalmacen: string;
+//   idproducto: string;
+//   idserie: string;
+//   prD_DSC: string;
+//   idmedida: string;
+//   vin: string;
+//   cantidad: number;
+// }
+
 
 export interface MotivoJustificacion {
   idmotivomovimiento: string;
@@ -403,24 +405,26 @@ export class Api {
     );
   }
 
-  listarSaldoAlmacenVehiculos(
-    fecha: string,
-    sucursal: string,
-    almacen: string
-  ): Observable<any> {
-    const params = new HttpParams()
-      .set('fecha', fecha)
-      .set('sucursal', sucursal)
-      .set('almacen', almacen);
+  // Segunda etapa: Saldo por Almacén (desactivado).
+//   listarSaldoAlmacenVehiculos(
+//     fecha: string,
+//     sucursal: string,
+//     almacen: string
+//   ): Observable<any> {
+//     const params = new HttpParams()
+//       .set('fecha', fecha)
+//       .set('sucursal', sucursal)
+//       .set('almacen', almacen);
+//
+//     return this.https.get(`${this.baseUrl}/Vehicles/Inventario/SaldoAlmacen`, {
+//       headers: this.authService.getHeaders(),
+//       params
+//     }).pipe(
+//       map((response: any) => response),
+//       catchError(error => throwError(() => error))
+//     );
+//   }
 
-    return this.https.get(`${this.baseUrl}/Vehicles/Inventario/SaldoAlmacen`, {
-      headers: this.authService.getHeaders(),
-      params
-    }).pipe(
-      map((response: any) => response),
-      catchError(error => throwError(() => error))
-    );
-  }
 
   listarVehiculosInventario(
     idInventario: number | string,
