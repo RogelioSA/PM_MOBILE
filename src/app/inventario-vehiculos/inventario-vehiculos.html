@@ -30,7 +30,7 @@
   <div class="max-w-[1600px] mx-auto">
     <div class="mb-6">
       <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">Inventario de Vehículos</h1>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Consulta, registro de inventarios por VIN y control de saldos por almacén.</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Consulta y registro de inventarios por VIN.</p>
     </div>
 
     <section class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 sm:p-5 mb-6">
@@ -61,11 +61,13 @@
       </div>
     </section>
 
+    <!-- Segunda etapa: Saldo por Almacén (desactivado).
     <section class="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
       <div class="section-heading"><h2><i class="pi pi-warehouse text-emerald-500 mr-2"></i>Saldo por Almacén</h2><span class="warehouse-chip">{{ nombreAlmacenFiltro }}</span></div>
       <div class="hidden md:block overflow-x-auto"><p-table [value]="saldoAlmacen" [loading]="cargandoSaldo" responsiveLayout="scroll" [tableStyle]="{'min-width':'48rem'}"><ng-template pTemplate="header"><tr><th>CODPROD</th><th>DESCRIPCIÓN</th><th>UNIDAD</th><th class="text-right">CANTIDAD</th></tr></ng-template><ng-template pTemplate="body" let-item><tr><td class="font-semibold">{{ item.idproducto }}</td><td>{{ item.prD_DSC }}</td><td>{{ item.idmedida }}</td><td class="text-right font-bold text-emerald-600">{{ item.cantidad | number:'1.0-3' }}</td></tr></ng-template><ng-template pTemplate="emptymessage"><tr><td colspan="4" class="text-center py-8 text-gray-500">No hay saldo para los filtros seleccionados.</td></tr></ng-template></p-table></div>
       <div class="md:hidden p-3 space-y-3"><div *ngIf="cargandoSaldo" class="text-center py-8 text-gray-500"><i class="pi pi-spin pi-spinner text-3xl"></i></div><article *ngFor="let item of saldoAlmacen" class="rounded-lg border border-gray-200 dark:border-slate-600 p-3"><p class="font-semibold">{{ item.idproducto }}</p><p class="text-sm mt-1">{{ item.prD_DSC }}</p><div class="flex justify-between text-sm mt-2"><span>{{ item.idmedida }}</span><strong class="text-emerald-600">{{ item.cantidad | number:'1.0-3' }}</strong></div></article><div *ngIf="!cargandoSaldo && !saldoAlmacen.length" class="text-center py-8 text-gray-500">No hay saldo para los filtros seleccionados.</div></div>
     </section>
+    -->
   </div>
 </main>
 

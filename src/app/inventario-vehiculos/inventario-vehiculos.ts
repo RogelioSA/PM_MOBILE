@@ -20,7 +20,7 @@ import {
   Api,
   InventarioVehiculoPayload,
   InventarioVehiculoRegistro,
-  SaldoAlmacenVehiculo,
+  // Segunda etapa: SaldoAlmacenVehiculo,
   VehiculoRecepcion
 } from '../services/api';
 import { Master } from '../services/master';
@@ -59,7 +59,7 @@ type ModoFormulario = 'crear' | 'editar' | 'ver';
 })
 export class InventarioVehiculos implements OnInit {
   inventarios: InventarioVehiculoRegistro[] = [];
-  saldoAlmacen: SaldoAlmacenVehiculo[] = [];
+  // Segunda etapa: saldoAlmacen: SaldoAlmacenVehiculo[] = [];
   sucursales: Opcion[] = [];
   almacenesFiltro: Opcion[] = [];
   almacenesFormulario: Opcion[] = [];
@@ -85,7 +85,7 @@ export class InventarioVehiculos implements OnInit {
   vehiculos: VehiculoRecepcion[] = [];
 
   cargando = false;
-  cargandoSaldo = false;
+  // Segunda etapa: cargandoSaldo = false;
   cargandoVehiculos = false;
   guardando = false;
   guardandoDetalle = false;
@@ -178,7 +178,7 @@ export class InventarioVehiculos implements OnInit {
   buscar(): void {
     this.cargando = true;
     this.cdr.markForCheck();
-    this.cargarSaldoAlmacen();
+    // Segunda etapa: this.cargarSaldoAlmacen();
     this.api.listarInventariosVehiculos({
       fecha: this.fechaFiltro ? this.formatearFecha(this.fechaFiltro) : undefined,
       sucursal: this.sucursalFiltro || undefined,
@@ -216,46 +216,48 @@ export class InventarioVehiculos implements OnInit {
     }
   }
 
-  private cargarSaldoAlmacen(): void {
-    if (!this.fechaFiltro || !this.sucursalFiltro || !this.almacenFiltro) {
-      this.saldoAlmacen = [];
-      this.cargandoSaldo = false;
-      this.cdr.markForCheck();
-      return;
-    }
+  // Segunda etapa: Saldo por Almacén (desactivado).
+//   private cargarSaldoAlmacen(): void {
+//     if (!this.fechaFiltro || !this.sucursalFiltro || !this.almacenFiltro) {
+//       this.saldoAlmacen = [];
+//       this.cargandoSaldo = false;
+//       this.cdr.markForCheck();
+//       return;
+//     }
+//
+//     this.cargandoSaldo = true;
+//     this.cdr.markForCheck();
+//     this.api.listarSaldoAlmacenVehiculos(
+//       this.formatearFechaSaldo(this.fechaFiltro),
+//       this.sucursalFiltro,
+//       this.almacenFiltro
+//     ).subscribe({
+//       next: response => {
+//         const data = Array.isArray(response)
+//           ? response
+//           : Array.isArray(response?.data) ? response.data : [];
+//         this.saldoAlmacen = data.map((item: any) => ({
+//           idsucursal: String(item.idsucursal ?? ''),
+//           idalmacen: String(item.idalmacen ?? ''),
+//           idproducto: String(item.idproducto ?? '').trim(),
+//           idserie: String(item.idserie ?? '').trim(),
+//           prD_DSC: String(item.prD_DSC ?? '').trim(),
+//           idmedida: String(item.idmedida ?? '').trim(),
+//           vin: String(item.vin ?? '').trim(),
+//           cantidad: Number(item.cantidad ?? 0)
+//         }));
+//         this.cargandoSaldo = false;
+//         this.cdr.markForCheck();
+//       },
+//       error: error => {
+//         this.saldoAlmacen = [];
+//         this.cargandoSaldo = false;
+//         this.mostrarError(error?.error?.message || 'No se pudo cargar el saldo por almacén');
+//         this.cdr.markForCheck();
+//       }
+//     });
+//   }
 
-    this.cargandoSaldo = true;
-    this.cdr.markForCheck();
-    this.api.listarSaldoAlmacenVehiculos(
-      this.formatearFechaSaldo(this.fechaFiltro),
-      this.sucursalFiltro,
-      this.almacenFiltro
-    ).subscribe({
-      next: response => {
-        const data = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.data) ? response.data : [];
-        this.saldoAlmacen = data.map((item: any) => ({
-          idsucursal: String(item.idsucursal ?? ''),
-          idalmacen: String(item.idalmacen ?? ''),
-          idproducto: String(item.idproducto ?? '').trim(),
-          idserie: String(item.idserie ?? '').trim(),
-          prD_DSC: String(item.prD_DSC ?? '').trim(),
-          idmedida: String(item.idmedida ?? '').trim(),
-          vin: String(item.vin ?? '').trim(),
-          cantidad: Number(item.cantidad ?? 0)
-        }));
-        this.cargandoSaldo = false;
-        this.cdr.markForCheck();
-      },
-      error: error => {
-        this.saldoAlmacen = [];
-        this.cargandoSaldo = false;
-        this.mostrarError(error?.error?.message || 'No se pudo cargar el saldo por almacén');
-        this.cdr.markForCheck();
-      }
-    });
-  }
 
   abrirNuevo(): void {
     if (!this.puedeIniciarInventario || this.guardando) return;
@@ -616,11 +618,13 @@ export class InventarioVehiculos implements OnInit {
       ?? '-';
   }
 
-  get nombreAlmacenFiltro(): string {
-    return this.almacenesFiltro.find(item => item.value === this.almacenFiltro)?.label
-      ?? this.almacenFiltro
-      ?? '-';
-  }
+  // Segunda etapa: Saldo por Almacén (desactivado).
+//   get nombreAlmacenFiltro(): string {
+//     return this.almacenesFiltro.find(item => item.value === this.almacenFiltro)?.label
+//       ?? this.almacenFiltro
+//       ?? '-';
+//   }
+
 
   private cargarFormulario(item: InventarioVehiculoRegistro, modo: ModoFormulario): void {
     this.modoFormulario = modo;
@@ -863,9 +867,11 @@ export class InventarioVehiculos implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
-  private formatearFechaSaldo(fecha: Date): string {
-    return this.formatearFecha(fecha);
-  }
+  // Segunda etapa: Saldo por Almacén (desactivado).
+//   private formatearFechaSaldo(fecha: Date): string {
+//     return this.formatearFecha(fecha);
+//   }
+
 
   private parsearFecha(value: string): Date {
     if (!value) return new Date();
